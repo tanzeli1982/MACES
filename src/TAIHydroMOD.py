@@ -18,7 +18,7 @@ roua = 1.225        # density of air (kg/m^3)
 karman = 0.4        # von Karman's constant
 Cd = 1.3e-3         # drag coefficient for wind at 10-m height
 
-class TAIHydroMOD:
+class TAIHydroMOD(object):
     """Class of the 1D hydrodynamics model for coastal wetland.
 
     State variables:
@@ -38,9 +38,6 @@ class TAIHydroMOD:
         m_tau[:]: bottom shear stress (Pa)
         m_css[:]: suspended sediment concentration (kg/m^3)
         m_cj[:] : conceptual salinity or nutrients ()
-        
-    External drivings:
-        m_ancillary: a set of ancillary data (wind, tide, temperature, ...)
         
     Parameters:
         m_params: a set of free parameters
@@ -65,9 +62,6 @@ class TAIHydroMOD:
     m_css = None
     m_cj = None
     
-    # class member ancillary data
-    m_ancillary = {}
-    
     # class free parameters
     m_params = {}
     
@@ -80,25 +74,25 @@ class TAIHydroMOD:
         self.m_zh = zh
         self.m_ncell = np.size(x)
         
-    def load_ancillary_data(self, arrU0, arrTR, arrh0, arrU10, arrT, 
-                            arrTa):
-        """load ancillary data, including hydrodynamic forcings
-        Arguments:
-            arrU0 : tide speed at the seaward boundary (m/s)
-            arrTR : tidal range (m)
-            arrh0 : sea water level at the seaward boundary (m)
-            arrU10: wind speed at 10-m height over the domain (m/s)
-            arrT  : wave period (s)
-            arrTa : air temperature (celsius)
-        """
-        self.m_ancillary = {}   # remove previous loadings
-        
-        self.m_ancillary['U0'] = arrU0
-        self.m_ancillary['TR'] = arrTR
-        self.m_ancillary['h0'] = arrh0
-        self.m_ancillary['U10'] = arrU10
-        self.m_ancillary['T'] = arrT
-        self.m_ancillary['Ta'] = arrTa
+#    def load_ancillary_data(self, arrU0, arrTR, arrh0, arrU10, arrT, 
+#                            arrTa):
+#        """load ancillary data, including hydrodynamic forcings
+#        Arguments:
+#            arrU0 : tide speed at the seaward boundary (m/s)
+#            arrTR : tidal range (m)
+#            arrh0 : sea water level at the seaward boundary (m)
+#            arrU10: wind speed at 10-m height over the domain (m/s)
+#            arrT  : wave period (s)
+#            arrTa : air temperature (celsius)
+#        """
+#        self.m_ancillary = {}   # remove previous loadings
+#        
+#        self.m_ancillary['U0'] = arrU0
+#        self.m_ancillary['TR'] = arrTR
+#        self.m_ancillary['h0'] = arrh0
+#        self.m_ancillary['U10'] = arrU10
+#        self.m_ancillary['T'] = arrT
+#        self.m_ancillary['Ta'] = arrTa
     
     def init_state_variables(self, pft):
         """initialize the state variables
@@ -128,13 +122,13 @@ class TAIHydroMOD:
         self.m_params['mangrove']['bb'] = B_mangrove['bb']
         self.m_params['mangrove']['cc'] = B_mangrove['cc']
         
-    def update_ground_roughness(self, yindx, C0):
+    def update_ground_roughness(self, TR, C0):
         """update plant-induced surface roughness for water flow
         Arguments:
-            yindx : year index
+            TR : tidal range
             C0 : flow conductance when no vegetation (van Rijn's (1984) formula)
         """
-        hMHT = self.m_ancillary['TR'][yindx]
+        hMHT = TR
         DMHT = hMHT - self.m_zh
         cb = self.m_params['cb']
         for ii in range(self.m_ncell):
@@ -162,12 +156,11 @@ class TAIHydroMOD:
             cD = cD0 + ScD*self.m_Bag[ii]
             self.m_Cf[ii] = C0*np.sqrt(2.0/(cD*(cb**2)*asb*h+2.0*(1-asb*dsb)))
         
-    def update_shear_stress(self, ti):
+    def update_shear_stress(self, T):
         """update bottom shear stress
         Arguments:
-            ti : time index
+            T : wave period
         """
-        T = self.m_ancillary['T'][ti]
         indice = self.m_h > 0
         self.m_tau[self.m_h<=0] = 0.0
         # bottom shear stress induced by currents
@@ -179,12 +172,11 @@ class TAIHydroMOD:
         tau_wave = 0.5*fwave*roul*Um**2
         self.m_tau[indice] = tau_curr*(1+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
 
-    def wave_number(self, ti):
+    def wave_number(self, T):
         """calculate wave number
         Arguments:
-            ti : time index
+            T : wave period
         """
-        T = self.m_ancillary['T'][ti]
         indice = self.m_h > 0
         sigma = 2.0*np.pi/T
         k = np.ones_like(self.m_h[indice])
@@ -197,6 +189,7 @@ class TAIHydroMOD:
 
     def breaking_possibility(self):
         """calculate wave breaking possibility
+        
         Arguments:
 
         """
@@ -212,6 +205,7 @@ class TAIHydroMOD:
         
     def wave_generation(self, ti, k):
         """calculate wave generation by wind (J/m^2)
+        
         Arguments:
             ti : time index
             k  : wave number
@@ -229,6 +223,7 @@ class TAIHydroMOD:
     
     def wave_bottom_friction(self, ti, k, Qb):
         """calculate wave dissipation through bottom friction (J/m^2)
+        
         Arguments:
             ti : time index
             k  : wave number
@@ -243,6 +238,7 @@ class TAIHydroMOD:
         
     def wave_white_capping(self, ti):
         """calculate wave dissipation through white capping (J/m^2)
+        
         Arguments:
             ti : time index
         """
@@ -257,6 +253,7 @@ class TAIHydroMOD:
         
     def wave_depth_breaking(self, ti, k, Qb):
         """calculate wave dissipation through depth-induced breaking (J/m^2)
+        
         Arguments:
             ti : time index
             k  : wave number
@@ -276,6 +273,7 @@ class TAIHydroMOD:
     # solve differential equations
     def solve_dynamic_equations(self):
         """update the aboveground biomass and surface roughness for water flow
+        
         Arguments:
             
         """
@@ -286,8 +284,27 @@ class TAIHydroMOD:
         # Hred(%) = 3*Bag/Bmax*Latt (Hred is the % reduction of m_Hw)
         
         # at depths smaller than 0.1 m the flow velocity and sediment transport
-        # are taken equal to zero
+        # are taken toward to zero (linearly interpolated to zero)
     
     # 
     
+class FVSKT_4th_RK_solver(object):
+    """Class of the 1D Finite Volume Semidiscrete Kurganov and Tadmor (KT) 
+    central scheme.
+
+    Member variables:
+        uminus  : 
+        uplus   :
+        
+    """
+    
+    def __init__(self):
+        
+        
+    def slope_limiter(self):
+        
+    def fluxρ(self):
+        return
+    
+    def solve(self):
     
