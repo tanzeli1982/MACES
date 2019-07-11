@@ -1,2 +1,2 @@
 # MACES
-Multi-Algorithm Coastal Ecogeomorphology Solution
+Multi-Algorithm Coastal Eco-geomorphology Simulator
