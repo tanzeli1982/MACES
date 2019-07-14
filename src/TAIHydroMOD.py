@@ -12,13 +12,11 @@ algorithm comparison
 import numpy as np
 from scipy import constants
 from scipy import optimize
-from RungeKutta4 import rungekutta4
 
 roul = 1e3          # density of water (kg/m^3)
 roua = 1.225        # density of air (kg/m^3)
 karman = 0.4        # von Karman's constant
 Cd = 1.3e-3         # drag coefficient for wind at 10-m height
-MAX_OF_STEP = 1800  # maximum simulation time step (s)
 
 class TAIHydroMOD(object):
     """Class of the 1D hydrodynamics model for coastal wetland.
@@ -58,6 +56,7 @@ class TAIHydroMOD(object):
     Ew_arr = None
     tau_arr = None
     hydro_states = None
+    forcings = None
     
     # model parameters (free + empirical)
     model_params = {}
@@ -70,16 +69,16 @@ class TAIHydroMOD(object):
         self.x_arr = x
         self.zh_arr = zh
         self.pft_arr = pft
-        self.Ew_arr = np.zeros_like(x)
-        self.U_arr = np.zeros_like(x)
-        self.tau_arr = np.zeros_like(x)
+        self.Ew_arr = np.zeros_like(x, dtype=np.float64, order='F')
+        self.U_arr = np.zeros_like(x, dtype=np.float64, order='F')
+        self.tau_arr = np.zeros_like(x, dtype=np.float64, order='F')
         # initialize the hydrodynamic state variables
         self.hydro_states[0] = -self.zh_arr
-        self.hydro_states[self.hydro_states[0]<0] = 0.0
-        self.hydro_states[1] = np.zeros_like(self.x_arr)
-        self.hydro_states[2] = np.zeros_like(self.x_arr)
-        self.hydro_states[3] = np.zeros_like(self.x_arr)
-        self.hydro_states[4] = np.zeros_like(self.x_arr)
+        self.hydro_states[0][self.hydro_states[0]<0] = 0.0
+        self.hydro_states[1] = np.zeros_like(x, dtype=np.float64, order='F')
+        self.hydro_states[2] = np.zeros_like(x, dtype=np.float64, order='F')
+        self.hydro_states[3] = np.zeros_like(x, dtype=np.float64, order='F')
+        self.hydro_states[4] = np.zeros_like(x, dtype=np.float64, order='F')
         
 #    def load_ancillary_data(self, arrU0, arrTR, arrh0, arrU10, arrT, 
 #                            arrTa):
@@ -241,12 +240,13 @@ class TAIHydroMOD(object):
             self.Ew_arr[indice]
         return Sbrk        
     
-    # solve differential equations
-    def model_run(self, forcings):
+    # finite volume spatial discretization
+    def odeFunc(self, uhydro_in, duhydro):
         """update hydrodynamic state variables
         
         Arguments:
-            forcings : a set of forcing data
+            uhydro_in : the current state of hydrodynamics
+            duhydro   : hydrodynamics time derivative
         """
         # for wave energy, it assumes that the maximum wave energy allowed is
         # roul*g*(fr*h)**2/8
@@ -263,31 +263,12 @@ class TAIHydroMOD(object):
             Ero     : erosion rate (kg/m^2)
             Dep     : deposition rate (kg/m^2)
         """
-        
-        nday = forcings['simday']
-        nhour = 24 * nday
-        t = 0
-        tf = 8.64e4 * nday
-        error = False
-        hindx = 0
-        ncount = 0
-        curstep = 50
-        nextstep = MAX_OF_STEP
-        ncell = np.size(self.x_arr)
-        uhydro_out = {}
-        uhydro_out['h'] = np.zeros((nhour,ncell), dtype=np.float32)
-        uhydro_out['U'] = np.zeros((nhour,ncell), dtype=np.float32)
-        uhydro_out['Hw'] = np.zeros((nhour,ncell), dtype=np.float32)
-        uhydro_out['']
-        while (t<tf and (not error)):
-            if t>=3.6e3*hindx and hindx<nhour:
-                print('Id', int(self.site_id), ': time step', int(hindx))
             
         N = np.shape(uhydro)[1]
         for i in range(1,N):
-            phi_i = self.slope_limiter(uhydro,i)
-            phi_im = self.slope_limiter(uhydro,i-1)
-            phi_ip = self.slope_limiter(uhydro,i+1)
+            phi_i = self.slope_limiter(uhydro_in,i)
+            phi_im = self.slope_limiter(uhydro_in,i-1)
+            phi_ip = self.slope_limiter(uhydro_in,i+1)
             uleft_minus = uhydro[:,i-1] + 0.5*phi_im*(uhydro[:,i]-uhydro[:,i-1])
             uright_minus = uhydro[:,i] - 0.5*phi_i*(uhydro[:,i+1]-uhydro[:,i])
             uleft_plus = uhydro[:,i] + 0.5*phi_i*(uhydro[:,i+1]-uhydro[:,i])

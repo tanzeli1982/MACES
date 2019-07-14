@@ -54,7 +54,6 @@ contains
       call odeFunc(invars, K1)
       do while (isLargeErr .or. isConstrainBroken)
          if (iter>MAXITER) then
-            print *, "Runge-Kutta iteration is more than MAXITER"
             outerr(1) = 1
             return
          end if
@@ -152,13 +151,5 @@ contains
          end do
       end if
    end subroutine
-
-   !subroutine odeFunc(matrix, values)
-   !   implicit none
-   !   real(kind=8), intent(in) :: matrix(:,:)
-   !   real(kind=8), intent(inout) :: values(:,:)
-!
-!      values = 0.0
-!   end subroutine
 
 end module RungeKutta4
