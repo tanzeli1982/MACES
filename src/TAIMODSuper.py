@@ -8,6 +8,7 @@ Base class for coastal wetland models (geomorphology + biogeochemistry)
 @author: Zeli Tan
 """
 
+import numpy as np
 from abc import ABCMeta, abstractmethod
 
 class TAIMODSuper(object):
@@ -87,4 +88,13 @@ class TAIMODSuper(object):
             aa, bb, cc = [0.0, 0.0, 0.0]
             alpha_a, beta_a, alpha_d, beta_d = [0.0, 0.0, 0.0, 0.0]
             cD0, ScD = [0.0, 0.0]
-        self.m_Bag[ii] = aa*DMHT[ii] + bb*(DMHT[ii])**2 + cc      
+        self.m_Bag[ii] = aa*DMHT[ii] + bb*(DMHT[ii])**2 + cc
+        
+def construct_platform_elev(diva_topo):
+    """Construct the TAI platform elevation profile
+    Arguments:
+        diva_topo : DIVA topography input
+    """
+    N = 1000
+    zh = np.zeros(N, dtype=np.float64, order='F')
+    return zh

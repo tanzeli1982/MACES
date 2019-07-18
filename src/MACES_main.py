@@ -10,6 +10,7 @@ Main program to run the MACES model
 
 import pandas as pd
 import numpy as np
+import TAIMODSuper as TAIMOD
 from mpi4py import MPI
 from optparse import OptionParser
 from scipy.io import netcdf
@@ -60,6 +61,10 @@ def run_tai_maces(params, input_data, verbose):
     rk4.interim = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
     rk4.rerr = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
     out_uhydro = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
+    sed_ero = np.zeros(ncell, dtype=np.float64, order='F')
+    sed_dep = np.zeros(ncell, dtype=np.float64, order='F')
+    om_dep = np.zeros(ncell, dtype=np.float64, order='F')
+    zh_pltfrm = TAIMOD.construct_platform_elev(input_data['diva_topo'])
     # initialize model run
     t = 0
     tf = 8.64e4 * nday
@@ -75,6 +80,8 @@ def run_tai_maces(params, input_data, verbose):
                     print('Id', int(site_id), ': time step', int(hindx))
                 isHourNode = True
                 hindx = hindx + 1
+                if np.mod(hindx,24)==0:
+                    dindx = dindx + 1
             if isHourNode:
                 uhydro_out['h'][hindx] = model.hydro_states[0,:]
                 uhydro_out['U'][hindx] = model.U_arr
@@ -85,12 +92,18 @@ def run_tai_maces(params, input_data, verbose):
                 # calculate daily mean eco-geomorphology variables
             
             # simulate hydrodynamics
+            model.setup(sed_ero, sed_dep)
             error = np.array([0], dtype=np.int32, order='F')
             rk4.rk4fehlberg(model.odeFunc, model.hydro_states, out_uhydro, 
                             rk4_mode, uhydro_tol, curstep, nextstep, error)
             assert error[0]==0, "Runge-Kutta iteration is more than MAXITER"
+            model.callback(out_uhydro)
             # simulate eco-geomorphology
-            
+            sed_ero = 0.0
+            sed_dep = 0.0
+            om_dep = 0.0
+            # update platform elevation
+            zh_pltfrm = zh_pltfrm + (sed_dep+om_dep-sed_ero)*curstep
             # check small time step
             isHourNode = False
             if curstep<0.1:
