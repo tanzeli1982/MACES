@@ -17,13 +17,45 @@ module RungeKutta4
    real(kind=8), allocatable, dimension(:,:) :: K4
    real(kind=8), allocatable, dimension(:,:) :: K5
    real(kind=8), allocatable, dimension(:,:) :: K6
-   real(kind=8), allocatable, dimension(:,:) :: nxt4th(:,:)
-   real(kind=8), allocatable, dimension(:,:) :: nxt5th(:,:)
-   real(kind=8), allocatable, dimension(:,:) :: interim(:,:)
-   real(kind=8), allocatable, dimension(:,:) :: rerr(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: nxt4th
+   real(kind=8), allocatable, dimension(:,:) :: nxt5th
+   real(kind=8), allocatable, dimension(:,:) :: interim
+   real(kind=8), allocatable, dimension(:,:) :: rerr
    ! intermediate scalers
 
 contains
+   subroutine InitRKDataBuffer(nvar, ncell)
+      implicit none
+      integer, intent(in) :: nvar
+      integer, intent(in) :: ncell
+
+      allocate(K1(nvar,ncell))
+      allocate(K2(nvar,ncell))
+      allocate(K3(nvar,ncell))
+      allocate(K4(nvar,ncell))
+      allocate(K5(nvar,ncell))
+      allocate(K6(nvar,ncell))
+      allocate(nxt4th(nvar,ncell))
+      allocate(nxt5th(nvar,ncell))
+      allocate(interim(nvar,ncell))
+      allocate(rerr(nvar,ncell))
+   end subroutine
+
+   subroutine DestructRKDataBuffer()
+      implicit none
+
+      deallocate(K1)
+      deallocate(K2)
+      deallocate(K3)
+      deallocate(K4)
+      deallocate(K5)
+      deallocate(K6)
+      deallocate(nxt4th)
+      deallocate(nxt5th)
+      deallocate(interim)
+      deallocate(rerr)
+   end subroutine
+
    subroutine RK4Fehlberg(odeFunc, invars, outvars, mode, tol, &
                           curstep, nextstep, outerr)
       implicit none
@@ -151,5 +183,28 @@ contains
          end do
       end if
    end subroutine
+
+   function NLBrents(func, lower, upper, tol)
+      implicit none
+      external :: func
+      real(kind=8), intent(in) :: lower
+      real(kind=8), intent(in) :: upper
+      real(kind=8) :: a, b, fa, fb
+      real(kind=8) :: NLBrents
+
+      a = lower
+      b = upper
+      fa = func(a)
+      fb = func(b)
+      if (abs(fa)<tol) then
+         NLBrents = a
+         return
+      else if (abs(fb)<tol) then
+         NLBrents = b
+         return
+      else if (fa*fb>0) then
+         NLBrents = 
+      end if
+   end function
 
 end module RungeKutta4
