@@ -331,6 +331,8 @@ class TAIHydroMOD(object):
         """return the maximum eigenvalue of the Jacobian of the 1st order 
         space derivative of the state variables
         
+        Ignore the non-diagonal terms of Jacobi for N, Css and Cj
+        
         Arguments:
             uhydro  : instant hydrodynamic states
         """
@@ -345,11 +347,13 @@ class TAIHydroMOD(object):
             h = uhydro[0,ii]
             Uh = uhydro[1,ii]
             U = Uh / max(h,0.1)
-            Css = uhydro[3,ii]
-            Cj = uhydro[4,ii]
+            #Css = uhydro[3,ii]
+            #Cj = uhydro[4,ii]
+            #jacobi = np.array([[U,1,0,0,0],[U**2+G*h,2*U,0,0,0],
+            #                   [0.5*(G/max(h,0.1))**0.5,0,Cg[ii],0,0],
+            #                   [U*Css,Css,0,Uh,0],[U*Cj,Cj,0,0,Uh]])
             jacobi = np.array([[U,1,0,0,0],[U**2+G*h,2*U,0,0,0],
-                               [0.5*(G/max(h,0.1))**0.5,0,Cg[ii],0,0],
-                               [U*Css,Css,0,Uh,0],[U*Cj,Cj,0,0,Uh]])
+                               [0,0,Cg[ii],0,0],[0,0,0,Uh,0],[0,0,0,0,Uh]])
             lamda[ii] = np.max(np.abs(linalg.eigvals(jacobi)))
         return lamda
     
