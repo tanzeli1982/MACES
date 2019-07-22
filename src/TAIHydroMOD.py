@@ -173,7 +173,7 @@ class TAIHydroMOD(object):
         for ii, h in enumerate(self.hydro_states[0][indice]):
             a = sigma**2/G
             b = sigma / np.sqrt(G*h)
-            self.k[ii] = optimize.root_scalar(lambda x: G*x*np.tanh(x*h)-sigma**2, \
+            self.k[ii] = optimize.root_scalar(lambda x: np.sqrt(G*x*np.tanh(x*h))-sigma, \
                  bracket=[a,b], method='brentq').root
 
     def breaking_possibility(self):
@@ -183,13 +183,12 @@ class TAIHydroMOD(object):
 
         """
         indice = self.hydro_states[0] > 0
-        Hmax = 0.78 * self.hydro_states[0][indice]
-        self.Qb = 0
+        self.Qb = 1
         for ii, h in enumerate(self.hydro_states[0][indice]):
             Hrms = self.Hw_arr[indice][ii]
             Hmax = 0.78 * h
-            self.Qb[ii] = optimize.root_scalar(lambda x: 1-x+np.log(x)*(Hrms/Hmax)**2, \
-                  bracket=[0,1], method='brentq').root
+            self.Qb[ii] = optimize.root_scalar(lambda x: (1-x)/np.log(x)+(Hrms/Hmax)**2, \
+                  bracket=[1e-10,1-1e-10], method='brentq').root
         
     def wave_generation(self):
         """calculate wave generation by wind (J/m^2)
@@ -295,7 +294,6 @@ class TAIHydroMOD(object):
         
         Arguments:
             uhydro : the updated hydrodynamics
-            dt     : time step (s)
         """
         self.hydro_states = uhydro
         # update current velocity
@@ -304,8 +302,9 @@ class TAIHydroMOD(object):
         # update wave energy and significant wave height
         T = self.forcings['T']
         sigma = 2*np.pi/T
-        self.Ew_arr = sigma * uhydro[2,:]
+        self.Ew_arr = sigma * uhydro[2]
         self.Hw_arr = np.sqrt(8*self.Ew_arr/G/roul)
+        self.update_shear_stress()
         
     def dF_1st(self, uhydro):
         """calculate the 1st order space derivative of the state variables
@@ -314,17 +313,20 @@ class TAIHydroMOD(object):
             uhydro  : instant hydrodynamic states
         """
         T = self.forcings['T']
+        fr = self.model_params['fr']
         Cg = np.zeros_like(self.x_arr, dtype=np.float64, order='F')
         indice = uhydro[0] > 0
         sigma = 2*np.pi/T
         Cg[indice] = 0.5*sigma/self.k[indice]*(1+2*self.k[indice]*uhydro[0][indice]/ \
           np.sinh(2*self.k[indice]*uhydro[0][indice]))
+        Nmax = 0.125*roul*G*(fr*uhydro[0])**2/sigma
         dF = np.zeros_like(uhydro, dtype=np.float64, order='F')
-        dF[0,:] = uhydro[1,:]
-        dF[1,:] = uhydro[1,:]**2/uhydro[0,:] + 0.5*G*uhydro[0,:]**2
-        dF[2,:] = Cg * uhydro[2,:]
-        dF[3,:] = uhydro[1,:]*uhydro[3,:]
-        dF[4,:] = uhydro[1,:]*uhydro[4,:]
+        dF[0] = uhydro[1]
+        dF[1] = uhydro[1]**2/uhydro[0] + 0.5*G*uhydro[0]**2
+        for ii, N in enumerate(uhydro[2]):
+            dF[2,ii] = Cg * min(uhydro[2],Nmax[ii])
+        dF[3] = uhydro[1]*uhydro[3]
+        dF[4] = uhydro[1]*uhydro[4]
         return dF
     
     def dF_jacobian(self, uhydro):
@@ -385,14 +387,13 @@ class TAIHydroMOD(object):
         T = self.forcings['T']
         Ero = self.forcings['Ero']
         Dep = self.forcings['Dep']
-        fr = self.model_params['fr']
         sigma = 2*np.pi/T
         Dep_inst = np.copy(Dep)
         indice = Dep_inst > 0
         Dep_inst[indice] = Dep_inst[indice]*uhydro[3,indice]/self.hydro_states[3,indice]
         Src = np.zeros_like(uhydro, dtype=np.float64, order='F')
-        U = np.zeros_like(uhydro[1,:], dtype=np.float64, order='F')
-        dB = np.zeros_like(uhydro[1,:], dtype=np.float64, order='F')
+        U = np.zeros_like(uhydro[1], dtype=np.float64, order='F')
+        dB = np.zeros_like(uhydro[1], dtype=np.float64, order='F')
         for ii, h in enumerate(uhydro[0]):
             U[ii] = uhydro[1,ii] / max(0.1,uhydro[0,ii])
             if ii==0:
@@ -401,16 +402,9 @@ class TAIHydroMOD(object):
                 dB[ii] = 0.5*(self.zh_arr[ii]-self.zh_arr[ii-1]) / self.dx_arr[ii]
             else:
                 dB[ii] = 0.5*(self.zh_arr[ii+1]-self.zh_arr[ii-1]) / self.dx_arr[ii]
-        Src[1,:] = -U*np.abs(U)/(self.Cf_arr)**2 - G*uhydro[0,:]*dB
+        Src[1,:] = -U*np.abs(U)/(self.Cf_arr)**2 - G*uhydro[0]*dB
         Src[2,:] = (self.Swg - self.Sbf - self.Swc - self.Sbrk) / sigma
-        for ii, h in enumerate(uhydro[0]):
-            Nmax = 0.125*roul*G*(fr*h)**2/sigma
-            kx = self.k[ii]
-            dx = self.dx_arr[ii]
-            if uhydro[2,ii]>Nmax:
-                Cg = 0.5*sigma/kx*(1+2*kx*h/np.sinh(2*kx*h))
-                Src[2,ii] = Src[2,ii] - Cg*(Nmax-uhydro[2,ii])/dx
-        Src[3,:] = Ero - Dep_inst
+        Src[3,:] =  Dep_inst - Ero
     
     # finite volume spatial discretization
     def odeFunc(self, uhydro, duhydro):
@@ -453,7 +447,8 @@ class TAIHydroMOD(object):
                 duhydro[:,ii] = 0.0
             elif ii==N-1:
                 # landward boundary conditions
-                duhydro[:,ii] = 0.0
+                duhydro[:,ii] = F_minus[:,ii] / dx - P[:,ii-1] / dx + \
+                    Src[:,ii]
             else:
                 duhydro[:,ii] = -(F_plus[:,ii] - F_minus[:,ii]) / dx + \
                     (P[:,ii] - P[:,ii-1]) / dx + Src[:,ii]  
