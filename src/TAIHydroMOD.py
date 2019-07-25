@@ -144,7 +144,7 @@ class TAIHydroMOD(object):
             asb = alpha_a*(Bag[ii]**beta_a)
             dsb = alpha_d*(Bag[ii]**beta_d)
             cD = cD0 + ScD*Bag[ii]
-            self.Cf_arr[ii] = C0*np.sqrt(2.0/(cD*(cb**2)*asb*h+2.0*(1-asb*dsb)))
+            self.Cf_arr[ii] = C0*np.sqrt(2.0/(cD*asb*h+2.0*(1-asb*dsb)*cb))
         
     def update_shear_stress(self):
         """update bottom shear stress
@@ -404,7 +404,7 @@ class TAIHydroMOD(object):
                 dB[ii] = 0.5*(self.zh_arr[ii+1]-self.zh_arr[ii-1]) / self.dx_arr[ii]
         Src[1,:] = -U*np.abs(U)/(self.Cf_arr)**2 - G*uhydro[0]*dB
         Src[2,:] = (self.Swg - self.Sbf - self.Swc - self.Sbrk) / sigma
-        Src[3,:] =  Dep_inst - Ero
+        Src[3,:] =  Ero - Dep_inst
     
     # finite volume spatial discretization
     def odeFunc(self, uhydro, duhydro):

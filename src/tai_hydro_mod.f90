@@ -12,8 +12,8 @@ module TAIHydroMOD
    type ParamData
       real(kind=8) :: d50        ! sediment median diameter (m)
       real(kind=8) :: Cz0        ! the Chézy friction coefficient (m^0.5/s)
-      real(kind=8) :: cb         ! bed drag coefficient (unknown)
-      real(kind=8) :: cD0(4)     ! bulk plant drag coefficient baseline (unknown)
+      real(kind=8) :: cb         ! bed drag coefficient (unitless)
+      real(kind=8) :: cD0(4)     ! bulk plant drag coefficient baseline (unitless)
       real(kind=8) :: ScD(4)     ! the slope between cD and Bag (unknown)
       real(kind=8) :: alphaA(4)  ! empirical coefficient for projected plant area
       real(kind=8) :: betaA(4)   ! empirical coefficient for projected plant area
@@ -201,12 +201,11 @@ contains
    ! cbc should be related to 1/Cz0
    !
    !------------------------------------------------------------------------------
-   subroutine SetModelParameters(d50, Cz0, cb, Kdf, cbc, fr, alphaA, betaA, &
+   subroutine SetModelParameters(d50, Cz0, Kdf, cbc, fr, alphaA, betaA, &
                                  alphaD, betaD, cD0, ScD)
       implicit none
       real(kind=8), intent(in), optional :: d50 = 250.0d-6  ! m
       real(kind=8), intent(in), optional :: Cz0 = 65.0      ! m^0.5/s
-      real(kind=8), intent(in), optional :: cb =  
       real(kind=8), intent(in), optional :: Kdf = 100.0     ! m^2/s
       real(kind=8), intent(in), optional :: cbc = 0.015     ! unknown 
       real(kind=8), intent(in), optional :: fr = 0.78       ! fraction
@@ -219,7 +218,6 @@ contains
 
       m_params%d50 = d50
       m_params%Cz0 = Cz0
-      m_params%cb = cb
       m_params%Kdf = Kdf
       m_params%cbc = cbc
       m_params%fr = fr
@@ -229,6 +227,7 @@ contains
       m_params%betaD = betaD
       m_params%cD0 = cD0
       m_params%ScD = ScD
+      m_params%cb = 2.5d-3
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -254,6 +253,8 @@ contains
       m_Zh = Zh
       m_Esed = Ero
       m_Dsed = Dep
+      ! a typical wave period is 2s but increase greatly with the increase
+      ! of wave speed (https://en.wikipedia.org/wiki/Wind_wave)
       m_forcings%T = T
       m_forcings%U0 = U0
       m_forcings%h0 = h0
@@ -337,14 +338,14 @@ contains
          asb = alphaA + Bag(ii)**betaA
          dsb = alphaD + Bag(ii)**betaD
          cD = cD0 + ScD * Bag(ii)
-         m_Cz(ii) = Cz0*sqrt(2.0/(cD*(cb**2)*asb*h+2.0*(1.0-asb*dsb)))
+         m_Cz(ii) = Cz0*sqrt(2.0/(cD*asb*h+2.0*(1.0-asb*dsb)*cb))
       end do
    end subroutine
 
    subroutine UpdateShearStress()
       implicit none
       real(kind=8) :: d50, T, fcurr, fwave
-      real(kind=8) :: h, U, Umav, Hwav
+      real(kind=8) :: h, U, Uwav, Hwav
       real(kind=8) :: tau_curr, tau_wave
       integer :: ii
 
@@ -359,7 +360,7 @@ contains
             fcurr = 0.24/(log(4.8*h/d50))**2
             tau_curr = 0.125*Roul*fcurr*U**2
             ! bottom shear stress by wave
-            Umav = PI*Hwav(ii)/T/sinh(Karman*h)
+            Uwav = PI*Hwav(ii)/T/sinh(Karman*h)
             fwave = 1.39*(6.0*Uwav*T/PI/d50)**(-0.52)
             tau_wave = 0.5*fwave*Roul*Uwav**2
             m_tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
@@ -673,7 +674,7 @@ contains
       sources(1,:) = 0.0d0
       sources(2,:) = -tmp_U*abs(tmp_U)*G/m_Cz**2 - G*uhydro(1,:)*m_dZh/m_dX
       sources(3,:) = (tmp_Swg - tmp_Sbf - tmp_Swc - tmp_Sbrk) / sigma 
-      sources(4,:) = m_Dsed - m_Esed
+      sources(4,:) = m_Esed - m_Dsed
       sources(5,:) = 0.0d0
    end subroutine
 
