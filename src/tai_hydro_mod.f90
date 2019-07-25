@@ -401,7 +401,7 @@ contains
          if (h>0) then
             xbounds = (/sigma**2/G, sigma/sqrt(G*h)/)
             coefs = (/T, h/)
-            call NonLRBrents(WaveNumberEQ, coefs, xbounds, m_kwav(ii))
+            call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, m_kwav(ii))
          else
             m_kwav(ii) = 0.0d0
          end if
@@ -420,7 +420,7 @@ contains
       if (h1>0) then
          xbounds = (/sigma**2/G, sigma/sqrt(G*h1)/)
          coefs = (/T, h1/)
-         call NonLRBrents(WaveNumberEQ, coefs, xbounds, m_kwav(1))
+         call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, m_kwav(1))
          do ii = 2, NX, 1
             h = m_uhydro(1,ii)
             if (h>0) then
@@ -464,7 +464,7 @@ contains
             Hrms = m_Hwav(ii)
             xbounds = (/1d-10, 1.0-1d-10/)
             coefs = (/Hmax, Hrms/)
-            call NonLRBrents(BreakProbEQ, coefs, xbounds, m_Qb(ii))
+            call NonLRBrents(BreakProbEQ, coefs, xbounds, 1d-4, m_Qb(ii))
          else
             m_Qb(ii) = 1.0d0
          end if

@@ -190,13 +190,13 @@ contains
    ! https://rosettacode.org/wiki/Roots_of_a_function#Brent.27s_Method
    !
    !------------------------------------------------------------------------------
-   subroutine NonLRBrents(NonLREQ, coefs, xbounds, root, tol)
+   subroutine NonLRBrents(NonLREQ, coefs, xbounds, tol, root)
       implicit none
       external :: NonLREQ
       real(kind=8), intent(in) :: coefs(:)
       real(kind=8), intent(in) :: xbounds(2) 
+      real(kind=8), intent(in) :: tol
       real(kind=8), intent(out) :: root
-      real(kind=8), intent(in), optional :: tol = 1d-4
       real(kind=8) :: xa, xb, ya, yb
       real(kind=8) :: xc, yc, xd, ys
       integer :: iter
@@ -249,7 +249,7 @@ contains
                   ( mflag .and. abs(root-xb)>=abs(xb-xc)*0.5 ) .or. &
                   ( (.NOT. mflag) .and. abs(root-xb)>=abs(xc-xd)*0.5 ) .or. &
                   ( mflag .and. abs(xb-xc)<tol ) .or. &
-                  ( (.NOT. mflag) .and. abs(xc-xd)<tol ) then
+                  ( (.NOT. mflag) .and. abs(xc-xd)<tol ) ) then
                ! bisection method
                root = 0.5 * (xa + xb)
                mflag = .True.
@@ -306,7 +306,7 @@ contains
             phi(:,ii) = 0.0d0
          else
             rr = (uhydro(:,ii)-uhydro(:,ii-1))/(uhydro(:,ii+1)-uhydro(:,ii))
-            phi(:,ii) = max(0,min(2.0*rr,1),min(rr,2))            
+            phi(:,ii) = max(0.0,min(2.0*rr,1.0),min(rr,2.0))            
          end if
       end do
    end subroutine
