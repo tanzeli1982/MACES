@@ -14,7 +14,7 @@ import TAIMODSuper as TAIMOD
 from mpi4py import MPI
 from optparse import OptionParser
 from scipy.io import netcdf
-from TAIHydroMOD import taihydromod
+from TAIHydroMOD import taihydro
 from TAIHydroMOD import rungekutta4 as rk4
 
 # model simulation constants
@@ -54,8 +54,8 @@ def run_tai_maces(params, input_data, verbose):
     sed_dep = np.zeros(ncell, dtype=np.float64, order='F')
     om_dep = np.zeros(ncell, dtype=np.float64, order='F')
     site_zh = TAIMOD.construct_platform_elev(input_data['diva_topo'])
-    taihydromod.initialize(site_x, site_zh)
-    taihydromod.setmodelparameters(d50, )
+    taihydro.Initialize(site_x, site_zh)
+    taihydro.SetModelParameters(d50, )
     # initialize model run
     t = 0
     tf = 8.64e4 * nday
@@ -83,12 +83,12 @@ def run_tai_maces(params, input_data, verbose):
                 # calculate daily mean eco-geomorphology variables
             
             # simulate hydrodynamics
-            taihydromod.modelsetup(zh, sed_ero, sed_dep)
+            taihydro.ModelSetup(zh, sed_ero, sed_dep)
             error = np.array([0], dtype=np.int32, order='F')
-            rk4.rk4fehlberg(model.taihydroequations, model.m_uhydro, out_uhydro, 
-                            rk4_mode, uhydro_tol, curstep, nextstep, error)
+            rk4.RK4Fehlberg(taihydro.TAIHydroEquations, taihydro.m_uhydro, 
+                            out_uhydro, rk4_mode, uhydro_tol, curstep, nextstep, error)
             assert error[0]==0, "Runge-Kutta iteration is more than MAXITER"
-            taihydromod.callback(out_uhydro)
+            taihydro.Callback(out_uhydro)
             # simulate eco-geomorphology
             sed_ero = 0.0
             sed_dep = 0.0
