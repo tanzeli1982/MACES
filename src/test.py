@@ -1,4 +1,4 @@
-from RungeKutta4 import rungekutta4 as rk4
+from TAIHydroMOD import rungekutta4 as rk4
 import numpy as np
 
 def odeFunc(x, y):

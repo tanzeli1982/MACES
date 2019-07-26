@@ -275,7 +275,7 @@ contains
       !call UpdateWaveNumber()
       call UpdateWaveNumber2()   ! much more efficient but less accurate
       !call UpdateWaveBrkProb()
-      call UpdateWaveBrkPro2()   ! much more efficient but less accurate
+      call UpdateWaveBrkProb2()  ! much more efficient but less accurate
       call UpdateWaveGeneration()
       call UpdateWaveBtmFriction()
       call UpdateWaveWhiteCapping()
