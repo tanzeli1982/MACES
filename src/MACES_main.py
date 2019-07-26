@@ -94,7 +94,7 @@ def run_tai_maces(params, input_data, verbose):
             # simulate hydrodynamics
             model.setup(sed_ero, sed_dep)
             error = np.array([0], dtype=np.int32, order='F')
-            rk4.rk4fehlberg(model.odeFunc, model.hydro_states, out_uhydro, 
+            rk4.rk4fehlberg(model.taihydroequations, model.m_uhydro, out_uhydro, 
                             rk4_mode, uhydro_tol, curstep, nextstep, error)
             assert error[0]==0, "Runge-Kutta iteration is more than MAXITER"
             model.callback(out_uhydro)
