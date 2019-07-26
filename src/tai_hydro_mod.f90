@@ -78,7 +78,7 @@ module TAIHydroMOD
    integer :: NX
 
 contains
-   subroutine InitializeTAIMOD(X, Zh)
+   subroutine Initialize(X, Zh)
       implicit none
       real(kind=8), intent(in) :: X(:)    ! grid cell coordinate (m) 
       real(kind=8), intent(in) :: Zh(:)   ! grid cell elevation (m)
@@ -144,7 +144,7 @@ contains
          0.9950,0.9975,1.0/)
    end subroutine
 
-   subroutine DestructTAIMOD()
+   subroutine Destruct()
       implicit none
 
       call DestructRKDataBuffer()

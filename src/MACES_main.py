@@ -14,8 +14,8 @@ import TAIMODSuper as TAIMOD
 from mpi4py import MPI
 from optparse import OptionParser
 from scipy.io import netcdf
-from TAIHydroMOD import TAIHydroMOD
-from RungeKutta4 import rungekutta4 as rk4
+from TAIHydroMOD import taihydromod
+from TAIHydroMOD import rungekutta4 as rk4
 
 # model simulation constants
 MAX_OF_STEP = 1800  # maximum simulation time step (s)
@@ -48,23 +48,14 @@ def run_tai_maces(params, input_data, verbose):
     ecogeo_out['bg_bio'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
     ecogeo_out['coast_veg'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
     # create a model object and initialize RungeKutta allocatables
-    model = TAIHydroMOD(site_id, site_lat, site_lon, x, zh, pft)
     nhydro = len(uhydro_out)
-    rk4.k1 = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.k2 = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.k3 = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.k4 = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.k5 = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.k6 = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.nxt4th = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.nxt5th = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.interim = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    rk4.rerr = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
     out_uhydro = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
     sed_ero = np.zeros(ncell, dtype=np.float64, order='F')
     sed_dep = np.zeros(ncell, dtype=np.float64, order='F')
     om_dep = np.zeros(ncell, dtype=np.float64, order='F')
-    zh_pltfrm = TAIMOD.construct_platform_elev(input_data['diva_topo'])
+    site_zh = TAIMOD.construct_platform_elev(input_data['diva_topo'])
+    taihydromod.initialize(site_x, site_zh)
+    taihydromod.setmodelparameters(d50, )
     # initialize model run
     t = 0
     tf = 8.64e4 * nday
@@ -92,18 +83,18 @@ def run_tai_maces(params, input_data, verbose):
                 # calculate daily mean eco-geomorphology variables
             
             # simulate hydrodynamics
-            model.setup(sed_ero, sed_dep)
+            taihydromod.modelsetup(zh, sed_ero, sed_dep)
             error = np.array([0], dtype=np.int32, order='F')
             rk4.rk4fehlberg(model.taihydroequations, model.m_uhydro, out_uhydro, 
                             rk4_mode, uhydro_tol, curstep, nextstep, error)
             assert error[0]==0, "Runge-Kutta iteration is more than MAXITER"
-            model.callback(out_uhydro)
+            taihydromod.callback(out_uhydro)
             # simulate eco-geomorphology
             sed_ero = 0.0
             sed_dep = 0.0
             om_dep = 0.0
             # update platform elevation
-            zh_pltfrm = zh_pltfrm + (sed_dep+om_dep-sed_ero)*curstep
+            site_zh = site_zh + (sed_dep+om_dep-sed_ero-rslr)*curstep
             # check small time step
             isHourNode = False
             if curstep<0.1:
@@ -123,15 +114,7 @@ def run_tai_maces(params, input_data, verbose):
         print(error)
     finally:
         # deallocate
-        rk4.k1 = None
-        rk4.k2 = None
-        rk4.k3 = None
-        rk4.k4 = None
-        rk4.k5 = None
-        rk4.k6 = None
-        rk4.nxt4th = None
-        rk4.nxt5th = None
-        rk4.interim = None
+        taihydromod.destruct()
     # save the simulation (only short-term hydrodynamics are saved)
     
     
