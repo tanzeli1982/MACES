@@ -25,8 +25,8 @@ Platform plant function type
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
-class TAIMODSuper(object):
-    """Abstract base class for TAI models.
+class MACMODSuper(object):
+    """Abstract base class for TAI mineral accretion models.
 
     Attributes:
         m_params : model parameters
@@ -40,7 +40,7 @@ class TAIMODSuper(object):
     @abstractmethod 
     def mineral_accretion(self, inputs):
         """"Calculate mineral accretion rate.
-        Parameters:
+        Arguments:
             inputs : driving data for mineral accretion calculation
             inputs['x']   : platform coordinate (m)
             inputs['zh']  : platform elevation relative to MSL (m)
@@ -56,10 +56,22 @@ class TAIMODSuper(object):
         """
         pass
     
+class OMACMODSuper(object):
+    """Abstract base class for TAI organic matter accretion models.
+
+    Attributes:
+        m_params : model parameters
+
+    """
+    
+    m_params = {}
+    
+    __metaclass__ = ABCMeta    
+    
     @abstractmethod 
     def organic_accretion(self, inputs):
         """"Calculate organic matter accretion rate.
-        Parameters:
+        Arguments:
             inputs : driving data for OM accretion calculation
             inputs['x']     : platform coordinate (m)
             inputs['zh']    : platform elevation relative to MSL (m)
@@ -72,12 +84,24 @@ class TAIMODSuper(object):
         Returns: organic matter accretion rate (g m-2 s-1)
         """
         pass
+    
+class WINDEROMODSuper(object):
+    """Abstract base class for TAI storm surge erosion models.
+
+    Attributes:
+        m_params : model parameters
+
+    """
+    
+    m_params = {}
+    
+    __metaclass__ = ABCMeta
 
     @abstractmethod 
     def wind_erosion(self, inputs):
         """"Calculate storm surge erosion rate. This should be used to get the
         new values of grid cell coordinate and elevation.
-        Parameters:
+        Arguments:
             inputs : driving data for storm surge erosion calculation
             inputs['x']    : platform coordinate (m)
             inputs['zh']   : platform elevation relative to MSL (m)
@@ -85,12 +109,24 @@ class TAIMODSuper(object):
             inputs['Hwav'] : significant wave height (m)
         Returns: storm surge erosion rate (m s-1)
         """
-        pass  
+        pass
+    
+class LNDMGMODSuper(object):
+    """Abstract base class for TAI landward migration models.
+
+    Attributes:
+        m_params : model parameters
+
+    """
+    
+    m_params = {}
+    
+    __metaclass__ = ABCMeta
     
     @abstractmethod 
     def landward_migration(self, inputs):
         """"Calculate coastal wetland landward migration at the end of each year.
-        Parameters:
+        Arguments:
             inputs : driving data for landward migration calculation
             inputs['x']      : platform coordinate (m)
             inputs['zh']     : platform elevation relative to MSL (m)
