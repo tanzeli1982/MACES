@@ -38,10 +38,10 @@ class MACMODSuper(object):
     __metaclass__ = ABCMeta
     
     @abstractmethod 
-    def mineral_accretion(self, inputs):
-        """"Calculate mineral accretion rate.
+    def mineral_suspend(self, inputs):
+        """"Calculate mineral suspension rate.
         Arguments:
-            inputs : driving data for mineral accretion calculation
+            inputs : driving data for mineral suspension calculation
             inputs['x']   : platform coordinate (m)
             inputs['zh']  : platform elevation relative to MSL (m)
             inputs['pft'] : platform vegetation cover pft
@@ -52,7 +52,26 @@ class MACMODSuper(object):
             inputs['h']   : water depth (m)
             inputs['TR']  : tidal range (m)
             inputs['d50'] : sediment median diameter (m)
-        Returns: mineral accretion rate (g m-2 s-1)
+        Returns: mineral suspension rate (g m-2 s-1)
+        """
+        pass
+    
+    @abstractmethod
+    def mineral_deposition(self, inputs):
+        """"Calculate mineral deposition rate.
+        Arguments:
+            inputs : driving data for mineral deposition calculation
+            inputs['x']   : platform coordinate (m)
+            inputs['zh']  : platform elevation relative to MSL (m)
+            inputs['pft'] : platform vegetation cover pft
+            inputs['Css'] : suspended sediment concentration (g m-3)
+            inputs['tau'] : bottom shear stress (Pa)
+            inputs['Bag'] : aboveground biomass (gC m-2)
+            inputs['U']   : water flow velocity (m s-1)
+            inputs['h']   : water depth (m)
+            inputs['TR']  : tidal range (m)
+            inputs['d50'] : sediment median diameter (m)
+        Returns: mineral deposition rate (g m-2 s-1)
         """
         pass
     

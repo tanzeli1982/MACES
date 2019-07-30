@@ -24,14 +24,24 @@ class F06MAC(MACMODSuper):
     def __init__(self, params):
         self.m_params = params
         
-    def mineral_accretion(self, inputs):
-        """"Calculate mineral accretion rate.
+    def mineral_suspend(self, inputs):
+        """"Calculate mineral suspension rate.
         Arguments:
-            inputs : driving data for mineral accretion calculation
-        Returns: mineral accretion rate (g m-2 s-1)
+            inputs : driving data for mineral suspension calculation
+        Returns: mineral suspension rate (g m-2 s-1)
         """
         Css = inputs['Css']     # sediment conc (g/m3)
         tau = inputs['tau']     # bottom shear stress (Pa)
         d50 = inputs['d50']     # sediment median diameter (m)
-        Rmac = ws * Css
-        return Rmac
+        rsuspend = ws * Css
+        return rsuspend
+    
+    def mineral_deposition(self, inputs):
+        """"Calculate mineral deposition rate.
+        Arguments:
+            inputs : driving data for mineral deposition calculation
+        Returns: mineral deposition rate (g m-2 s-1)
+        """
+        x = inputs['x']
+        rdeposit = np.zeros_like(x, dtype=np.float64)
+        return rdeposit
