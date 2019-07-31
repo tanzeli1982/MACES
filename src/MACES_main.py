@@ -10,7 +10,11 @@ Main program to run the MACES model
 
 import pandas as pd
 import numpy as np
-import TAIMODSuper as TAIMOD
+import minac_mod as minac
+import omac_mod as omac
+import windero_mod as wde
+import lndmgr_mod as ldm
+import maces_utilities as util
 from mpi4py import MPI
 from optparse import OptionParser
 from scipy.io import netcdf

@@ -1,9 +1,10 @@
-from TAIHydroMOD import rungekutta4 as rk4
 import numpy as np
+import maces_utilities as util
+from TAIHydroMOD import taihydro
+from TAIHydroMOD import rungekutta4 as rk4
 
-def odeFunc(x, y):
-   y = 0.01 * x
-   return
+# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2012JF002363
+# Test case: 
 
 # create numpy array as Fortran-contiguous ordered
 rk4.k1 = np.zeros((4,20), dtype=np.float64, order='F')
