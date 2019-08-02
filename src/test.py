@@ -6,8 +6,11 @@ from TAIHydroMOD import rungekutta4 as rk4
 # https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2012JF002363
 # Test case: Venice Lagoon
 
-venice_segments = []
-util.construct_tai_platform(venice_segments)
+venice_segments = {}
+venice_segments['length'] = [5.1869, 10.3737, 3.2550, 3.1226, 3.2992, 2.9881, \
+               9.9763, 10.0239, 8.9745]
+venice_segments['pop'] = []
+x_tai, zh_tai, pop_tai = util.construct_tai_platform(venice_segments)
 
 # create numpy array as Fortran-contiguous ordered
 rk4.k1 = np.zeros((4,20), dtype=np.float64, order='F')
