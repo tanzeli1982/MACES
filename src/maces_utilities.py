@@ -9,6 +9,7 @@ Utility functions for the MACES
 """
 
 import numpy as np
+import pandas as pd
 
 #    def biomass(self, TR):
 #        """update plant-induced aboveground biomass
@@ -38,13 +39,37 @@ import numpy as np
 #            cD0, ScD = [0.0, 0.0]
 #        self.m_Bag[ii] = aa*DMHT[ii] + bb*(DMHT[ii])**2 + cc
         
-def construct_platform_elev(diva_topo):
-    """Construct the TAI platform elevation profile
+def construct_tai_platform(diva_segments):
+    """Construct the TAI platform coordinates and elevation profile.
+       elevation nodes are fixed at -12.5, -8.5, -5.5, -4.5, -3.5, -2.5, -1.5,
+       0, 1.5, 2.5, 3.5, 4.5, 5.5, 8.5, 12.5, 16.5 msl.
     Arguments:
-        diva_topo : DIVA topography input
-    Returns : new platform elevation
+        diva_segments : DIVA segment length (km)
+    Returns : platform coordinate and elevation
     """
-    ntopo = len(diva_topo)
-    N = 
-    zh = np.zeros(N, dtype=np.float64)
-    return zh
+    zhs_pnts = [-12.5, -8.5, -5.5, -4.5, -3.5, -2.5, -1.5, 0, 1.5, 2.5, 3.5, 
+                4.5, 5.5, 8.5, 12.5, 16.5]
+    assert len(zhs_pnts)-1 == len(diva_segments), \
+        "DIVA segments do not match with elevation nodes"
+    Nx = 0
+    xRes = 50.0
+    nmax = 50
+    for length in diva_segments:
+        nnode = int( 1e3 * length / xRes )
+        Nx = Nx + min( max(nnode,2), nmax )
+    Nx = Nx + 1     # the end node
+    xcor = np.zeros(Nx, dtype=np.float64)
+    zh = np.zeros(Nx, dtype=np.float64)
+    indx = 0
+    x0 = 0.0
+    for ii, length in enumerate(diva_segments):
+        nnode = min( max( int(1e3*length/xRes), 2 ), nmax )
+        xcor[indx:indx+nnode] = x0 + 1e3*length*np.arange(0,nnode)/nnode
+        zh[indx:indx+nnode] = zhs_pnts[ii] + (zhs_pnts[ii+1]-zhs_pnts[ii])* \
+            np.arange(0,nnode)/nnode
+        indx = indx + nnode
+        x0 = x0 + 1e3*length
+    # the end node
+    xcor[-1] = x0 
+    zh[-1] = zhs_pnts[-1]
+    return xcor, zh

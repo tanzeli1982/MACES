@@ -4,7 +4,10 @@ from TAIHydroMOD import taihydro
 from TAIHydroMOD import rungekutta4 as rk4
 
 # https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2012JF002363
-# Test case: 
+# Test case: Venice Lagoon
+
+venice_segments = []
+util.construct_tai_platform(venice_segments)
 
 # create numpy array as Fortran-contiguous ordered
 rk4.k1 = np.zeros((4,20), dtype=np.float64, order='F')
