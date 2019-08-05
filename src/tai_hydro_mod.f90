@@ -654,8 +654,8 @@ contains
       tmp_U = uhydro(2,:) / max(0.1,uhydro(1,:))
       sources(1,:) = 0.0d0
       sources(2,:) = -tmp_U*abs(tmp_U)*G/m_Cz**2 - G*uhydro(1,:)*m_dZh/m_dX
-      sources(3,:) = (m_Swg - m_Sbf - m_Swc - m_Sbrk) / sigma 
-      sources(4,:) = m_Esed - m_Dsed
+      sources(3,:) = (m_Swg - (m_Sbf+m_Swc+m_Sbrk)) / sigma 
+      sources(4,:) = m_Esed - m_Dsed*uhydro(4,:)/(m_uhydro(4,:)+1d-3)
       sources(5,:) = 0.0d0
    end subroutine
 

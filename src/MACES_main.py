@@ -14,7 +14,7 @@ import minac_mod as minac
 import omac_mod as omac
 import windero_mod as wde
 import lndmgr_mod as ldm
-import maces_utilities as util
+import maces_utilities as utils
 from mpi4py import MPI
 from optparse import OptionParser
 from scipy.io import netcdf
@@ -57,7 +57,7 @@ def run_tai_maces(params, input_data, verbose):
     sed_ero = np.zeros(ncell, dtype=np.float64, order='F')
     sed_dep = np.zeros(ncell, dtype=np.float64, order='F')
     om_dep = np.zeros(ncell, dtype=np.float64, order='F')
-    site_zh = TAIMOD.construct_platform_elev(input_data['diva_topo'])
+    site_zh = utils.construct_platform_elev(input_data['diva_topo'])
     taihydro.Initialize(site_x, site_zh)
     taihydro.SetModelParameters(d50, )
     # initialize model run

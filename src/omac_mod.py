@@ -11,7 +11,7 @@ Derived class for organic matter accretion algorithms
 import numpy as np
 from TAIMODSuper import OMACMODSuper
 
-class NULLMAC(OMACMODSuper):
+class NULLMOD(OMACMODSuper):
     """Realization of the null organic matter accretion model.
 
     Attributes:
@@ -28,12 +28,21 @@ class NULLMAC(OMACMODSuper):
         """"Calculate organic matter accretion rate.
         Arguments:
             inputs : driving data for OM accretion calculation
-        Returns: organic matter accretion rate (g m-2 s-1)
+        Returns: organic matter accretion rate (g m-2 s-1) and aboveground
+            biomass (gC m-2)
         """
         x = inputs['x']
-        return np.zeros_like(x, dtype=np.float64)
+        h = inputs['h']
+        hMHT = inputs['DMHT']
+        DMHT = hMHT - h
+        aa = self.m_params['aa']
+        bb = self.m_params['bb']
+        cc = self.m_params['cc']
+        Bag = aa * DMHT + bb * DMHT**2 + cc
+        omac = np.zeros_like(x, dtype=np.float64)
+        return omac, Bag
 
-class M12OMAC(OMACMODSuper):
+class M12MOD(OMACMODSuper):
     """Realization of the Morris et al. (2012) organic matter accretion model.
 
     Attributes:

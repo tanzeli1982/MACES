@@ -10,6 +10,10 @@ Utility functions for the MACES
 
 import numpy as np
 import pandas as pd
+from scipy import constants
+
+G = constants.g
+Karman = 0.42
 
 #    def biomass(self, TR):
 #        """update plant-induced aboveground biomass
@@ -41,19 +45,18 @@ import pandas as pd
         
 def construct_tai_platform(diva_segments):
     """Construct the MACES TAI platform.
-       elevation nodes are fixed at -12.5, -8.5, -5.5, -4.5, -3.5, -2.5, -1.5,
-       0, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 8.5, 12.5, 16.5 msl.
+       DIVA elevations are fixed at -12.5, -8.5, -5.5, -4.5, -3.5, -2.5, -1.5,
+       -0.5, 0, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 8.5, 12.5, 16.5 msl.
     Arguments:
         diva_segments['length'] : DIVA segment length (km)
+        diva_segments['zhs'] : DIVA segment elevation (m)
         diva_segments['pop'] : DIVA segment population density (people/km^2)
     Returns :
         x_tai   : platform grid coordinate (m)
         zh_tai  : platform grid elevation (m)
         pop_tai : platform grid population density (people/km^2)
     """
-    zhs = [-12.5, -8.5, -5.5, -4.5, -3.5, -2.5, -1.5, -0.5, 0, 0.5, 1.5, 
-           2.5, 3.5, 4.5, 5.5, 8.5, 12.5, 16.5]
-    assert len(zhs)-1 == len(diva_segments), \
+    assert len(diva_segments['zhs'])-1 == len(diva_segments['length']), \
         "DIVA segments do not match with elevation nodes"
     Nx = 0
     xRes = 50.0
@@ -67,6 +70,7 @@ def construct_tai_platform(diva_segments):
     pop_tai = np.zeros(Nx, dtype=np.float64)
     indx = 0
     x0 = 0.0
+    zhs = diva_segments['zhs']
     for ii, length in enumerate(diva_segments['length']):
         nnode = min( max( int(1e3*length/xRes), 2 ), nmax )
         x_tai[indx:indx+nnode] = x0 + 1e3*length*np.arange(0,nnode)/nnode
@@ -80,31 +84,41 @@ def construct_tai_platform(diva_segments):
     pop_tai[-1] = diva_segments['pop'][-1]
     return x_tai, zh_tai, pop_tai
 
-def nearest_search(array, li, ri, val):
-    """ Search the index of the grid that has the nearest to the target
-    Arguments:
-        array : a sorted array
-        li : left index of the sorting range
-        ri : right index of the sorting range
-        val : the target value
-    """
-    
-    while li <= ri:
-        mid = int( (ri+li)/2 )
-        if array[mid]==val:
-            return mid
-        elif array[mid]<        
-        
-    return -1
-
-def construct_platform_pft(pft_grids, x_tai, x0):
+def construct_platform_pft(pft_grids, x_tai):
     """Construct the pft on the MACES platform.
     Arguments:
-        pft_grids['x'] : grid cell coordinate (m)
+        pft_grids['x'] : pft grid cell coordinate (m)
         pft_grids['pft'] : grid cell pft
         x_tai : coordinate of MACES platform nodes (m)
-        x0 : coordinate of the grid node at msl (m)
     Returns : The pft on the MACES platform
     """
-    
+    x_arr = pft_grids['x']
+    pft_arr = pft_grids['pft']
+    pft_tai = np.zeros_like(x_tai, dtype=np.int32)
+    for ii, x in enumerate(x_tai):
+        if x<x_arr[0]:
+            pft_tai[ii] = 1     # tidal flats
+        elif x>=x_arr[-1]:
+            pft_tai[ii] = pft_arr[-1]
+        else:
+            indx = np.nonzero(x_arr<=x)[0][-1]
+            if x-x_arr[indx]<=x_arr[indx+1]-x:
+                pft_tai[ii] = pft_arr[indx]
+            else:
+                pft_tai[ii] = pft_arr[indx+1]
+    return pft_tai
+            
+def get_refshore_coordinate(diva_segments):
+    """Get the coordinate of the shore at msl.
+    Arguments:
+        diva_segments['length'] : DIVA segment length (km)
+        diva_segments['zhs'] : DIVA segment elevation (m)
+    Returns : the coordinate of shore at msl (m)
+    """
+    xlens = diva_segments['length']
+    zhs = diva_segments['zhs']
+    assert len(zhs)-1 == len(xlens), "DIVA segments do not match with elevation nodes"
+    indx = np.nonzero(zhs==0)[0]
+    assert len(indx)==1, "Shore node does not exist in DIVA segments"
+    return np.sum(xlens[:indx[0]])
     
