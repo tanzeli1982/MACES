@@ -9,39 +9,13 @@ Utility functions for the MACES
 """
 
 import numpy as np
-import pandas as pd
 from scipy import constants
+from scipy.io import netcdf
 
 G = constants.g
 Karman = 0.42
-
-#    def biomass(self, TR):
-#        """update plant-induced aboveground biomass
-#        Arguments:
-#            TR : tidal range
-#        """
-#        self.m_params['marsh']['aa'] = B_marsh['aa']
-#        self.m_params['marsh']['bb'] = B_marsh['bb']
-#        self.m_params['marsh']['cc'] = B_marsh['cc']
-#        self.m_params['mangrove']['aa'] = B_mangrove['aa']
-#        self.m_params['mangrove']['bb'] = B_mangrove['bb']
-#        self.m_params['mangrove']['cc'] = B_mangrove['cc']
-#        hMHT = TR
-#        DMHT = hMHT - self.zh_arr
-#        pft = self.m_pft[ii]
-#        if pft in ['marsh','mangrove']:
-#            aa = self.m_params[pft]['aa']
-#            alpha_a = self.m_params[pft]['alpha_a']
-#            beta_a = self.m_params[pft]['beta_a']
-#            alpha_d = self.m_params[pft]['alpha_d']
-#            beta_d = self.m_params[pft]['beta_d']
-#            cD0 = self.m_params[pft]['cD0']
-#            ScD = self.m_params[pft]['ScD']
-#        else:
-#            aa, bb, cc = [0.0, 0.0, 0.0]
-#            alpha_a, beta_a, alpha_d, beta_d = [0.0, 0.0, 0.0, 0.0]
-#            cD0, ScD = [0.0, 0.0]
-#        self.m_Bag[ii] = aa*DMHT[ii] + bb*(DMHT[ii])**2 + cc
+Roul = 1028.0
+visc = 1e-6     # kinematic viscosity of seawater (m2/s)
         
 def construct_tai_platform(diva_segments):
     """Construct the MACES TAI platform.
@@ -121,4 +95,85 @@ def get_refshore_coordinate(diva_segments):
     indx = np.nonzero(zhs==0)[0]
     assert len(indx)==1, "Shore node does not exist in DIVA segments"
     return np.sum(xlens[:indx[0]])
+
+def write_outputs(odir, sid, uhydro_out, ecogeom_out):
+    """Write model outputs into a nc file.
+    Arguments:
+        odir : output directory
+        sid : site id
+        uhydro_out  : hourly hydrodynamic model outputs
+        ecogeom_out : daily eco-geomorphology outputs 
+    Returns : 
+    """
+    zh = ecogeom_out['zh']
+    nday = np.shape(zh)[0]
+    nx = np.shape(zh)[1]
+    filename = odir + '{:d}'.format(sid) + '.nc'
+    try:
+        nc = netcdf.netcdf_file(filename, version=2)
+        nc.history = r'Simulated hourly hydrodynamics and daily eco-geomorphology by MACES'
+        nc.contact = r'Zeli.Tan@pnnl.gov'
+        nc.createDimension('hour', None)
+        nc.createDimension('day', nday)
+        nc.createDimension('x', nx)
+        # create and write hourly variables
+        h_var = nc.createVariable('h', 'f4', ('hour','x',))
+        h_var.long_name = r'water depth'
+        h_var.units = 'm'
+        h_var._FillValue = np.float32(1e20)
+        h_var[:] = uhydro_out['h']
+        U_var = nc.createVariable('U', 'f4', ('hour','x',))
+        U_var.long_name = r'tide flow velocity (direction + speed)'
+        U_var.units = 'm/s'
+        U_var._FillValue = np.float32(1e20)
+        U_var[:] = uhydro_out['U']
+        Hwav_var = nc.createVariable('Hwav', 'f4', ('hour','x',))
+        Hwav_var.long_name = r'significant wave height'
+        Hwav_var.units = 'm'
+        Hwav_var._FillValue = np.float32(1e20)
+        Hwav_var[:] = uhydro_out['Hwav']
+        tau_var = nc.createVariable('tau', 'f4', ('hour','x',))
+        tau_var.long_name = r'bottom shear stress'
+        tau_var.units = 'Pa'
+        tau_var._FillValue = np.float32(1e20)
+        tau_var[:] = uhydro_out['tau']
+        Css_var = nc.createVariable('Css', 'f4', ('hour','x',))
+        Css_var.long_name = r'suspended sediment concentration'
+        Css_var.units = 'kg/m3'
+        Css_var._FillValue = np.float32(1e20)
+        Css_var[:] = uhydro_out['Css']
+        Cj_var = nc.createVariable('Cj', 'f4', ('hour','x',))
+        Cj_var.long_name = r'water salinity'
+        Cj_var.units = 'PSU'
+        Cj_var._FillValue = np.float32(1e20)
+        Cj_var[:] = uhydro_out['Cj']   
+        # create and write daily variables
+        zh_var = nc.createVariable('zh', 'f4', ('day','x',))
+        zh_var.long_name = r'platform surface elevation'
+        zh_var.units = 'msl'
+        zh_var._FillValue = np.float32(1e20)
+        zh_var[:] = ecogeom_out['zh']
+        Esed_var = nc.createVariable('Esed', 'f4', ('day','x',))
+        Esed_var.long_name = r'sediment erosion rate'
+        Esed_var.units = 'kg/m2/s'
+        Esed_var._FillValue = np.float32(1e20)
+        Esed_var[:] = ecogeom_out['Esed']
+        Dsed_var = nc.createVariable('Dsed', 'f4', ('day','x',))
+        Dsed_var.long_name = r'sediment deposition rate'
+        Dsed_var.units = 'kg/m2/s'
+        Dsed_var._FillValue = np.float32(1e20)
+        Dsed_var[:] = ecogeom_out['Dsed']
+        DepOM_var = nc.createVariable('DepOM', 'f4', ('day','x',))
+        DepOM_var.long_name = r'Organic matter accretion rate'
+        DepOM_var.units = 'kg/m2/s'
+        DepOM_var._FillValue = np.float32(1e20)
+        DepOM_var[:] = ecogeom_out['DepOM']
+        Bag_var = nc.createVariable('Bag', 'f4', ('day','x',))
+        Bag_var.long_name = r'platform aboveground biomass'
+        Bag_var.units = 'kg/m2'
+        Bag_var._FillValue = np.float32(1e20)
+        Bag_var[:] = ecogeom_out['Bag']
+    finally:
+        nc.close()
+    
     

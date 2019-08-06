@@ -31,11 +31,10 @@ uhydro_tol = np.array([1e-6,1e-6,1e-6,1e-6,1e-6,1e-6],
 def run_tai_maces(params, input_data, verbose):
     # create state variables
     site_id = input_data['site_id']
-    site_lon = input_data['site_lon']
-    site_lat = input_data['site_lat']
     nday = np.size(input_data['wind'])
     nhour = 24 * nday
     ncell = NXLAYER
+    # maybe also need to save the attenuation of wave and tide energy (both are the sink terms in PDE)
     uhydro_out = {}
     uhydro_out['h'] = np.zeros((nhour,ncell), dtype=np.float32, order='F')
     uhydro_out['U'] = np.zeros((nhour,ncell), dtype=np.float32, order='F')

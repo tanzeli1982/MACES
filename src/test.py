@@ -42,6 +42,25 @@ pft_grids = {}
 pft_grids['x'] = np.array([0, 0.8, 2.4, 6.8, 17.2]) + xref
 pft_grids['pft'] = np.array([2, 2, 0, 0, 0], dtype=np.int32)
 site_pft = utils.construct_platform_pft(pft_grids, site_x)
+Nx = len(site_x)
+
+site_rslr = 0.0     # relative sea level rise (mm/yr)
+site_rslr = 1e-3 / 8.64e4 / 365 * site_rslr     # m/s
+rhoSed = 2650.0     # sediment density (kg/m3)
+rhoOM = 1200.0      # OM density (kg/m3)
+porSed = 0.4        # porosity
+hydro_params = {}
+hydro_params['d50'] = 1e-4
+hydro_params['Cz0'] = 65.0
+hydro_params['Kdf'] = 100.0
+hydro_params['cbc'] = 0.015
+hydro_params['fr'] = 0.78
+hydro_params['alphaA'] = 8.0 * np.ones(8, dtype=np.float64)
+hydro_params['betaA'] = 0.5 * np.ones(8, dtype=np.float64)
+hydro_params['alphaD'] = 0.005 * np.ones(8, dtype=np.float64)
+hydro_params['betaD'] = 0.3 * np.ones(8, dtype=np.float64)
+hydro_params['cD0'] = 1.1 * np.ones(8, dtype=np.float64)
+hydro_params['ScD'] = -0.3 * np.ones(8, dtype=np.float64)
 
 # eco-geomorphology models
 mac_params = {}
@@ -53,7 +72,12 @@ omac_mod = omac.M12MOD(omac_params)
 # hydrodynamic model initialization and set up
 taihydro.Initialize(site_x, site_zh)
 
-taihydro.SetModelParameters(d50, )
+taihydro.SetModelParameters(hydro_params['d50'], hydro_params['Cz0'], 
+                            hydro_params['Kdf'], hydro_params['cbc'], 
+                            hydro_params['fr'], hydro_params['alphaA'], 
+                            hydro_params['betaA'], hydro_params['alphaD'], 
+                            hydro_params['betaD'], hydro_params['cD0'], 
+                            hydro_params['ScD'])
 
 # construct hydrodynamic model boundary conditions
 nyear = 10
@@ -71,30 +95,104 @@ Hwav0 = np.sinh(utils.Karman*h0) / np.sinh(utils.Karman*30.0) * Hwav_ocean
 Css0 = 8.0 * np.ones(nhour, dtype=np.float64)
 Cj0 = 28.0 * np.ones(nhour, dtype=np.float64)
 
-# create numpy array as Fortran-contiguous ordered
-rk4.k1 = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.k2 = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.k3 = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.k4 = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.k5 = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.k6 = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.nxt4th = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.nxt5th = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.interim = np.zeros((4,20), dtype=np.float64, order='F')
-rk4.rerr = np.zeros((4,20), dtype=np.float64, order='F')
-invars = np.zeros((4,20), dtype=np.float64, order='F')
-outvars = np.zeros((4,20), dtype=np.float64, order='F')
-invars[0,:] = 1
-invars[1,:] = 1
-invars[2,:] = 1e-3
-invars[3,:] = 1e-1
-curstep = np.array([1.0], dtype=np.float64, order='F')
-nextstep = np.array([1.0], dtype=np.float64, order='F')
-mode = 102
-outerr = np.array([0], dtype=np.int32, order='F')
-tol = np.array([1e-2, 1e-2, 1e-5, 1e-4], dtype=np.float64, order='F')
+# temporal variables
+site_Esed = np.zeros(Nx, dtype=np.float64)
+site_Dsed = np.zeros(Nx, dtype=np.float64)
+site_Bag = np.zeros(Nx, dtype=np.float64)
+site_DepOM = np.zeros(Nx, dtype=np.float64)
+tmp_uhydro = np.zeros((5,Nx), dtype=np.float64)
+uhydro_out = {}
+uhydro_out['h'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
+uhydro_out['U'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
+uhydro_out['Hwav'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
+uhydro_out['tau'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
+uhydro_out['Css'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
+uhydro_out['Cj'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
+ecogeom_out = {}
+ecogeom_out['zh'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
+ecogeom_out['Esed'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
+ecogeom_out['Dsed'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
+ecogeom_out['DepOM'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
+ecogeom_out['Bag'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
 
-rk4.rk4fehlberg(odeFunc, invars, outvars, mode, tol, curstep, nextstep, outerr)
+odir = '/qfs/projects/taim/TAIMOD/test/'
+site_id = 466
 
-# release allocated memory
-taihydro.Destruct()
+# run simulation
+MAX_OF_STEP = 1800  # maximum simulation time step (s)
+rk4_mode = 101      # adaptive mode
+uhydro_tol = np.array([1e-6,1e-6,1e-6,1e-6,1e-6,1e-6], dtype=np.float64)  # toleratance
+t = 0
+tf = 8.64e4 * nday
+hindx = -1
+dindx = -1
+ncount = 0
+isHourNode = False
+isDayNode = False
+curstep = np.array([50], dtype=np.float64)
+nextstep = np.array([MAX_OF_STEP], dtype=np.float64)
+try:
+    while t < tf:
+        if t>=3.6e3*hindx and hindx<nhour:
+            print('time step', int(hindx))
+            isHourNode = True
+            hindx = hindx + 1
+            if np.mod(hindx,24)==0:
+                isDayNode = True
+                dindx = dindx + 1
+        # simulate hydrodynamics
+        taihydro.ModelSetup(site_zh, site_pft, site_Bag, site_Esed, site_Dsed, 
+                            Twav, U10[hindx], h0[hindx], U0[hindx], 
+                            Hwav0[hindx], Css0[hindx], Cj0[hindx])
+        error = np.array([0], dtype=np.int32)
+        rk4.RK4Fehlberg(taihydro.TAIHydroEquations, taihydro.m_uhydro, 
+                        tmp_uhydro, rk4_mode, uhydro_tol, curstep, nextstep, 
+                        error)
+        assert error[0]==0, "Runge-Kutta iteration is more than MAXITER"
+        taihydro.ModelCallback(tmp_uhydro)
+        # simulate eco-geomorphology
+        mac_inputs = {}
+        site_Esed = mac_mod.mineral_suspend(mac_inputs)
+        site_Dsed = mac_mod.mineral_deposition(mac_inputs)
+        omac_inputs = {}
+        site_DepOM, site_Bag = omac_mod.organic_accretion(omac_inputs)
+        # update platform elevation
+        site_zh = site_zh + ((site_Esed/rhoSed + site_DepOM/rhoOM - \
+            site_Dsed/rhoSed)/(1.0-porSed) - site_rslr) * curstep
+        # archive hydrodynamic state variables
+        if isHourNode:
+            uhydro_out['h'][hindx] = taihydro.m_uhydro[0,:]
+            uhydro_out['U'][hindx] = taihydro.m_U
+            uhydro_out['Hwav'][hindx] = taihydro.m_uhydro[2,:]
+            uhydro_out['tau'][hindx] = taihydro.m_tau
+            uhydro_out['css'][hindx] = taihydro.m_uhydro[3,:]
+            uhydro_out['sal'][hindx] = taihydro.m_uhydro[4,:]
+        if isDayNode:
+            # archive daily mean eco-geomorphology variables
+            ecogeom_out['zh'] = site_zh
+            ecogeom_out['Esed'][dindx] = site_Esed
+            ecogeom_out['Dsed'][dindx] = site_Dsed
+            ecogeom_out['DepOM'][dindx] = site_DepOM
+            ecogeom_out['Bag'][dindx] = site_Bag
+        # check small time step
+        isHourNode = False
+        isDayNode = False
+        if curstep[0]<0.1:
+            ncount = ncount + 1
+            err_msg = 'Run diverge at step' + '{:d}'.format(hindx)
+            assert ncount<=100, err_msg
+            nextstep = 50.0
+        else:
+            ncount = 0
+        t = t + curstep[0]
+        curstep = nextstep
+        nextstep = MAX_OF_STEP
+        
+except AssertionError as errstr:
+    # print error message
+    print("Model stops due to that", errstr)
+finally:
+    # write simulation outputs
+    utils.write_outputs(odir, site_id, uhydro_out, ecogeom_out)
+    # deallocate
+    taihydro.Destruct()

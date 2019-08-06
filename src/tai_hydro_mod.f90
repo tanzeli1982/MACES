@@ -11,7 +11,7 @@ module TAIHydroMOD
 
    implicit none
    integer, parameter :: NVAR = 5
-   integer, parameter :: NPFT = 4
+   integer, parameter :: NPFT = 8
    real(kind=8), parameter :: PI = 3.14159265d+0
    real(kind=8), parameter :: e = 2.71828183d+0
    real(kind=8), parameter :: Roul = 1028.0
@@ -289,11 +289,13 @@ contains
    !          transport are taken to zero (linearly interpolated to zero)??
    !
    !------------------------------------------------------------------------------
-   subroutine ModelCallback()
+   subroutine ModelCallback(uhydro)
       implicit none
+      real(kind=8), intent(in) :: uhydro(:,:)
       real(kind=8) :: sigma
       integer :: ii
       
+      m_uhydro = uhydro
       sigma = 2.0*PI/force_T
       do ii = 1, NX, 1
          if (m_uhydro(1,ii)<=0) then
