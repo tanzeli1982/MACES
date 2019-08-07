@@ -96,6 +96,24 @@ def get_refshore_coordinate(diva_segments):
     assert len(indx)==1, "Shore node does not exist in DIVA segments"
     return np.sum(xlens[:indx[0]])
 
+def get_platform_slope(x, zh):
+    """Get the platform slope.
+    Arguments:
+        x : longitudinal coordinate (m)
+        zh : platform surface elevation (msl)
+    Returns : the platform cell slope (m/m)
+    """
+    Nx = np.size(x)
+    dzh = np.ones(Nx, dtype=np.float64)
+    for ii in range(Nx):
+        if ii>0 and ii<Nx-1:
+            dzh[ii] = (zh[ii+1] - zh[ii-1]) / (x[ii+1] - x[ii-1])
+        elif ii==0:
+            dzh[ii] = (zh[ii+1] - zh[ii]) / (x[ii+1] - x[ii])
+        else:
+            dzh[ii] = (zh[ii] - zh[ii-1]) / (x[ii] - x[ii-1])
+    return dzh
+
 def write_outputs(odir, sid, uhydro_out, ecogeom_out):
     """Write model outputs into a nc file.
     Arguments:

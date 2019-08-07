@@ -16,7 +16,7 @@ class NULLMOD(OMACMODSuper):
     """Realization of the null organic matter accretion model.
 
     Attributes:
-
+        Parameters : aa, bb, cc
     Constants:
         
     """ 
@@ -29,20 +29,10 @@ class NULLMOD(OMACMODSuper):
         """"Calculate organic matter accretion rate.
         Arguments:
             inputs : driving data for OM accretion calculation
-        Returns: 
-            omac : organic matter accretion rate (kg m-2 s-1)
-            Bag  : aboveground biomass (kg m-2)
+        Returns: organic matter accretion rate (kg m-2 s-1)
         """
         x = inputs['x']
-        h = inputs['h']
-        hMHT = inputs['DMHT']
-        DMHT = hMHT - h
-        aa = self.m_params['aa']
-        bb = self.m_params['bb']
-        cc = self.m_params['cc']
-        Bag = aa * DMHT + bb * DMHT**2 + cc
-        omac = np.zeros_like(x, dtype=np.float64)
-        return omac, Bag
+        return np.zeros_like(x, dtype=np.float64)
 
 ###############################################################################
 class M12MOD(OMACMODSuper):

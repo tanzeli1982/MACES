@@ -11,7 +11,7 @@ Base class for coastal wetland models (geomorphology + biogeochemistry)
 """
 Platform plant function type
 0 => uninhabitable barriers (such as roads, dyks, harbors and etc)
-1 => tidal flats
+1 => tidal flats or open water
 2 => salt marshes
 3 => brackish marshes
 4 => freshwater marshes
@@ -124,11 +124,23 @@ class OMACMODSuper(object):
             inputs['Tair']  : annual mean air temperature (K)
             inputs['month'] : month
             inputs['day']   : day
-        Returns: 
-            omac : organic matter accretion rate (kg m-2 s-1)
-            Bag  : aboveground biomass (kg m-2)
+        Returns: organic matter accretion rate (kg m-2 s-1)
         """
         pass
+    
+    def aboveground_biomass(self, zh, MHT):
+        """"Calculate aboveground biomass (Morris et al., 2012).
+        Arguments:
+            zh : platform surface elevation (msl)
+            MHT : mean high tide (msl)
+        Returns: aboveground biomass (kg m-2)
+        """
+        DMHT = MHT - zh
+        aa = self.m_params['aa']
+        bb = self.m_params['bb']
+        cc = self.m_params['cc']
+        Bag = aa * DMHT + bb * DMHT**2 + cc
+        return Bag
 
 ###############################################################################    
 class WINDEROMODSuper(object):

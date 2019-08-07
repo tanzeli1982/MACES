@@ -155,7 +155,8 @@ try:
         site_Esed = mac_mod.mineral_suspend(mac_inputs)
         site_Dsed = mac_mod.mineral_deposition(mac_inputs)
         omac_inputs = {}
-        site_DepOM, site_Bag = omac_mod.organic_accretion(omac_inputs)
+        site_Bag = omac_mod.aboveground_biomass(omac_inputs)
+        site_DepOM = omac_mod.organic_accretion(omac_inputs)
         # update platform elevation
         site_zh = site_zh + ((site_Esed/rhoSed + site_DepOM/rhoOM - \
             site_Dsed/rhoSed)/(1.0-porSed) - site_rslr) * curstep
