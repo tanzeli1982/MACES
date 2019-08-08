@@ -270,7 +270,7 @@ class VDK05MOD(MACMODSuper):
     """Realization of the van de Koppel et al. (2005) mineral accretion model.
 
     Attributes:
-        parameters : Dmax
+        parameters : Dmax, Emax, aNv, bNv
     Constants:
         
     """
@@ -285,7 +285,14 @@ class VDK05MOD(MACMODSuper):
             inputs : driving data for mineral suspension calculation
         Returns: mineral suspension rate (kg m-2 s-1)
         """
-        
+        Emax = self.m_params['Emax']    # maximum sediment erosion by water flow (yr-1)
+        ds = self.m_params['ds']        # a conversion factor for wave erosion (yr-1)
+        aNv = self.m_params['aNv']      # sediment erosion increase rate by plant (kg/m2)
+        bNv = self.m_params['bNv']
+        Bag = inputs['Bag']     # aboveground biomass (kg/m2)
+        tau = inputs['tau']     # bottom shear stress (Pa)
+        S = inputs['S']         # platform slope (m/m)
+        tau_max = np.max(tau)
         
     def mineral_deposition(self, inputs):
         """"Calculate mineral deposition rate.

@@ -11,7 +11,8 @@ Derived class for landward migration algorithms
 import numpy as np
 from TAIMODSuper import LNDMGMODSuper
 
-class NULLLNDMG(LNDMGMODSuper):
+###############################################################################
+class NULLMOD(LNDMGMODSuper):
     """Realization of the null landward migration model.
 
     Attributes:
@@ -32,8 +33,9 @@ class NULLLNDMG(LNDMGMODSuper):
         """
         pft = inputs['pft']
         return pft
-    
-class R20LNDMG(LNDMGMODSuper):
+
+###############################################################################    
+class R20MOD(LNDMGMODSuper):
     """Realization of the Reyes et al. (2000) landward migration model.
 
     Attributes:
@@ -54,3 +56,5 @@ class R20LNDMG(LNDMGMODSuper):
         """
         pft = inputs['pft']
         return pft 
+    
+###############################################################################

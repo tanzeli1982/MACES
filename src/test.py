@@ -154,12 +154,14 @@ try:
         mac_inputs = {}
         site_Esed = mac_mod.mineral_suspend(mac_inputs)
         site_Dsed = mac_mod.mineral_deposition(mac_inputs)
+        site_Lbed = mac_mod.bed_loading(mac_inputs)
         omac_inputs = {}
         site_Bag = omac_mod.aboveground_biomass(omac_inputs)
         site_DepOM = omac_mod.organic_accretion(omac_inputs)
         # update platform elevation
-        site_zh = site_zh + ((site_Esed/rhoSed + site_DepOM/rhoOM - \
-            site_Dsed/rhoSed)/(1.0-porSed) - site_rslr) * curstep
+        site_zh = site_zh + ((site_Dsed/rhoSed + site_Lbed/rhoSed + \
+            site_DepOM/rhoOM - site_Esed/rhoSed)/(1.0-porSed) - \
+            site_rslr) * curstep
         # archive hydrodynamic state variables
         if isHourNode:
             uhydro_out['h'][hindx] = taihydro.m_uhydro[0,:]

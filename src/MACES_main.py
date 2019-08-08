@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 import minac_mod as minac
 import omac_mod as omac
-import windero_mod as wde
+import wavero_mod as wve
 import lndmgr_mod as ldm
 import maces_utilities as utils
 from mpi4py import MPI

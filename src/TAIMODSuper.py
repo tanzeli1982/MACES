@@ -77,6 +77,15 @@ class MACMODSuper(object):
         """
         pass
     
+    def bed_loading(self, inputs):
+        """"Calculate sand bed loading rate.
+        Arguments:
+            inputs : driving data for bed loading calculation
+        Returns: bed loading rate (kg m-2 s-1)
+        """
+        x = inputs['x']
+        return np.zeros_like(x, dtype=np.float64)
+    
     def settling_velocity(self, tau, d50, Rous):
         """"Calculate effective sediment settling velocity (Mudd et al., 2010).
         Arguments:
@@ -128,22 +137,27 @@ class OMACMODSuper(object):
         """
         pass
     
-    def aboveground_biomass(self, zh, MHT):
+    def aboveground_biomass(self, inputs):
         """"Calculate aboveground biomass (Morris et al., 2012).
         Arguments:
-            zh : platform surface elevation (msl)
-            MHT : mean high tide (msl)
+            inputs : driving data for OM accretion calculation
         Returns: aboveground biomass (kg m-2)
         """
+        zh = inputs['zh']       # platform surface elevation (msl)
+        MHT = inputs['MHT']     # mean high tide water level (msl)
+        pft = inputs['pft']     # platform pft
         DMHT = MHT - zh
         aa = self.m_params['aa']
         bb = self.m_params['bb']
         cc = self.m_params['cc']
         Bag = aa * DMHT + bb * DMHT**2 + cc
+        indice = np.logical_and(np.logical_and(zh>=0, zh<=MHT), 
+                                np.logical_and(pft>=2, pft<=5))
+        Bag[np.logical_not(indice)] = 0.0
         return Bag
 
 ###############################################################################    
-class WINDEROMODSuper(object):
+class WAVEROMODSuper(object):
     """Abstract base class of models for TAI storm surge erosion at wetland edges.
 
     Attributes:
@@ -156,7 +170,7 @@ class WINDEROMODSuper(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod 
-    def wind_erosion(self, inputs):
+    def wave_erosion(self, inputs):
         """"Calculate storm surge erosion rate. This should be used to get the
             new values of grid cell coordinate and elevation.
         Arguments:
