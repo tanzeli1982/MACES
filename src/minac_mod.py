@@ -80,9 +80,12 @@ class T03MOD(MACMODSuper):
         k = self.m_params['k']
         l = self.m_params['l']
         m = self.m_params['m']
-        H = inputs['zh']
-        Dc = inputs['x'] - inputs['xref']
-        return 1e-3 * k * np.exp(l*H) * np.exp(m*Dc) / 27.32 / 8.64e4
+        H = inputs['zh']        # platform surface elevation (msl)
+        Css = inputs['Css']     # sediment conc (kg/m3)
+        Dc = inputs['x'] - inputs['xref']   # distance to wetland edge (m)
+        Qm = 1e-3 * k * np.exp(l*H) * np.exp(m*Dc) / 27.32 / 8.64e4
+        Qm[Css<=0] = 0.0
+        return Qm
 
 ###############################################################################    
 class KM12MOD(MACMODSuper):
@@ -194,32 +197,55 @@ class M12MOD(MACMODSuper):
         Returns: mineral deposition rate (kg m-2 s-1)
         """
         ks = self.m_params['ks']
-        alphaSG = self.m_params['alphaSG']  # m2/yr
-        betaSG = self.m_params['betaSG']    # m4/yr
         Css = inputs['Css']     # sediment conc (kg/m3)
         tau = inputs['tau']     # bottom shear stress (Pa)
         d50 = inputs['d50']     # sediment median diameter (m)
         Rous = inputs['Rous']   # sediment density (kg/m3)
         Bag = inputs['Bag']     # aboveground biomass (kg/m2)
         pft = inputs['pft']     # platform pft
+        Css = inputs['Css']     # sediment conc (kg/m3)
         zh = inputs['zh']       # platform surface elevation (msl)
         MHT = inputs['MHT']     # mean high tide level (msl)
         TR = inputs['TR']       # tidal range (m)
-        S = inputs['S']         # platform slope (m/m)
         ws = self.settling_velocity(tau, d50, Rous)
         DMHT = MHT - zh
         indice = np.logical_and(DMHT<=0, pft==1)
         DMHT[indice] = 0.0
         Qm = Rous * Css * (ws + ks*Bag) * (DMHT**2) / TR
-        Qsg = Rous * (alphaSG/3.1536e7 - betaSG/3.1536e7*Bag) * S
-        return Qm + Qsg
+        Qm[Css<=0] = 0.0
+        return Qm
+    
+    def bed_loading(self, inputs):
+        """"Calculate sand bed loading rate.
+        Arguments:
+            inputs : driving data for bed loading calculation
+        Returns: bed loading rate (kg m-2 s-1)
+        """
+        alphaSG = self.m_params['alphaSG']  # m2/yr
+        betaSG = self.m_params['betaSG']    # m4/yr
+        pft = inputs['pft']     # platform pft
+        Bag = inputs['Bag']     # aboveground biomass (kg/m2)
+        S = inputs['S']         # platform slope (m/m)
+        Rous = inputs['Rous']   # sediment density (kg/m3)
+        Nx = np.size(pft)
+        Qsg = np.zeros(Nx, dtype=np.float64)
+        for ii in range(Nx):
+            if pft[ii]>0:
+                Qsg[ii] = -Rous*(alphaSG-betaSG*Bag)/3.1536e7*S[ii]
+                if ii<Nx-1:
+                    Sup = S[ii+1]
+                else:
+                    Sup = 0.0
+                if pft[ii+1]>0:
+                    Qsg[ii] = Qsg[ii] + Rous*(alphaSG-betaSG*Bag)/3.1536e7*Sup
+        return Qsg
     
 ###############################################################################
 class F07MOD(MACMODSuper):
     """Realization of the Fagherazzi et al. (2007) mineral accretion model.
 
     Attributes:
-        parameters : E0, tauE_cr, tauD_cr, gamma
+        parameters : E0, tauE_cr, gamma, KD, tauD_cr
     Constants:
         
     """
@@ -254,15 +280,14 @@ class F07MOD(MACMODSuper):
         Returns: mineral deposition rate (kg m-2 s-1)
         """
         tauD_cr = self.m_params['tauD_cr']  # critical shear stress (Pa)
+        KD = self.m_params['KD']    # cohesive sed settling rate (m5 s-1 kg-4/3)
         Css = inputs['Css']     # sediment conc (kg/m3)
         tau = inputs['tau']     # bottom shear stress (Pa)
         Rous = inputs['Rous']   # sediment density (kg/m3) 
         ws = self.settling_velocity(tau, 1.25e-4, Rous)
         Qd_sand = 0.3 * Css * ws     # sand deposition (assume 30% of sediment)
-        KD = 0.00077            # m5 s-1 kg-4/3
         Qd_silt = np.zeros_like(Css, dtype=np.float64)
-        indice = tau < tauD_cr
-        Qd_silt[indice] = KD * (0.7*Css[indice])**(7/3) * (1 - tau/tauD_cr)
+        Qd_silt = KD * (0.7*Css)**(7/3) * (1 - tau/tauD_cr)
         return Qd_sand + Qd_silt
     
 ###############################################################################
@@ -270,7 +295,7 @@ class VDK05MOD(MACMODSuper):
     """Realization of the van de Koppel et al. (2005) mineral accretion model.
 
     Attributes:
-        parameters : Dmax, Emax, aNv, bNv
+        parameters : Dmax, Emax, ds, aNv, bNv
     Constants:
         
     """
@@ -286,13 +311,24 @@ class VDK05MOD(MACMODSuper):
         Returns: mineral suspension rate (kg m-2 s-1)
         """
         Emax = self.m_params['Emax']    # maximum sediment erosion by water flow (yr-1)
-        ds = self.m_params['ds']        # a conversion factor for wave erosion (yr-1)
+        ds = self.m_params['ds']        # a conversion coefficient for wave erosion (yr-1)
         aNv = self.m_params['aNv']      # sediment erosion increase rate by plant (kg/m2)
-        bNv = self.m_params['bNv']
+        bNv = self.m_params['bNv']      # sediment erosion increase rate by plant (kg/m2)
         Bag = inputs['Bag']     # aboveground biomass (kg/m2)
         tau = inputs['tau']     # bottom shear stress (Pa)
-        S = inputs['S']         # platform slope (m/m)
+        h = inputs['h']         # water depth (m)
+        zh = inputs['zh']       # platform surface elevation (m)
+        S = inputs['S']         # platform surface slope (m/m)
+        Rous = inputs['Rous']   # sediment density (kg/m3)
         tau_max = np.max(tau)
+        Etide = np.zeros_like(zh, dtype=np.float64)
+        Ewave = np.zeros_like(zh, dtype=np.float64)
+        indice = np.logical_and(zh>=0, h>0)
+        Etide[indice] = Rous * Emax/3.1536e7 * (aNv/(aNv+Bag[indice])) * \
+            (tau[indice]/tau_max) * zh[indice]
+        Ewave[indice] = ds/3.1536e7 * (bNv/(bNv+Bag[indice])) * S[indice] * \
+            zh[indice]
+        return Etide + Ewave
         
     def mineral_deposition(self, inputs):
         """"Calculate mineral deposition rate.
@@ -301,12 +337,95 @@ class VDK05MOD(MACMODSuper):
         Returns: mineral deposition rate (kg m-2 s-1)
         """
         Dmax = self.m_params['Dmax']    # maximum deposition rate (m/yr)
+        Css = inputs['Css']         # sediment conc (kg/m3)
         zh = inputs['zh']           # platform surface elevation (msl)
         Rous = inputs['Rous']       # sediment density (kg/m3)
         Ks = inputs['MHT']          # mean high water level (msl)
         rdeposit = np.zeros_like(zh, dtype=np.float64)
-        indice = np.logical_and(zh>=0, zh<=Ks)
+        indice = np.logical_and(zh>=0, Css>0)
         rdeposit[indice] = Rous * Dmax/3.1536e7 * (1.0 - zh[indice]/Ks)
         return rdeposit
+    
+###############################################################################
+class DA07MOD(MACMODSuper):
+    """Realization of the D'Alpaos et al. (2007) mineral accretion model.
+
+    Attributes:
+        parameters : E0, tauE_cr, tauD_cr, Kveg, Bmax, alphaN, betaN,
+                     alphaH, betaH, alphaD, betaD, alphaE, betaE, gammaE
+    Constants:
+        
+    """
+    
+    # constructor
+    def __init__(self, params):
+        self.m_params = params
+        
+    def mineral_suspension(self, inputs):
+        """"Calculate mineral suspension rate.
+        Arguments:
+            inputs : driving data for mineral suspension calculation
+        Returns: mineral suspension rate (kg m-2 s-1)
+        """
+        E0 = self.m_params['E0']    # reference erosion rate (m/s)
+        tauE_cr0 = self.m_params['tauE_cr0']  # critical shear stress (Pa)
+        Kveg = self.m_params['Kveg']    # shear stress increase rate with Bag
+        Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
+        tau = inputs['tau']     # bottom shear stress (Pa)
+        Bag = inputs['Bag']     # aboveground biomass (kg/m2)
+        Rous = inputs['Rous']   # sediment density (kg/m3)
+        tauE_cr = tauE_cr0 * (1.0 + Kveg*Bag/Bmax)
+        Esed = E0 * Rous * (tau/tauE_cr - 1.0)
+        Esed[tau<=tauE_cr] = 0.0
+        return Esed
+        
+    def mineral_deposition(self, inputs):
+        """"Calculate mineral deposition rate.
+        Arguments:
+            inputs : driving data for mineral deposition calculation
+        Returns: mineral deposition rate (kg m-2 s-1)
+        """
+        tauD_cr = self.m_params['tauD_cr']  # critical shear stress (Pa)
+        alphaN = self.m_params['alphaN']    # coef for stem density per unit area
+        betaN = self.m_params['betaN']      # coef for stem density per unit area
+        alphaH = self.m_params['alphaH']    # coef for stem height
+        betaH = self.m_params['betaH']      # coef for stem height
+        alphaD = self.m_params['alphaD']    # coef for stem diameter
+        betaD = self.m_params['betaD']      # coef for stem diameter
+        alphaE = self.m_params['alphaE']    # coef for trapping efficiency
+        betaE = self.m_params['betaE']      # coef for trapping efficiency
+        gammaE = self.m_params['gammaE']    # coef for trapping efficiency
+        Css = inputs['Css']     # sediment conc (kg/m3)
+        U = inputs['U']         # water flow velocity (m/s)
+        h = inputs['h']         # water depth (m)
+        tau = inputs['tau']     # bottom shear stress (Pa)
+        Bag = inputs['Bag']     # aboveground biomass (kg/m2)
+        d50 = inputs['d50']     # sediment median diameter (m)
+        Rous = inputs['Rous']   # sediment density (kg/m3)
+        nv = utils.visc
+        ws = self.settling_velocity(tau, d50, Rous)
+        Qds = 2.0 * ws * Css * (1.0 - tau/tauD_cr)
+        Qds[tau<tauD_cr] = 0.0      # direct deposition
+        ns = alphaN * Bag**betaN
+        hs = alphaH * Bag**betaH
+        ds = alphaD * Bag**betaD
+        eps = alphaE * (U*ds/nv)**betaE * (d50/ds)**gammaE
+        Qdt = Css * np.abs(U) * eps * ds * ns * np.minimum(hs,h)    # plant trapping
+        return Qds + Qdt
+    
+    def bed_loading(self, inputs):
+        """"Calculate sand bed loading rate (Zhou et al., 2016).
+        Arguments:
+            inputs : driving data for bed loading calculation
+        Returns: bed loading rate (kg m-2 s-1)
+        """
+        h = inputs['h']         # water depth (m)
+        U = inputs['U']         # water flow velocity (m/s)
+        d50 = inputs['d50']     # sediment median diameter (m)
+        Rous = inputs['Rous']   # sediment density
+        G = utils.G
+        Roul = utils.Roul
+        As = 0.005 * h * (d50/h)**1.2 / ((Rous/Roul-1)*G*d50)**1.2
+        Fsand = As * U * 
         
         
