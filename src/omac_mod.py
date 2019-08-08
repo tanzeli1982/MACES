@@ -34,6 +34,25 @@ class NULLMOD(OMACMODSuper):
         x = inputs['x']
         return np.zeros_like(x, dtype=np.float64)
     
+    def aboveground_biomass(self, inputs):
+        """"Calculate aboveground biomass (Morris et al., 2012).
+        Arguments:
+            inputs : driving data for OM accretion calculation
+        Returns: aboveground biomass (kg m-2)
+        """
+        aa = self.m_params['aa']
+        bb = self.m_params['bb']
+        cc = self.m_params['cc']
+        zh = inputs['zh']       # platform surface elevation (msl)
+        MHT = inputs['MHT']     # mean high tide water level (msl)
+        pft = inputs['pft']     # platform pft
+        DMHT = MHT - zh
+        Bag = aa * DMHT + bb * DMHT**2 + cc
+        indice = np.logical_and(np.logical_and(zh>=0, zh<=MHT), 
+                                np.logical_and(pft>=2, pft<=5))
+        Bag[np.logical_not(indice)] = 0.0
+        return Bag
+    
 ###############################################################################
 class VDK05MOD(OMACMODSuper):
     """Realization of the null organic matter accretion model with the 
@@ -79,13 +98,13 @@ class VDK05MOD(OMACMODSuper):
         indice = np.logical_or(pft<2, pft>5)
         Bag[indice] = 0.0
         return Bag
-
+    
 ###############################################################################
 class M12MOD(OMACMODSuper):
     """Realization of the Morris et al. (2012) organic matter accretion model.
 
     Attributes:
-
+        parameters : Kr, Tr, phi, aa, bb, cc
     Constants:
         
     """
@@ -98,9 +117,121 @@ class M12MOD(OMACMODSuper):
         """"Calculate organic matter accretion rate.
         Arguments:
             inputs : driving data for OM accretion calculation
-        Returns: 
-            omac : organic matter accretion rate (kg m-2 s-1)
-            Bag  : aboveground biomass (kg m-2)
+        Returns: organic matter accretion rate (kg m-2 s-1)
         """
+        Kr = self.m_params['Kr']    # the refractory fraction of root and rhizome biomass
+        Tr = self.m_params['Tr']    # the root aand rhizome turnover time (yr)
+        phi = self.m_params['phi']  # the root:shoot quotient
+        Bag = inputs['Bag']     # aboveground biomass (kg/m2)
+        return Kr * (phi*Bag) / (Tr*3.1536e7)
+    
+    def aboveground_biomass(self, inputs):
+        """"Calculate aboveground biomass (Morris et al., 2012).
+        Arguments:
+            inputs : driving data for OM accretion calculation
+        Returns: aboveground biomass (kg m-2)
+        """
+        aa = self.m_params['aa']
+        bb = self.m_params['bb']
+        cc = self.m_params['cc']
+        zh = inputs['zh']       # platform surface elevation (msl)
+        MHT = inputs['MHT']     # mean high tide water level (msl)
+        pft = inputs['pft']     # platform pft
+        DMHT = MHT - zh
+        Bag = aa * DMHT + bb * DMHT**2 + cc
+        indice = np.logical_and(np.logical_and(zh>=0, zh<=MHT), 
+                                np.logical_and(pft>=2, pft<=5))
+        Bag[np.logical_not(indice)] = 0.0
+        return Bag    
 
 ###############################################################################
+class DA07MOD(OMACMODSuper):
+    """Realization of the D'Alpaos et al. (2007) organic matter accretion model.
+
+    Attributes:
+        parameters : Qom0, Bmax
+    Constants:
+        
+    """
+    
+    # constructor
+    def __init__(self, params):
+        self.m_params = params
+        
+    def organic_accretion(self, inputs):
+        """"Calculate organic matter accretion rate.
+        Arguments:
+            inputs : driving data for OM accretion calculation
+        Returns: organic matter accretion rate (kg m-2 s-1)
+        """
+        Qom0 = self.m_params['Qom0']    # a typical OM deposition rate (kg/m2/s)
+        Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
+        Bag = inputs['Bag']     # aboveground biomass (kg/m2)
+        return Qom0 * Bag / Bmax
+        
+    def aboveground_biomass(self, inputs):
+        """"Calculate aboveground biomass.
+        Arguments:
+            inputs : driving data for OM accretion calculation
+        Returns: aboveground biomass (kg m-2)
+        """
+        
+        
+        
+
+###############################################################################
+class KM12MOD(OMACMODSuper):
+    """Realization of the Kirwan & Mudd (2012) organic matter accretion model.
+
+    Attributes:
+        parameters : 
+    Constants:
+        
+    """
+    
+    # constructor
+    def __init__(self, params):
+        self.m_params = params
+        
+    def organic_accretion(self, inputs):
+        """"Calculate organic matter accretion rate.
+        Arguments:
+            inputs : driving data for OM accretion calculation
+        Returns: organic matter accretion rate (kg m-2 s-1)
+        """
+
+        
+    def aboveground_biomass(self, inputs):
+        """"Calculate aboveground biomass.
+        Arguments:
+            inputs : driving data for OM accretion calculation
+        Returns:
+        """
+        
+###############################################################################
+class K16MOD(OMACMODSuper):
+    """Realization of the Kakeh et al. (2016) organic matter accretion model.
+
+    Attributes:
+        parameters : 
+    Constants:
+        
+    """
+    
+    # constructor
+    def __init__(self, params):
+        self.m_params = params
+        
+    def organic_accretion(self, inputs):
+        """"Calculate organic matter accretion rate.
+        Arguments:
+            inputs : driving data for OM accretion calculation
+        Returns: organic matter accretion rate (kg m-2 s-1)
+        """
+
+        
+    def aboveground_biomass(self, inputs):
+        """"Calculate aboveground biomass.
+        Arguments:
+            inputs : driving data for OM accretion calculation
+        Returns:

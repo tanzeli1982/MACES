@@ -211,9 +211,7 @@ class M12MOD(MACMODSuper):
         DMHT = MHT - zh
         indice = np.logical_and(DMHT<=0, pft==1)
         DMHT[indice] = 0.0
-        Qm = Rous * Css * (ws + ks*Bag) * (DMHT**2) / TR
-        Qm[Css<=0] = 0.0
-        return Qm
+        return Rous * Css * (ws + ks*Bag) * (DMHT**2) / TR
     
     def bed_loading(self, inputs):
         """"Calculate sand bed loading rate.
@@ -376,8 +374,7 @@ class DA07MOD(MACMODSuper):
         Rous = inputs['Rous']   # sediment density (kg/m3)
         tauE_cr = tauE_cr0 * (1.0 + Kveg*Bag/Bmax)
         Esed = E0 * Rous * (tau/tauE_cr - 1.0)
-        Esed[tau<=tauE_cr] = 0.0
-        return Esed
+        return np.maximum(Esed, 0.0)
         
     def mineral_deposition(self, inputs):
         """"Calculate mineral deposition rate.
@@ -404,8 +401,7 @@ class DA07MOD(MACMODSuper):
         Rous = inputs['Rous']   # sediment density (kg/m3)
         nv = utils.visc
         ws = self.settling_velocity(tau, d50, Rous)
-        Qds = 2.0 * ws * Css * (1.0 - tau/tauD_cr)
-        Qds[tau<tauD_cr] = 0.0      # direct deposition
+        Qds = np.maximum( 2.0*ws*Css*(1.0-tau/tauD_cr), 0.0 )   # direct deposition
         ns = alphaN * Bag**betaN
         hs = alphaH * Bag**betaH
         ds = alphaD * Bag**betaD
@@ -419,13 +415,30 @@ class DA07MOD(MACMODSuper):
             inputs : driving data for bed loading calculation
         Returns: bed loading rate (kg m-2 s-1)
         """
+        x = inputs['x']         # coordinate (m)
         h = inputs['h']         # water depth (m)
         U = inputs['U']         # water flow velocity (m/s)
+        Uwav = inputs['Uwav']   # wave speed (m/s)
         d50 = inputs['d50']     # sediment median diameter (m)
         Rous = inputs['Rous']   # sediment density
         G = utils.G
         Roul = utils.Roul
+        Karman = utils.Karman
         As = 0.005 * h * (d50/h)**1.2 / ((Rous/Roul-1)*G*d50)**1.2
-        Fsand = As * U * 
+        Ucr = 0.19 * (d50**0.1) * np.log(2*h/d50)   # critical velocity for initiation of motion
+        Urms = 2.0**0.5 * Uwav  # root-mean-square wave orbital velocity
+        zr = 6e-3   # bed roughness length (m)
+        Cdc = (Karman/(np.log(h/zr)-1))**2  # non-dimensional drag coefficient due to current
+        Fsand = Rous * As * U * ((U**2+0.018/Cdc*Urms**2)**0.5 - Ucr)**2.4
+        Nx = np.size(x)
+        Qsg = np.zeros(Nx, dtype=np.float64)
+        for ii in range(Nx):
+            if ii==0:
+                Qsg[ii] = -(Fsand[ii+1] - Fsand[ii]) / (x[ii+1] - x[ii])
+            elif ii==Nx-1:
+                Qsg[ii] = -(Fsand[ii] - Fsand[ii-1]) / (x[ii] - x[ii-1])
+            else:
+                Qsg[ii] = -(Fsand[ii+1] - Fsand[ii-1]) / (x[ii+1] - x[ii-1])
+        return np.maximum(Qsg, 0.0)
         
         

@@ -46,6 +46,7 @@ module TAIHydroMOD
    ! significant wave height (m) and wave energy (W)
    real(kind=8), allocatable, dimension(:)   :: m_Hwav
    real(kind=8), allocatable, dimension(:)   :: m_Ewav
+   real(kind=8), allocatable, dimension(:)   :: m_Uwav
    ! bottom shear stress (Pa)
    real(kind=8), allocatable, dimension(:)   :: m_tau
    ! sediment source and sink (kg/m2/s)
@@ -95,6 +96,7 @@ contains
       allocate(m_U(NX))
       allocate(m_Hwav(NX))
       allocate(m_Ewav(NX))
+      allocate(m_Uwav(NX))
       allocate(m_Esed(NX))
       allocate(m_Dsed(NX))
       allocate(m_tau(NX))
@@ -157,6 +159,7 @@ contains
       deallocate(m_U)
       deallocate(m_Hwav)
       deallocate(m_Ewav)
+      deallocate(m_Uwav)
       deallocate(m_Esed)
       deallocate(m_Dsed)
       deallocate(m_tau)
@@ -292,7 +295,7 @@ contains
    subroutine ModelCallback(uhydro)
       implicit none
       real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8) :: sigma
+      real(kind=8) :: sigma, Hwav, h
       integer :: ii
       
       m_uhydro = uhydro
@@ -305,6 +308,15 @@ contains
       m_U = m_uhydro(2,:) / max(0.1,m_uhydro(1,:))
       m_Ewav = sigma * m_uhydro(3,:)
       m_Hwav = sqrt(8.0*m_Ewav/G/Roul)
+      do ii = 1, NX, 1
+         h = m_uhydro(1,ii)
+         Hwav = m_Hwav(ii)
+         if (h<=0) then
+            m_Uwav(ii) = 0.0d0
+         else
+            m_Uwav(ii) = min(PI*Hwav/force_T/sinh(Karman*h), 20.0)
+         end if
+      end do
       call UpdateShearStress()
    end subroutine
 
@@ -354,12 +366,12 @@ contains
          h = m_uhydro(1,ii)
          U = m_U(ii)
          Hwav = m_Hwav(ii)
+         Uwav = m_Uwav(ii)
          if (h>0) then
             ! bottom shear stress by currents
             fcurr = 0.24/(log(4.8*h/par_d50))**2
             tau_curr = 0.125*Roul*fcurr*U**2
             ! bottom shear stress by wave
-            Uwav = PI*Hwav/force_T/sinh(Karman*h)
             fwave = 1.39*(6.0*Uwav*force_T/PI/par_d50)**(-0.52)
             tau_wave = 0.5*fwave*Roul*Uwav**2
             m_tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)

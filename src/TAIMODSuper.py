@@ -137,24 +137,14 @@ class OMACMODSuper(object):
         """
         pass
     
+    @abstractmethod
     def aboveground_biomass(self, inputs):
         """"Calculate aboveground biomass (Morris et al., 2012).
         Arguments:
-            inputs : driving data for OM accretion calculation
+            inputs : driving data for aboveground biomass calculation
         Returns: aboveground biomass (kg m-2)
         """
-        zh = inputs['zh']       # platform surface elevation (msl)
-        MHT = inputs['MHT']     # mean high tide water level (msl)
-        pft = inputs['pft']     # platform pft
-        DMHT = MHT - zh
-        aa = self.m_params['aa']
-        bb = self.m_params['bb']
-        cc = self.m_params['cc']
-        Bag = aa * DMHT + bb * DMHT**2 + cc
-        indice = np.logical_and(np.logical_and(zh>=0, zh<=MHT), 
-                                np.logical_and(pft>=2, pft<=5))
-        Bag[np.logical_not(indice)] = 0.0
-        return Bag
+        pass
 
 ###############################################################################    
 class WAVEROMODSuper(object):
