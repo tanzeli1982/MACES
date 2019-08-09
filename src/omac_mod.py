@@ -25,11 +25,11 @@ class NULLMOD(OMACMODSuper):
     def __init__(self, params):
         self.m_params = params
     
-    def organic_accretion(self, inputs):
-        """"Calculate organic matter accretion rate.
+    def organic_deposition(self, inputs):
+        """"Calculate organic matter deposition rate.
         Arguments:
-            inputs : driving data for OM accretion calculation
-        Returns: organic matter accretion rate (kg m-2 s-1)
+            inputs : driving data for OM deposition calculation
+        Returns: organic matter deposition rate (kg m-2 s-1)
         """
         x = inputs['x']
         return np.zeros_like(x, dtype=np.float64)
@@ -68,11 +68,11 @@ class VDK05MOD(OMACMODSuper):
     def __init__(self, params):
         self.m_params = params
     
-    def organic_accretion(self, inputs):
-        """"Calculate organic matter accretion rate.
+    def organic_deposition(self, inputs):
+        """"Calculate organic matter deposition rate.
         Arguments:
-            inputs : driving data for OM accretion calculation
-        Returns: organic matter accretion rate (kg m-2 s-1)
+            inputs : driving data for OM deposition calculation
+        Returns: organic matter deposition rate (kg m-2 s-1)
         """
         x = inputs['x']
         return np.zeros_like(x, dtype=np.float64)
@@ -113,16 +113,16 @@ class M12MOD(OMACMODSuper):
     def __init__(self, params):
         self.m_params = params
         
-    def organic_accretion(self, inputs):
-        """"Calculate organic matter accretion rate.
+    def organic_deposition(self, inputs):
+        """"Calculate organic matter deposition rate.
         Arguments:
-            inputs : driving data for OM accretion calculation
-        Returns: organic matter accretion rate (kg m-2 s-1)
+            inputs : driving data for OM deposition calculation
+        Returns: organic matter deposition rate (kg m-2 s-1)
         """
         Kr = self.m_params['Kr']    # the refractory fraction of root and rhizome biomass
         Tr = self.m_params['Tr']    # the root aand rhizome turnover time (yr)
         phi = self.m_params['phi']  # the root:shoot quotient
-        Bag = inputs['Bag']     # aboveground biomass (kg/m2)
+        Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         return Kr * (phi*Bag) / (Tr*3.1536e7)
     
     def aboveground_biomass(self, inputs):
@@ -149,7 +149,7 @@ class DA07MOD(OMACMODSuper):
     """Realization of the D'Alpaos et al. (2007) organic matter accretion model.
 
     Attributes:
-        parameters : Qom0, Bmax
+        parameters : Qom0, Bmax, omega, mps
     Constants:
         
     """
@@ -158,15 +158,15 @@ class DA07MOD(OMACMODSuper):
     def __init__(self, params):
         self.m_params = params
         
-    def organic_accretion(self, inputs):
-        """"Calculate organic matter accretion rate.
+    def organic_deposition(self, inputs):
+        """"Calculate organic matter deposition rate.
         Arguments:
-            inputs : driving data for OM accretion calculation
-        Returns: organic matter accretion rate (kg m-2 s-1)
+            inputs : driving data for OM deposition calculation
+        Returns: organic matter deposition rate (kg m-2 s-1)
         """
         Qom0 = self.m_params['Qom0']    # a typical OM deposition rate (kg/m2/s)
         Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
-        Bag = inputs['Bag']     # aboveground biomass (kg/m2)
+        Bag = inputs['Bag']             # aboveground biomass (kg/m2)
         return Qom0 * Bag / Bmax
         
     def aboveground_biomass(self, inputs):
@@ -175,16 +175,23 @@ class DA07MOD(OMACMODSuper):
             inputs : driving data for OM accretion calculation
         Returns: aboveground biomass (kg m-2)
         """
-        
-        
-        
+        Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
+        omega = self.m_params['omega']  # the ratio of winter Bag to Bps 
+        mps = self.m_params['mps']      # month of Bag at its peak
+        zh = inputs['zh']       # platform surface elevation (msl)
+        MHT = inputs['MHT']     # mean high tide water level (msl)
+        m = inputs['MONTH']     # month (1 to 12)
+        Bps = (MHT - zh) / MHT * Bmax   # peak season Bag
+        Bps[np.logical_or(zh>MHT,zh<0)] = 0.0
+        return 0.5*Bps*(1-omega)*(np.sin(np.pi*m/6-mps*np.pi/12)+1) + omega*Bps
 
 ###############################################################################
 class KM12MOD(OMACMODSuper):
     """Realization of the Kirwan & Mudd (2012) organic matter accretion model.
 
     Attributes:
-        parameters : 
+        parameters : Bmax, Tref, sigmaB, rBmin, jdps, thetaBG, Dmbm, 
+                     rGmin, rGps, sigmaOM, TrefOM, kl0, kr0
     Constants:
         
     """
@@ -193,13 +200,37 @@ class KM12MOD(OMACMODSuper):
     def __init__(self, params):
         self.m_params = params
         
-    def organic_accretion(self, inputs):
-        """"Calculate organic matter accretion rate.
+    def organic_deposition(self, inputs):
+        """"Calculate organic matter deposition rate.
         Arguments:
-            inputs : driving data for OM accretion calculation
-        Returns: organic matter accretion rate (kg m-2 s-1)
+            inputs : driving data for OM deposition calculation
+        Returns: organic matter deposition rate (kg m-2 s-1)
         """
-
+        thetaBG = self.m_params['thetaBG']  # coef for the root:shoot quotient
+        Dmbm = self.m_params['Dmbm']        # coef for the root:shoot quotient 
+        Bmax = self.m_params['Bmax']        # maximum Bag (kg/m2)
+        rBmin = self.m_params['rBmin']      # the ratio of winter Bag to Bps
+        Tref = self.m_params['Tref']        # reference temperature for veg growth (K)
+        sigmaB = self.m_params['sigmaB']    # biomass increase due to temperature (K-1)
+        rGmin = self.m_params['rGmin']      # the ratio of winter growth rate to Bps (day-1)
+        rGps = self.m_params['rGps']        # the ratio of peak growth rate to Bps (day-1)
+        jdps = self.m_params['jdps']        # the DOY when Bag is at its peak
+        Tair = inputs['Tair']       # air temperature (K)
+        Bag = inputs['Bag']         # aboveground biomass (kg/m2)
+        zh = inputs['zh']           # platform surface elevation (msl)
+        MHHW = inputs['MHHW']       # mean high high water level (msl)
+        jd = inputs['day']          # day (1 to 365)
+        phi = thetaBG*(MHHW-zh) + Dmbm      # the root:shoot quotient
+        phi[np.logical_or(zh<0,zh>MHHW)] = 0.0
+        Bps = Bmax * (MHHW-zh) / MHHW * (1 + (Tair-Tref)*sigmaB)   # peak season Bag
+        Bmin = rBmin * Bps          # winter Bag
+        Gmin = rGmin/8.64e4 * Bps   # winter growth rate (kg/m2/s)
+        Gps = rGps/8.64e4 * Bps     # peak growth rate (kg/m2/s)
+        jd_phi = 56     # the phase shift (in days) between Gps and Bps
+        # the mortality rate (kg/m2/s) of aboveground biomass
+        Mag = 0.5*(Gmin+Gps+(Gps-Gmin)*np.cos(2.0*np.pi*(jd-jdps+jd_phi)/365)) + \
+            np.pi/365*(Bps-Bmin)*np.sin(2.0*np.pi*(jd-jdps)/365)
+        return phi*Mag
         
     def aboveground_biomass(self, inputs):
         """"Calculate aboveground biomass.
@@ -207,13 +238,61 @@ class KM12MOD(OMACMODSuper):
             inputs : driving data for OM accretion calculation
         Returns:
         """
+        Bmax = self.m_params['Bmax']        # maximum Bag (kg/m2)
+        rBmin = self.m_params['rBmin']      # the ratio of winter Bag to Bps
+        Tref = self.m_params['Tref']        # reference temperature for veg growth (K)
+        sigmaB = self.m_params['sigmaB']    # biomass increase due to temperature (K-1)
+        jdps = self.m_params['jdps']        # the DOY when Bag is at its peak
+        Tair = inputs['Tair']       # air temperature (K)
+        zh = inputs['zh']           # platform surface elevation (msl)
+        MHHW = inputs['MHHW']       # mean high high water level (msl)
+        jd = inputs['day']          # day (1 to 365)
+        Bps = Bmax * (MHHW-zh) / MHHW * (1 + (Tair-Tref)*sigmaB)   # peak season Bag
+        Bps[np.logical_or(zh<0,zh>MHHW)] = 0.0
+        Bmin = rBmin * Bps          # winter Bag
+        return 0.5*(Bmin+Bps+(Bps-Bmin)*np.cos(2*np.pi*(jd-jdps)/365))
+    
+    def belowground_biomass(self, inputs):
+        """"Calculate belowground biomass.
+        Arguments:
+            inputs : driving data for belowground biomass calculation
+        Returns: belowground biomass (kg m-2)
+        """
+        thetaBG = self.m_params['thetaBG']  # coef for the root:shoot quotient
+        Dmbm = self.m_params['Dmbm']        # coef for the root:shoot quotient    
+        Bag = inputs['Bag']         # aboveground biomass (kg/m2)
+        zh = inputs['zh']           # platform surface elevation (msl)
+        MHHW = inputs['MHHW']       # mean high high water level (msl)
+        phi = thetaBG*(MHHW-zh) + Dmbm      # the root:shoot quotient
+        phi[np.logical_or(zh<0,zh>MHHW)] = 0.0
+        return phi*Bag
+    
+    def soilcarbon_decay(self, inputs):
+        """"Calculate soil OC mineralization rate.
+        Arguments:
+            inputs : driving data for SOC decay rate calculation
+        Returns: SOC decay rate (kg m-2 s-1) of two pools
+        """
+        kl0 = self.m_params['kl0']  # column-integrated decay rate of labile pool (yr-1)
+        kr0 = self.m_params['kr0']  # column-integrated decay rate of refractory pool (yr-1)
+        TrefOM = self.m_params['TrefOM']    # reference temperature for decay (K)
+        sigmaOM = self.m_params['sigmaOM']  # decay increase due to temperature (K-1)
+        SOM = inputs['SOM']     # soil organic matter pools (kg/m2)
+        Tsoi = inputs['Tsoi']   # soil temperature (K)
+        Cl = SOM[0]         # labile belowground SOM pool
+        Cr = SOM[1]         # refractory belowground SOM pool
+        Nx = np.shape(SOM)[1]
+        rdC = np.zeros((2,Nx), dtype=np.float64)
+        rdC[0] = ((1.0+(Tsoi-TrefOM)*sigmaOM)*kl0/3.1536e7) * Cl
+        rdC[1] = ((1.0+(Tsoi-TrefOM)*sigmaOM)*kr0/3.1536e7) * Cr
+        return rdC
         
 ###############################################################################
 class K16MOD(OMACMODSuper):
     """Realization of the Kakeh et al. (2016) organic matter accretion model.
 
     Attributes:
-        parameters : 
+        parameters : gammaB, Bmax
     Constants:
         
     """
@@ -222,16 +301,48 @@ class K16MOD(OMACMODSuper):
     def __init__(self, params):
         self.m_params = params
         
-    def organic_accretion(self, inputs):
-        """"Calculate organic matter accretion rate.
+    def organic_deposition(self, inputs):
+        """"Calculate organic matter deposition rate.
         Arguments:
-            inputs : driving data for OM accretion calculation
-        Returns: organic matter accretion rate (kg m-2 s-1)
+            inputs : driving data for OM deposition calculation
+        Returns: organic matter deposition rate (kg m-2 s-1)
         """
-
+        gammaB = self.m_params['gammaB']    # m yr-1 m2 kg-1
+        Bag = inputs['Bag']         # aboveground biomass (kg/m2)
+        rhoOM = inputs['rhoOM']     # OM density (kg/m3)
+        return rhoOM * gammaB/3.1536e7 * Bag
         
     def aboveground_biomass(self, inputs):
         """"Calculate aboveground biomass.
         Arguments:
             inputs : driving data for OM accretion calculation
         Returns:
+        """
+        Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
+        Bag_old = inputs['Bag']     # Bag at the last time step (kg/m2)
+        zh = inputs['zh']           # platform surface elevation (msl)
+        pft = inputs['pft']         # platform pft
+        dt = inputs['dt']           # time step (s)
+        Nx = np.size(zh)
+        Bag = np.zeros(Nx, dtype=np.float64)
+        for ii in range(Nx):
+            if pft[ii]==2:
+                # Spartina alterniflora dominated marshes
+                Bag
+            elif pft[ii]>=3 and pft[ii]<=4:
+                # multi-species marshes
+                Bag
+            elif pft[ii]==5:
+                # mangroves
+                Bag
+        # marshes
+        
+        # mangroves
+        
+    def belowground_biomass(self, inputs):
+        """"Calculate belowground biomass.
+        Arguments:
+            inputs : driving data for belowground biomass calculation
+        Returns: belowground biomass (kg m-2)
+        """
+        phi =         

@@ -348,8 +348,8 @@ contains
          alphaD = par_alphaD(pft(ii))
          betaD = par_betaD(pft(ii))
          h = m_uhydro(1,ii)
-         asb = alphaA + Bag(ii)**betaA
-         dsb = alphaD + Bag(ii)**betaD
+         asb = alphaA * Bag(ii)**betaA
+         dsb = alphaD * Bag(ii)**betaD
          cD = cD0 + ScD * Bag(ii)
          m_Cz(ii) = par_Cz0*sqrt(2.0/(cD*asb*h+2.0*(1.0-asb*dsb)*Cb))
       end do

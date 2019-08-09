@@ -133,6 +133,7 @@ def write_outputs(odir, sid, uhydro_out, ecogeom_out):
         nc.contact = r'Zeli.Tan@pnnl.gov'
         nc.createDimension('hour', None)
         nc.createDimension('day', nday)
+        nc.createDimension('pool', 2)
         nc.createDimension('x', nx)
         # create and write hourly variables
         h_var = nc.createVariable('h', 'f4', ('hour','x',))
@@ -182,7 +183,7 @@ def write_outputs(odir, sid, uhydro_out, ecogeom_out):
         Dsed_var._FillValue = np.float32(1e20)
         Dsed_var[:] = ecogeom_out['Dsed']
         DepOM_var = nc.createVariable('DepOM', 'f4', ('day','x',))
-        DepOM_var.long_name = r'Organic matter accretion rate'
+        DepOM_var.long_name = r'Organic matter deposition rate'
         DepOM_var.units = 'kg/m2/s'
         DepOM_var._FillValue = np.float32(1e20)
         DepOM_var[:] = ecogeom_out['DepOM']
@@ -191,6 +192,16 @@ def write_outputs(odir, sid, uhydro_out, ecogeom_out):
         Bag_var.units = 'kg/m2'
         Bag_var._FillValue = np.float32(1e20)
         Bag_var[:] = ecogeom_out['Bag']
+        Bbg_var = nc.createVariable('Bbg', 'f4', ('day','x',))
+        Bbg_var.long_name = r'platform belowground biomass'
+        Bbg_var.units = 'kg/m2'
+        Bbg_var._FillValue = np.float32(1e20)
+        Bbg_var[:] = ecogeom_out['Bbg']
+        SOM_var = nc.createVariable('SOM', 'f4', ('day','pool','x',))
+        SOM_var.long_name = r'platform column-integrated soil organic matter'
+        SOM_var.units = 'kg/m2'
+        SOM_var._FillValue = np.float32(1e20)
+        SOM_var[:] = ecogeom_out['SOM']
     finally:
         nc.close()
     

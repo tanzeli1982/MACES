@@ -44,6 +44,9 @@ pft_grids['pft'] = np.array([2, 2, 0, 0, 0], dtype=np.int32)
 site_pft = utils.construct_platform_pft(pft_grids, site_x)
 Nx = len(site_x)
 
+# initialize soil organic matter pools
+site_OM = np.zeros((2,Nx), dtype=np.float64)
+
 site_rslr = 0.0     # relative sea level rise (mm/yr)
 site_rslr = 1e-3 / 8.64e4 / 365 * site_rslr     # m/s
 rhoSed = 2650.0     # sediment density (kg/m3)
@@ -95,6 +98,9 @@ Hwav0 = np.sinh(utils.Karman*h0) / np.sinh(utils.Karman*30.0) * Hwav_ocean
 Css0 = 8.0 * np.ones(nhour, dtype=np.float64)
 Cj0 = 28.0 * np.ones(nhour, dtype=np.float64)
 
+# driving data for eco-geomorphology model
+# in an old version of ALBM, there is a method to link Tair and Tsoi
+
 # temporal variables
 site_Esed = np.zeros(Nx, dtype=np.float64)
 site_Dsed = np.zeros(Nx, dtype=np.float64)
@@ -114,6 +120,8 @@ ecogeom_out['Esed'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
 ecogeom_out['Dsed'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
 ecogeom_out['DepOM'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
 ecogeom_out['Bag'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
+ecogeom_out['Bbg'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
+ecogeom_out['SOM'] = 1e20 * np.ones((nday,2,Nx), dtype=np.float32)
 
 odir = '/qfs/projects/taim/TAIMOD/test/'
 site_id = 466
@@ -157,7 +165,15 @@ try:
         site_Lbed = mac_mod.bed_loading(mac_inputs)
         omac_inputs = {}
         site_Bag = omac_mod.aboveground_biomass(omac_inputs)
-        site_DepOM = omac_mod.organic_accretion(omac_inputs)
+        omac_inputs['Bag'] = site_Bag
+        site_Bbg = omac_mod.belowground_biomass(omac_inputs)
+        site_DepOM = omac_mod.organic_deposition(omac_inputs)
+        site_DecayOM = omac_mod.soilcarbon_decay(omac_inputs)
+        # update soil OM pool
+        DepOM_pools = np.zeros((2,Nx), dtype=np.float64)
+        DepOM_pools[0] = 0.158 * site_DepOM
+        DepOM_pools[1] = 0.842 * site_DepOM
+        site_OM = site_OM + (DepOM_pools - site_DecayOM) * curstep
         # update platform elevation
         site_zh = site_zh + ((site_Dsed/rhoSed + site_Lbed/rhoSed + \
             site_DepOM/rhoOM - site_Esed/rhoSed)/(1.0-porSed) - \
@@ -177,6 +193,8 @@ try:
             ecogeom_out['Dsed'][dindx] = site_Dsed
             ecogeom_out['DepOM'][dindx] = site_DepOM
             ecogeom_out['Bag'][dindx] = site_Bag
+            ecogeom_out['Bbg'][dindx] = site_Bbg
+            ecogeom_out['SOM'][dindx] = site_OM
         # check small time step
         isHourNode = False
         isDayNode = False

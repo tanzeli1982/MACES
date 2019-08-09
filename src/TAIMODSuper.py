@@ -121,10 +121,10 @@ class OMACMODSuper(object):
     __metaclass__ = ABCMeta    
     
     @abstractmethod
-    def organic_accretion(self, inputs):
-        """"Calculate organic matter accretion rate.
+    def organic_deposition(self, inputs):
+        """"Calculate organic matter deposition rate.
         Arguments:
-            inputs : driving data for OM accretion calculation
+            inputs : driving data for OM deposition calculation
             inputs['x']     : platform coordinate (m)
             inputs['zh']    : platform elevation relative to MSL (m)
             inputs['pft']   : platform vegetation cover pft
@@ -133,18 +133,38 @@ class OMACMODSuper(object):
             inputs['Tair']  : annual mean air temperature (K)
             inputs['month'] : month
             inputs['day']   : day
-        Returns: organic matter accretion rate (kg m-2 s-1)
+        Returns: organic matter deposition rate (kg m-2 s-1)
         """
         pass
     
     @abstractmethod
     def aboveground_biomass(self, inputs):
-        """"Calculate aboveground biomass (Morris et al., 2012).
+        """"Calculate aboveground biomass.
         Arguments:
             inputs : driving data for aboveground biomass calculation
         Returns: aboveground biomass (kg m-2)
         """
         pass
+    
+    def belowground_biomass(self, inputs):
+        """"Calculate belowground biomass.
+        Arguments:
+            inputs : driving data for belowground biomass calculation
+        Returns: belowground biomass (kg m-2)
+        """
+        phi = self.m_params['phi']  # the root:shoot quotient
+        Bag = inputs['Bag']         # aboveground biomass (kg/m2)
+        return phi*Bag
+    
+    def soilcarbon_decay(self, inputs):
+        """"Calculate soil OC mineralization rate.
+        Arguments:
+            inputs : driving data for SOC decay rate calculation
+        Returns: SOC decay rate (kg m-2 s-1) of two pools
+        """
+        x = inputs['x']
+        Nx = np.size(x)
+        return np.zeros((2,Nx), dtype=np.float64)
 
 ###############################################################################    
 class WAVEROMODSuper(object):
