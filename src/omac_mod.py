@@ -51,6 +51,7 @@ class NULLMOD(OMACMODSuper):
         indice = np.logical_and(np.logical_and(zh>=0, zh<=MHT), 
                                 np.logical_and(pft>=2, pft<=5))
         Bag[np.logical_not(indice)] = 0.0
+        Bag[Bag<0] = 0.0
         return Bag
     
 ###############################################################################
@@ -95,7 +96,7 @@ class VDK05MOD(OMACMODSuper):
         dt = inputs['dt']       # time step (s)
         A = rB0*(1-Bag_old/Bmax)*(zh/(zh+czh)) - dP - dB*S
         Bag = Bag_old * (1.0 + A*dt) / (1.0 - A*dt)
-        indice = np.logical_or(pft<2, pft>5)
+        indice = np.logical_or(Bag<0, np.logical_or(pft<2, pft>5))
         Bag[indice] = 0.0
         return Bag
     
@@ -216,7 +217,6 @@ class KM12MOD(OMACMODSuper):
         rGps = self.m_params['rGps']        # the ratio of peak growth rate to Bps (day-1)
         jdps = self.m_params['jdps']        # the DOY when Bag is at its peak
         Tair = inputs['Tair']       # air temperature (K)
-        Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         zh = inputs['zh']           # platform surface elevation (msl)
         MHHW = inputs['MHHW']       # mean high high water level (msl)
         jd = inputs['day']          # day (1 to 365)
@@ -236,7 +236,7 @@ class KM12MOD(OMACMODSuper):
         """"Calculate aboveground biomass.
         Arguments:
             inputs : driving data for OM accretion calculation
-        Returns:
+        Returns: aboveground biomass (kg m-2)
         """
         Bmax = self.m_params['Bmax']        # maximum Bag (kg/m2)
         rBmin = self.m_params['rBmin']      # the ratio of winter Bag to Bps
@@ -292,14 +292,19 @@ class K16MOD(OMACMODSuper):
     """Realization of the Kakeh et al. (2016) organic matter accretion model.
 
     Attributes:
-        parameters : gammaB, Bmax
+        parameters : gammaB, Bmax, Gmgv, b2mgv, b3mgv, Mdmax, Mhmax, phi
     Constants:
         
     """
     
+    tmp_Md = None       # individual mangrove tree diameter (cm)
+    tmp_Mh = None       # individual mangrove tree height (cm)
+    
     # constructor
-    def __init__(self, params):
+    def __init__(self, params, Md0, Mh0):
         self.m_params = params
+        self.tmp_Md = Md0
+        self.tmp_Mh = Mh0
         
     def organic_deposition(self, inputs):
         """"Calculate organic matter deposition rate.
@@ -316,28 +321,55 @@ class K16MOD(OMACMODSuper):
         """"Calculate aboveground biomass.
         Arguments:
             inputs : driving data for OM accretion calculation
-        Returns:
+        Returns: aboveground biomass (kg m-2)
         """
         Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
+        Gmgv = self.m_params['Gmgv']    # stem diameter growth rate (cm s-1)
+        b2mgv = self.m_params['b2mgv']  # coef for Md vs Mh equation (dimensionless)
+        b3mgv = self.m_params['b3mgv']  # coef for Md vs Mh equation (cm-1)
+        Mhmax = self.m_params['Mhmax']  # mangrove maximum height (cm)
+        Mdmax = self.m_params['Mdmax']  # mangrove maximum diameter (cm)
         Bag_old = inputs['Bag']     # Bag at the last time step (kg/m2)
         zh = inputs['zh']           # platform surface elevation (msl)
         pft = inputs['pft']         # platform pft
+        MHT = inputs['MHT']         # mean high tide water level (msl)
         dt = inputs['dt']           # time step (s)
         Nx = np.size(zh)
         Bag = np.zeros(Nx, dtype=np.float64)
         for ii in range(Nx):
             if pft[ii]==2:
                 # Spartina alterniflora dominated marshes
-                Bag
-            elif pft[ii]>=3 and pft[ii]<=4:
+                if zh[ii]>=0 and zh[ii]<=MHT:
+                    rz = (1-0.5*zh[ii]/MHT)/3.1536e7   # Bag production rate (s-1)
+                    mz = 0.5*zh[ii]/MHT/3.1536e7       # Bag mortality rate (s-1)
+                    Bag[ii] = max( (1+0.5*(rz*(1-Bag_old[ii]/Bmax)-mz)*dt)* \
+                       Bag_old[ii]/(1-0.5*(rz*(1-Bag_old[ii]/Bmax)-mz)*dt), 0.0 )
+                else:
+                    Bag[ii] = Bag_old[ii]
+            elif pft[ii]==3 or pft[ii]==4:
                 # multi-species marshes
-                Bag
+                if zh[ii]>=0 and zh[ii]<=MHT:
+                    rz = 0.5*(1+zh[ii]/MHT)
+                    mz = 0.5*(1-zh[ii]/MHT)
+                    Bag[ii] = max( (1+0.5*(rz*(1-Bag_old[ii]/Bmax)-mz)*dt)* \
+                       Bag_old[ii]/(1-0.5*(rz*(1-Bag_old[ii]/Bmax)-mz)*dt), 0.0 )
+                else:
+                    Bag[ii] = Bag_old[ii]
             elif pft[ii]==5:
-                # mangroves
-                Bag
-        # marshes
-        
-        # mangroves
+                # mangroves (Avicennia marina)
+                if zh[ii]>=0 and zh[ii]<=MHT:
+                    P = 1 - zh[ii]/MHT
+                    I = max(4*P-8*P**2+0.5, 0.0)
+                    self.tmp_Md[ii] = self.tmp_Md[ii] + I*Gmgv/Mdmax/Mhmax* \
+                        self.tmp_Md[ii]*(1-self.tmp_Md[ii]*self.tmp_Mh[ii])/ \
+                        (274+3*b2mgv*self.tmp_Md[ii]-4*b3mgv*self.tmp_Md[ii]**2)
+                    self.tmp_Mh[ii] = 137 + b2mgv*self.tmp_Md[ii] + \
+                        b3mgv*self.tmp_Md[ii]**2
+                    rout = 0.5/self.tmp_Md[ii]   # tree density (tree/m2)
+                    Bag[ii] = rout * 0.308*self.tmp_Md[ii]**2.11    # kg/m2
+                else:
+                    Bag[ii] = Bag_old[ii]
+        return Bag
         
     def belowground_biomass(self, inputs):
         """"Calculate belowground biomass.
@@ -345,4 +377,26 @@ class K16MOD(OMACMODSuper):
             inputs : driving data for belowground biomass calculation
         Returns: belowground biomass (kg m-2)
         """
-        phi =         
+        phi = self.m_params['phi']  # the root:shoot quotient
+        Bbg_old = inputs['Bbg']     # belowground biomass of the last time step (kg/m2)
+        Bag = inputs['Bag']         # aboveground biomass (kg/m2)
+        pft = inputs['pft']         # platform pft
+        zh = inputs['zh']           # platform surface elevation (msl)
+        MHT = inputs['MHT']         # mean high tide water level (msl)
+        Nx = np.size(zh)
+        Bbg = np.zeros(Nx, dtype=np.float64)
+        for ii in range(Nx):
+            if pft[ii]>=2 and pft[ii]<=4:
+                if zh[ii]>=0 and zh[ii]<=MHT:
+                    Bbg[ii] = phi*Bag[ii]
+                else:
+                    Bbg[ii] = Bbg_old[ii]
+            elif pft[ii]==5:
+                # mangroves (Avicennia marina)
+                if zh[ii]>=0 and zh[ii]<=MHT:
+                    rout = 0.5/self.tmp_Md[ii]  # tree density (tree/m2)
+                    Bbg[ii] = rout * 1.28*self.tmp_Md[ii]**1.17
+                else:
+                    Bbg[ii] = Bbg_old[ii]
+        return Bbg
+         
