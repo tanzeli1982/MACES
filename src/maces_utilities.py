@@ -68,7 +68,7 @@ def construct_platform_pft(pft_grids, x_tai):
     """
     x_arr = pft_grids['x']
     pft_arr = pft_grids['pft']
-    pft_tai = np.zeros_like(x_tai, dtype=np.int32)
+    pft_tai = np.zeros_like(x_tai, dtype=np.int8)
     for ii, x in enumerate(x_tai):
         if x<x_arr[0]:
             pft_tai[ii] = 1     # tidal flats
@@ -167,6 +167,11 @@ def write_outputs(odir, sid, uhydro_out, ecogeom_out):
         Cj_var._FillValue = np.float32(1e20)
         Cj_var[:] = uhydro_out['Cj']   
         # create and write daily variables
+        pft_var = nc.createVariable('pft', 'i1', ('day','x',))
+        pft_var.long_name = r'platform plant function type'
+        pft_var.units = '0 to 8'
+        pft_var._FillValue = np.int8(-1)
+        pft_var[:] = ecogeom_out['pft'] 
         zh_var = nc.createVariable('zh', 'f4', ('day','x',))
         zh_var.long_name = r'platform surface elevation'
         zh_var.units = 'msl'

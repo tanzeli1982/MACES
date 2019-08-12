@@ -44,9 +44,6 @@ pft_grids['pft'] = np.array([2, 2, 0, 0, 0], dtype=np.int32)
 site_pft = utils.construct_platform_pft(pft_grids, site_x)
 Nx = len(site_x)
 
-# initialize soil organic matter pools
-site_OM = np.zeros((2,Nx), dtype=np.float64)
-
 site_rslr = 0.0     # relative sea level rise (mm/yr)
 site_rslr = 1e-3 / 8.64e4 / 365 * site_rslr     # m/s
 rhoSed = 2650.0     # sediment density (kg/m3)
@@ -66,11 +63,13 @@ hydro_params['cD0'] = 1.1 * np.ones(8, dtype=np.float64)
 hydro_params['ScD'] = -0.3 * np.ones(8, dtype=np.float64)
 
 # eco-geomorphology models
-mac_params = {}
-mac_mod = mac.M12MOD(mac_params)
+site_OM = np.zeros((2,Nx), dtype=np.float64)
 
-omac_params = {}
-omac_mod = omac.M12MOD(omac_params)
+mac_params = {}
+mac_mod = mac.F06MOD(mac_params)
+
+omac_params = {'phi': 2.2, 'aa': 15.5, 'bb': -18.55, 'cc': -1.364}
+omac_mod = omac.NULLMOD(omac_params)
 
 # hydrodynamic model initialization and set up
 taihydro.Initialize(site_x, site_zh)
@@ -115,6 +114,7 @@ uhydro_out['tau'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
 uhydro_out['Css'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
 uhydro_out['Cj'] = 1e20 * np.ones((nhour,Nx), dtype=np.float32)
 ecogeom_out = {}
+ecogeom_out['pft'] = -1 * np.ones((nday,Nx), dtype=np.int8)
 ecogeom_out['zh'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
 ecogeom_out['Esed'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
 ecogeom_out['Dsed'] = 1e20 * np.ones((nday,Nx), dtype=np.float32)
@@ -159,11 +159,12 @@ try:
         assert error[0]==0, "Runge-Kutta iteration is more than MAXITER"
         taihydro.ModelCallback(tmp_uhydro)
         # simulate eco-geomorphology
-        mac_inputs = {}
+        mac_inputs = {'Css': taihydro.m_uhydro[3], 'tau': taihydro.tau, 
+                      'd50': hydro_params['d50'], 'Rous': rhoSed}
         site_Esed = mac_mod.mineral_suspend(mac_inputs)
         site_Dsed = mac_mod.mineral_deposition(mac_inputs)
         site_Lbed = mac_mod.bed_loading(mac_inputs)
-        omac_inputs = {}
+        omac_inputs = {'zh': site_zh, 'MHT': 0.75, 'pft': site_pft}
         site_Bag = omac_mod.aboveground_biomass(omac_inputs)
         omac_inputs['Bag'] = site_Bag
         site_Bbg = omac_mod.belowground_biomass(omac_inputs)
@@ -195,6 +196,7 @@ try:
             ecogeom_out['Bag'][dindx] = site_Bag
             ecogeom_out['Bbg'][dindx] = site_Bbg
             ecogeom_out['SOM'][dindx] = site_OM
+            ecogeom_out['pft'][dindx] = site_pft
         # check small time step
         isHourNode = False
         isDayNode = False
