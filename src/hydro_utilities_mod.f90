@@ -1,149 +1,14 @@
-module RungeKutta4
-!---------------------------------------------------------------------------------
-! Purpose:
-!
-! This module implements 4th-order Runge-Kutta-Fehlberg method
-!
-!---------------------------------------------------------------------------------
+module hydro_utilities_mod
+
    implicit none
+   public
    integer, parameter :: MAXITER = 100
    integer, parameter :: adaptive_mode = 101, fixed_mode = 102
    real(kind=8), parameter :: TOL_REL = 1.d-6
    real(kind=8), parameter :: INFTSML = 1.d-30
-   ! allocatable intermediate arrays 
-   real(kind=8), allocatable, dimension(:,:) :: K1
-   real(kind=8), allocatable, dimension(:,:) :: K2
-   real(kind=8), allocatable, dimension(:,:) :: K3
-   real(kind=8), allocatable, dimension(:,:) :: K4
-   real(kind=8), allocatable, dimension(:,:) :: K5
-   real(kind=8), allocatable, dimension(:,:) :: K6
-   real(kind=8), allocatable, dimension(:,:) :: nxt4th
-   real(kind=8), allocatable, dimension(:,:) :: nxt5th
-   real(kind=8), allocatable, dimension(:,:) :: interim
-   real(kind=8), allocatable, dimension(:,:) :: rerr
    ! intermediate scalers
 
 contains
-   subroutine InitRKDataBuffer(nvar, ncell)
-      implicit none
-      integer, intent(in) :: nvar
-      integer, intent(in) :: ncell
-
-      allocate(K1(nvar,ncell))
-      allocate(K2(nvar,ncell))
-      allocate(K3(nvar,ncell))
-      allocate(K4(nvar,ncell))
-      allocate(K5(nvar,ncell))
-      allocate(K6(nvar,ncell))
-      allocate(nxt4th(nvar,ncell))
-      allocate(nxt5th(nvar,ncell))
-      allocate(interim(nvar,ncell))
-      allocate(rerr(nvar,ncell))
-   end subroutine
-
-   subroutine DestructRKDataBuffer()
-      implicit none
-
-      deallocate(K1)
-      deallocate(K2)
-      deallocate(K3)
-      deallocate(K4)
-      deallocate(K5)
-      deallocate(K6)
-      deallocate(nxt4th)
-      deallocate(nxt5th)
-      deallocate(interim)
-      deallocate(rerr)
-   end subroutine
-
-   subroutine RK4Fehlberg(odeFunc, invars, outvars, mode, tol, &
-                          curstep, nextstep, outerr)
-      implicit none
-      external :: odeFunc
-      real(kind=8), intent(in) :: invars(:,:)    
-      real(kind=8), intent(inout) :: outvars(:,:)
-      integer, intent(in)  :: mode
-      real(kind=8), intent(in) :: tol(:)
-      real(kind=8), intent(inout) :: curstep(1)
-      real(kind=8), intent(inout) :: nextstep(1)
-      integer, intent(inout)  :: outerr(1)
-      real(kind=8), dimension(size(invars,1)) :: dy, rdy, dyn
-      real(kind=8), dimension(size(invars,1)) :: rel_tol
-      real(kind=8), dimension(size(invars,1)) :: abs_rate
-      real(kind=8), dimension(size(invars,1)) :: rel_rate
-      real(kind=8) :: step, rate, delta
-      logical  :: isLargeErr, isConstrainBroken
-      integer  :: iter, ii, nx, ny
-
-      nx = size(invars,1)
-      ny = size(invars,2)
-      isLargeErr = .True.
-      isConstrainBroken = .False.
-      outerr(1) = 0
-      step = curstep(1)
-      iter = 1
-      rel_tol = TOL_REL
-      call odeFunc(invars, K1)
-      do while (isLargeErr .or. isConstrainBroken)
-         if (iter>MAXITER) then
-            outerr(1) = 1
-            return
-         end if
-         curstep(1) = step
-         interim = invars + step*0.25*K1
-         call odeFunc(interim, K2)
-         interim = invars + step*(0.09375*K1+0.28125*K2)
-         call odeFunc(interim, K3)
-         interim = invars + step*(0.87938*K1-3.27720*K2+3.32089*K3)
-         call odeFunc(interim, K4)
-         interim = invars + step*(2.03241*K1-8.0*K2+7.17349*K3-0.20590*K4)
-         call odeFunc(interim, K5)
-         nxt4th = invars + step*(0.11574*K1+0.54893*K3+0.53533*K4-0.2*K5)
-         if (mode==fixed_mode) then
-            nextstep(1) = step
-            outvars = nxt4th
-            return
-         end if
-         interim = invars + step*(-0.29630*K1+2.0*K2-1.38168*K3+0.45297*K4-0.275*K5)
-         call odeFunc(interim, K6)
-         nxt5th = invars + step*(0.11852*K1+0.51899*K3+0.50613*K4-0.18*K5+0.03636*K6)
-         rerr = (nxt4th - nxt5th) / (nxt4th + INFTSML)
-         call Norm(rerr, 1, rdy)
-         call Norm(nxt4th-nxt5th, 1, dy)
-         call Minimum(nxt4th, 1, dyn)
-         ! check whether solution is converged
-         isLargeErr = .False.
-         isConstrainBroken = .False.
-         do ii = 1, nx, 1
-            if (dy(ii)>tol(ii) .and. rdy(ii)>rel_tol(ii)) then
-               isLargeErr = .True.
-            end if
-            if (dyn(ii)<-100*tol(ii)) then
-               isConstrainBroken = .True.
-            end if
-         end do
-         ! update time step
-         if (isConstrainBroken) then
-            step = 0.5*step
-         else
-            abs_rate = tol / (dy + INFTSML)
-            rel_rate = rel_tol / (rdy + INFTSML)
-            rate = max(minval(abs_rate), minval(rel_rate))
-            delta = 0.84*rate**0.25
-            if (delta<=0.1) then
-               step = 0.1*step
-            else if (delta>=4.0) then
-               step = 4.0*step
-            else
-               step = delta*step
-            end if
-         end if
-         iter = iter + 1
-      end do
-      nextstep(1) = step
-      outvars = nxt4th
-   end subroutine
-
    subroutine Norm(matrix, dir, values)
       implicit none
       real(kind=8), intent(in)  :: matrix(:,:)
@@ -194,7 +59,7 @@ contains
       implicit none
       external :: NonLREQ
       real(kind=8), intent(in) :: coefs(:)
-      real(kind=8), intent(in) :: xbounds(2) 
+      real(kind=8), intent(in) :: xbounds(2)
       real(kind=8), intent(in) :: tol
       real(kind=8), intent(out) :: root
       real(kind=8) :: xa, xb, ya, yb
@@ -243,7 +108,7 @@ contains
                ! secant method
                root = xb - yb*(xb-xa)/(yb-ya)
             end if
-            ! check to see whether we can use the faster converging quadratic 
+            ! check to see whether we can use the faster converging quadratic
             ! && secant methods or if we need to use bisection
             if ( ( root<(3.0*xa+xb)*0.25 .or. root>xb ) .or. &
                   ( mflag .and. abs(root-xb)>=abs(xb-xc)*0.5 ) .or. &
@@ -290,7 +155,7 @@ contains
    !------------------------------------------------------------------------------
    !
    ! Purpose: Slope limiter for the 1D Finite Volume Semi-discrete Kurganov and
-   !			  Tadmor (KT) central scheme.
+   !          Tadmor (KT) central scheme.
    !
    !------------------------------------------------------------------------------
    subroutine FVSKT_Superbee(uhydro, phi)
@@ -306,7 +171,7 @@ contains
             phi(:,ii) = 0.0d0
          else
             rr = (uhydro(:,ii)-uhydro(:,ii-1))/(uhydro(:,ii+1)-uhydro(:,ii))
-            phi(:,ii) = max(0.0,min(2.0*rr,1.0),min(rr,2.0))            
+            phi(:,ii) = max(0.0,min(2.0*rr,1.0),min(rr,2.0))
          end if
       end do
    end subroutine
@@ -332,15 +197,15 @@ contains
             uhydroR(:,ii) = uhydro(:,ii)
          else
             duhydro = 0.5*phi(:,ii)*(uhydro(:,ii+1)-uhydro(:,ii))
-            uhydroL(:,ii) = uhydro(:,ii) - duhydro 
-            uhydroR(:,ii) = uhydro(:,ii) + duhydro 
+            uhydroL(:,ii) = uhydro(:,ii) - duhydro
+            uhydroR(:,ii) = uhydro(:,ii) + duhydro
          end if
       end do
    end subroutine
 
    !------------------------------------------------------------------------------
    !
-   ! Purpose: Performs a binary search of a sorted one-dimensional array for a 
+   ! Purpose: Performs a binary search of a sorted one-dimensional array for a
    !          specified element.
    !
    !------------------------------------------------------------------------------
@@ -377,4 +242,4 @@ contains
       idx = last - 1
    end subroutine
 
-end module RungeKutta4
+end module hydro_utilities_mod

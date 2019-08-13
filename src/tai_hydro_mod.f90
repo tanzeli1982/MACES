@@ -5,9 +5,8 @@ module TAIHydroMOD
 ! This module implements the 1-D transect-based hydrodynamic model
 !
 !---------------------------------------------------------------------------------
-   use RungeKutta4,  only : InitRKDataBuffer, DestructRKDataBuffer 
-   use RungeKutta4,  only : NonLRBrents, BinarySearch 
-   use RungeKutta4,  only : FVSKT_Superbee, FVSKT_celledge
+   use data_buffer_mod
+   use hydro_utilities_mod 
 
    implicit none
    integer, parameter :: NVAR = 5
@@ -33,48 +32,6 @@ module TAIHydroMOD
    ! model inputs
    real(kind=8) :: force_T       ! wave period (s)
    real(kind=8) :: force_U10     ! wind speed (m/s)
-   ! hydrodynamic state variables
-   real(kind=8), allocatable, dimension(:,:) :: m_uhydro
-   ! platform coordinate and elevation (m) 
-   real(kind=8), allocatable, dimension(:)   :: m_X
-   real(kind=8), allocatable, dimension(:)   :: m_dX
-   real(kind=8), allocatable, dimension(:)   :: m_Zh
-   real(kind=8), allocatable, dimension(:)   :: m_dZh
-   integer, allocatable, dimension(:)        :: m_pft
-   ! current speed (m/s)
-   real(kind=8), allocatable, dimension(:)   :: m_U
-   ! significant wave height (m) and wave energy (W)
-   real(kind=8), allocatable, dimension(:)   :: m_Hwav
-   real(kind=8), allocatable, dimension(:)   :: m_Ewav
-   real(kind=8), allocatable, dimension(:)   :: m_Uwav
-   ! bottom shear stress (Pa)
-   real(kind=8), allocatable, dimension(:)   :: m_tau
-   ! sediment source and sink (kg/m2/s)
-   real(kind=8), allocatable, dimension(:)   :: m_Esed
-   real(kind=8), allocatable, dimension(:)   :: m_Dsed
-   real(kind=8), allocatable, dimension(:)   :: m_Cz
-   real(kind=8), allocatable, dimension(:)   :: m_kwav
-   real(kind=8), allocatable, dimension(:)   :: m_Qb
-   real(kind=8), allocatable, dimension(:)   :: m_Swg
-   real(kind=8), allocatable, dimension(:)   :: m_Sbf
-   real(kind=8), allocatable, dimension(:)   :: m_Swc
-   real(kind=8), allocatable, dimension(:)   :: m_Sbrk
-   ! temporary variables
-   real(kind=8), allocatable, dimension(:,:) :: tmp_uhydroL
-   real(kind=8), allocatable, dimension(:,:) :: tmp_uhydroR
-   real(kind=8), allocatable, dimension(:,:) :: tmp_phi
-   real(kind=8), allocatable, dimension(:,:) :: tmp_FL
-   real(kind=8), allocatable, dimension(:,:) :: tmp_FR
-   real(kind=8), allocatable, dimension(:,:) :: tmp_P
-   real(kind=8), allocatable, dimension(:,:) :: tmp_SRC
-   real(kind=8), allocatable, dimension(:,:) :: tmp_eigval
-   real(kind=8), allocatable, dimension(:)   :: tmp_aL
-   real(kind=8), allocatable, dimension(:)   :: tmp_aR
-   real(kind=8), allocatable, dimension(:)   :: tmp_U
-   real(kind=8), allocatable, dimension(:)   :: tmp_Cg
-   real(kind=8), allocatable, dimension(:)   :: tmp_Nmax
-   ! constants
-   real(kind=8), allocatable, dimension(:)   :: const_Qb
    ! other variables
    integer :: NX
 
@@ -86,7 +43,16 @@ contains
       integer :: ii
 
       NX = size(X)
-      call InitRKDataBuffer(NVAR, NX)
+      allocate(rk4_k1(NVAR,NX))
+      allocate(rk4_K2(NVAR,NX))
+      allocate(rk4_K3(NVAR,NX))
+      allocate(rk4_K4(NVAR,NX))
+      allocate(rk4_K5(NVAR,NX))
+      allocate(rk4_K6(NVAR,NX))
+      allocate(rk4_nxt4th(NVAR,NX))
+      allocate(rk4_nxt5th(NVAR,NX))
+      allocate(rk4_interim(NVAR,NX))
+      allocate(rk4_rerr(NVAR,NX))
       allocate(m_uhydro(NVAR,NX))
       allocate(m_X(NX))
       allocate(m_dX(NX))
@@ -149,7 +115,16 @@ contains
    subroutine Destruct()
       implicit none
 
-      call DestructRKDataBuffer()
+      deallocate(rk4_K1)
+      deallocate(rk4_K2)
+      deallocate(rk4_K3)
+      deallocate(rk4_K4)
+      deallocate(rk4_K5)
+      deallocate(rk4_K6)
+      deallocate(rk4_nxt4th)
+      deallocate(rk4_nxt5th)
+      deallocate(rk4_interim)
+      deallocate(rk4_rerr)
       deallocate(m_uhydro)
       deallocate(m_X)
       deallocate(m_dX)
@@ -183,6 +158,94 @@ contains
       deallocate(tmp_Cg)
       deallocate(tmp_Nmax)
       deallocate(const_Qb)
+   end subroutine
+
+   subroutine RK4Fehlberg(odeFunc, invars, outvars, mode, tol, &
+                          curstep, nextstep, outerr)
+      implicit none
+      external :: odeFunc
+      real(kind=8), intent(in) :: invars(:,:)
+      real(kind=8), intent(inout) :: outvars(:,:)
+      integer, intent(in)  :: mode
+      real(kind=8), intent(in) :: tol(:)
+      real(kind=8), intent(inout) :: curstep(1)
+      real(kind=8), intent(inout) :: nextstep(1)
+      integer, intent(inout)  :: outerr(1)
+      real(kind=8), dimension(size(invars,1)) :: dy, rdy, dyn
+      real(kind=8), dimension(size(invars,1)) :: rel_tol
+      real(kind=8), dimension(size(invars,1)) :: abs_rate
+      real(kind=8), dimension(size(invars,1)) :: rel_rate
+      real(kind=8) :: step, rate, delta
+      logical  :: isLargeErr, isConstrainBroken
+      integer  :: iter, ii, nx, ny
+
+      nx = size(invars,1)
+      ny = size(invars,2)
+      isLargeErr = .True.
+      isConstrainBroken = .False.
+      outerr(1) = 0
+      step = curstep(1)
+      iter = 1
+      rel_tol = TOL_REL
+      call odeFunc(invars, K1)
+      do while (isLargeErr .or. isConstrainBroken)
+         if (iter>MAXITER) then
+            outerr(1) = 1
+            return
+         end if
+         curstep(1) = step
+         interim = invars + step*0.25*K1
+         call odeFunc(interim, K2)
+         interim = invars + step*(0.09375*K1+0.28125*K2)
+         call odeFunc(interim, K3)
+         interim = invars + step*(0.87938*K1-3.27720*K2+3.32089*K3)
+         call odeFunc(interim, K4)
+         interim = invars + step*(2.03241*K1-8.0*K2+7.17349*K3-0.20590*K4)
+         call odeFunc(interim, K5)
+         nxt4th = invars + step*(0.11574*K1+0.54893*K3+0.53533*K4-0.2*K5)
+         if (mode==fixed_mode) then
+            nextstep(1) = step
+            outvars = nxt4th
+            return
+         end if
+         interim = invars + step*(-0.29630*K1+2.0*K2-1.38168*K3+0.45297*K4-0.275*K5)
+         call odeFunc(interim, K6)
+         nxt5th = invars + step*(0.11852*K1+0.51899*K3+0.50613*K4-0.18*K5+0.03636*K6)
+         rerr = (nxt4th - nxt5th) / (nxt4th + INFTSML)
+         call Norm(rerr, 1, rdy)
+         call Norm(nxt4th-nxt5th, 1, dy)
+         call Minimum(nxt4th, 1, dyn)
+         ! check whether solution is converged
+         isLargeErr = .False.
+         isConstrainBroken = .False.
+         do ii = 1, nx, 1
+            if (dy(ii)>tol(ii) .and. rdy(ii)>rel_tol(ii)) then
+               isLargeErr = .True.
+            end if
+            if (dyn(ii)<-100*tol(ii)) then
+               isConstrainBroken = .True.
+            end if
+         end do
+         ! update time step
+         if (isConstrainBroken) then
+            step = 0.5*step
+         else
+            abs_rate = tol / (dy + INFTSML)
+            rel_rate = rel_tol / (rdy + INFTSML)
+            rate = max(minval(abs_rate), minval(rel_rate))
+            delta = 0.84*rate**0.25
+            if (delta<=0.1) then
+               step = 0.1*step
+            else if (delta>=4.0) then
+               step = 4.0*step
+            else
+               step = delta*step
+            end if
+         end if
+         iter = iter + 1
+      end do
+      nextstep(1) = step
+      outvars = nxt4th
    end subroutine
 
    !------------------------------------------------------------------------------
