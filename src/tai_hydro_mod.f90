@@ -5,100 +5,95 @@ module TAIHydroMOD
 ! This module implements the 1-D transect-based hydrodynamic model
 !
 !---------------------------------------------------------------------------------
+   use data_type_mod
    use data_buffer_mod
    use hydro_utilities_mod 
 
    implicit none
-   integer, parameter :: NVAR = 5
-   integer, parameter :: NPFT = 8
-   real(kind=8), parameter :: PI = 3.14159265d+0
-   real(kind=8), parameter :: e = 2.71828183d+0
-   real(kind=8), parameter :: Roul = 1028.0
-   real(kind=8), parameter :: Roua = 1.225
-   real(kind=8), parameter :: Karman = 0.41
-   real(kind=8), parameter :: G = 9.8
-   ! model parameters
-   real(kind=8) :: par_d50       ! sediment median diameter (m)
-   real(kind=8) :: par_Cz0       ! the Chézy friction coefficient (m^0.5/s)
-   real(kind=8) :: par_cD0(NPFT) ! bulk plant drag coefficient baseline (unitless)
-   real(kind=8) :: par_ScD(NPFT) ! the slope between cD and Bag (unknown)
-   real(kind=8) :: par_alphaA(NPFT) ! empirical coefficient for projected plant area
-   real(kind=8) :: par_betaA(NPFT)  ! empirical coefficient for projected plant area
-   real(kind=8) :: par_alphaD(NPFT) ! empirical coefficient for stem diameter
-   real(kind=8) :: par_betaD(NPFT)  ! empirical coefficient for stem diameter
-   real(kind=8) :: par_Kdf       ! sediment dispersion coefficient (m^2/s)
-   real(kind=8) :: par_cbc       ! wave dissipation coefficient (unknown)
-   real(kind=8) :: par_fr        ! maximum allowed wave height fraction
-   ! model inputs
-   real(kind=8) :: force_T       ! wave period (s)
-   real(kind=8) :: force_U10     ! wind speed (m/s)
-   ! other variables
-   integer :: NX
 
 contains
-   subroutine Initialize(X, Zh)
+   subroutine InitHydroMod(xin, zhin, nvar, npft, nx)
       implicit none
-      real(kind=8), intent(in) :: X(:)    ! grid cell coordinate (m) 
-      real(kind=8), intent(in) :: Zh(:)   ! grid cell elevation (m)
+      !f2py intent(in) :: xin, zhin, nvar, npft
+      !f2py intent(hide), depend(xin) :: nx = len(xin)
+      real(kind=8), dimension(nx) :: xin     ! platform x coordinate (m) 
+      real(kind=8), dimension(nx) :: zhin    ! platform surface elevation (msl)
+      integer :: nvar               ! state variable number
+      integer :: npft               ! pft number
+      integer :: nx                 ! grid cell number
+      ! local variables
       integer :: ii
 
-      NX = size(X)
-      allocate(rk4_k1(NVAR,NX))
-      allocate(rk4_K2(NVAR,NX))
-      allocate(rk4_K3(NVAR,NX))
-      allocate(rk4_K4(NVAR,NX))
-      allocate(rk4_K5(NVAR,NX))
-      allocate(rk4_K6(NVAR,NX))
-      allocate(rk4_nxt4th(NVAR,NX))
-      allocate(rk4_nxt5th(NVAR,NX))
-      allocate(rk4_interim(NVAR,NX))
-      allocate(rk4_rerr(NVAR,NX))
-      allocate(m_uhydro(NVAR,NX))
-      allocate(m_X(NX))
-      allocate(m_dX(NX))
-      allocate(m_Zh(NX))
-      allocate(m_dZh(NX))
-      allocate(m_pft(NX))
-      allocate(m_U(NX))
-      allocate(m_Hwav(NX))
-      allocate(m_Ewav(NX))
-      allocate(m_Uwav(NX))
-      allocate(m_Esed(NX))
-      allocate(m_Dsed(NX))
-      allocate(m_tau(NX))
-      allocate(m_Qb(NX))
-      allocate(m_Swg(NX))
-      allocate(m_Sbf(NX))
-      allocate(m_Swc(NX))
-      allocate(m_Sbrk(NX))
-      allocate(m_Cz(NX))
-      allocate(tmp_uhydroL(NVAR,NX))
-      allocate(tmp_uhydroR(NVAR,NX))
-      allocate(tmp_phi(NVAR,NX))
-      allocate(tmp_FL(NVAR,NX))
-      allocate(tmp_FR(NVAR,NX))
-      allocate(tmp_P(NVAR,NX))
-      allocate(tmp_SRC(NVAR,NX))
-      allocate(tmp_eigval(NVAR,NX))
-      allocate(tmp_aL(NX))
-      allocate(tmp_aR(NX))
-      allocate(tmp_U(NX))
-      allocate(tmp_Cg(NX))
-      allocate(tmp_Nmax(NX))
-      allocate(const_Qb(101))
+      ! RungeKutta4 allocatable arrays
+      allocate(rk4_K1(nvar,nx))        ; rk4_K1 = 0.0d0
+      allocate(rk4_K2(nvar,nx))        ; rk4_K2 = 0.0d0
+      allocate(rk4_K3(nvar,nx))        ; rk4_K3 = 0.0d0
+      allocate(rk4_K4(nvar,nx))        ; rk4_K4 = 0.0d0
+      allocate(rk4_K5(nvar,nx))        ; rk4_K5 = 0.0d0
+      allocate(rk4_K6(nvar,nx))        ; rk4_K6 = 0.0d0
+      allocate(rk4_nxt4th(nvar,nx))    ; rk4_nxt4th = 0.0d0
+      allocate(rk4_nxt5th(nvar,nx))    ; rk4_nxt5th = 0.0d0
+      allocate(rk4_interim(nvar,nx))   ; rk4_interim = 0.0d0
+      allocate(rk4_rerr(nvar,nx))      ; rk4_rerr = 0.0d0
+      ! hydrodynamics state allocatable arrays
+      allocate(m_uhydro(nvar,nx))      ; m_uhydro = 0.0d0
+      allocate(m_X(nx))                ; m_X = xin
+      allocate(m_dX(nx))               ; m_dX = 0.0d0
+      allocate(m_Zh(nx))               ; m_Zh = zhin
+      allocate(m_dZh(nx))              ; m_dZh = 0.0d0
+      allocate(m_U(nx))                ; m_U = 0.0d0
+      allocate(m_Hwav(nx))             ; m_Hwav = 0.0d0
+      allocate(m_Ewav(nx))             ; m_Ewav = 0.0d0
+      allocate(m_Uwav(nx))             ; m_Uwav = 0.0d0
+      allocate(m_tau(nx))              ; m_tau = 0.0d0
+      allocate(m_Qb(nx))               ; m_Qb = 0.0d0
+      allocate(m_Swg(nx))              ; m_Swg = 0.0d0
+      allocate(m_Sbf(nx))              ; m_Sbf = 0.0d0
+      allocate(m_Swc(nx))              ; m_Swc = 0.0d0
+      allocate(m_Sbrk(nx))             ; m_Sbrk = 0.0d0
+      allocate(m_Cz(nx))               ; m_Cz = 0.0d0
+      ! hydrodynamics temporary allocatable arrays
+      allocate(tmp_uhydroL(nvar,nx))   ; tmp_uhydroL = 0.0d0
+      allocate(tmp_uhydroR(nvar,nx))   ; tmp_uhydroR = 0.0d0
+      allocate(tmp_phi(nvar,nx))       ; tmp_phi = 0.0d0
+      allocate(tmp_FL(nvar,nx))        ; tmp_FL = 0.0d0
+      allocate(tmp_FR(nvar,nx))        ; tmp_FR = 0.0d0
+      allocate(tmp_P(nvar,nx))         ; tmp_P = 0.0d0
+      allocate(tmp_SRC(nvar,nx))       ; tmp_SRC = 0.0d0
+      allocate(tmp_eigval(nvar,nx))    ; tmp_eigval = 0.0d0
+      allocate(tmp_aL(nx))             ; tmp_aL = 0.0d0
+      allocate(tmp_aR(nx))             ; tmp_aR = 0.0d0
+      allocate(tmp_U(nx))              ; tmp_U = 0.0d0
+      allocate(tmp_Cg(nx))             ; tmp_Cg = 0.0d0
+      allocate(tmp_Nmax(nx))           ; tmp_Nmax = 0.0d0
+      allocate(tmp_Qb(101))            ; tmp_Qb = 0.0d0
+      ! user-defined allocatable arrays
+      allocate(m_params%cD0(npft))     ; m_params%cD0 = 0.0d0
+      allocate(m_params%ScD(npft))     ; m_params%ScD = 0.0d0
+      allocate(m_params%alphaA(npft))  ; m_params%alphaA = 0.0d0
+      allocate(m_params%betaA(npft))   ; m_params%betaA = 0.0d0
+      allocate(m_params%alphaD(npft))  ; m_params%alphaD = 0.0d0
+      allocate(m_params%betaD(npft))   ; m_params%betaD = 0.0d0
+      allocate(m_forcings%pft(nx))     ; m_forcings%pft = -1
+      allocate(m_forcings%Bag(nx))     ; m_forcings%Bag = 0.0d0
+      allocate(m_forcings%Esed(nx))    ; m_forcings%Esed = 0.0d0
+      allocate(m_forcings%Dsed(nx))    ; m_forcings%Dsed = 0.0d0
       
       m_uhydro = 0.0
-      do ii = 1, NX, 1
+      do ii = 1, nx, 1
          if (ii==1) then
             m_dX(ii) = 0.5 * (m_X(ii) + m_X(ii+1))
-         else if (ii==NX) then
+         else if (ii==nx) then
             m_dX(ii) = 0.5 * (m_X(ii-1) + m_X(ii))
          else
             m_dX(ii) = 0.5 * (m_X(ii+1) - m_X(ii-1))
          end if
-         m_uhydro(3,ii) = max(-Zh(ii), 0.0)
+         m_uhydro(1,ii) = max(-m_Zh(ii), 0.0)
+         if (m_uhydro(1,ii)>0) then
+            m_uhydro(5,ii) = 35.0d0
+         end if
       end do
-      const_Qb = (/0.0,0.4637,0.5005,0.5260,0.5461,0.5631,0.5780,0.5914, &
+      tmp_Qb = (/0.0,0.4637,0.5005,0.5260,0.5461,0.5631,0.5780,0.5914, &
          0.6035,0.6147,0.6252,0.6350,0.6442,0.6530,0.6614,0.6694,0.6770, &
          0.6844,0.6915,0.6984,0.7050,0.7115,0.7177,0.7238,0.7298,0.7355, &
          0.7412,0.7467,0.7521,0.7573,0.7625,0.7676,0.7725,0.7774,0.7822, &
@@ -112,9 +107,10 @@ contains
          0.9950,0.9975,1.0/)
    end subroutine
 
-   subroutine Destruct()
+   subroutine FinalizeHydroMod()
       implicit none
 
+      ! deallocate rungekutta4 arrays
       deallocate(rk4_K1)
       deallocate(rk4_K2)
       deallocate(rk4_K3)
@@ -125,18 +121,16 @@ contains
       deallocate(rk4_nxt5th)
       deallocate(rk4_interim)
       deallocate(rk4_rerr)
+      ! deallocate hydrodynamics state arrays
       deallocate(m_uhydro)
       deallocate(m_X)
       deallocate(m_dX)
       deallocate(m_Zh)
       deallocate(m_dZh)
-      deallocate(m_pft)
       deallocate(m_U)
       deallocate(m_Hwav)
       deallocate(m_Ewav)
       deallocate(m_Uwav)
-      deallocate(m_Esed)
-      deallocate(m_Dsed)
       deallocate(m_tau)
       deallocate(m_Qb)
       deallocate(m_Swg)
@@ -144,6 +138,7 @@ contains
       deallocate(m_Swc)
       deallocate(m_Sbrk)
       deallocate(m_Cz)
+      ! deallocate hydrodynamics temporary arrays
       deallocate(tmp_uhydroL)
       deallocate(tmp_uhydroR)
       deallocate(tmp_phi)
@@ -157,68 +152,411 @@ contains
       deallocate(tmp_U)
       deallocate(tmp_Cg)
       deallocate(tmp_Nmax)
-      deallocate(const_Qb)
+      deallocate(tmp_Qb)
+      ! deallocate user-defined arrays
+      deallocate(m_params%cD0)
+      deallocate(m_params%ScD)
+      deallocate(m_params%alphaA)
+      deallocate(m_params%betaA)
+      deallocate(m_params%alphaD)
+      deallocate(m_params%betaD)
+      deallocate(m_forcings%Esed)
+      deallocate(m_forcings%Dsed)
+      deallocate(m_forcings%Bag)
+      deallocate(m_forcings%pft)
    end subroutine
 
-   subroutine RK4Fehlberg(odeFunc, invars, outvars, mode, tol, &
-                          curstep, nextstep, outerr)
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Set model parameters.
+   ! cbc should be related to 1/Cz0
+   ! d50 = 0.00025   ! m
+   ! Cz0 = 65.0      ! m^0.5/s
+   ! Kdf = 100.0     ! m^2/s
+   ! cbc = 0.015     ! unknown 
+   ! fr = 0.78       ! fraction
+   ! alphaA(:) = 8.0
+   ! betaA(:) = 0.5
+   ! alphaD(:) = 0.005
+   ! betaD(:) = 0.3
+   ! cD0(:) = 1.1
+   ! ScD(:) = -0.3
+   !
+   !------------------------------------------------------------------------------
+   subroutine SetModelParams(d50, Cz0, Kdf, cbc, fr, alphaA, betaA, &
+                             alphaD, betaD, cD0, ScD, n)
       implicit none
+      !f2py intent(in) :: d50, Cz0, Kdf, cbc, fr
+      !f2py intent(in) :: alphaA, betaA, alphaD, betaD
+      !f2py intent(in) :: cD0, ScD
+      !f2py intent(hide), depend(alphaA) :: n = len(alphaA)
+      real(kind=8) :: d50, Cz0, Kdf, cbc, fr
+      real(kind=8), dimension(n) :: alphaA, betaA
+      real(kind=8), dimension(n) :: alphaD, betaD
+      real(kind=8), dimension(n) :: cD0, ScD
+      integer :: n
+
+      m_params%d50 = d50
+      m_params%Cz0 = Cz0
+      m_params%Kdf = Kdf
+      m_params%cbc = cbc
+      m_params%fr = fr
+      m_params%alphaA = alphaA
+      m_params%betaA = betaA
+      m_params%alphaD = alphaD
+      m_params%betaD = betaD
+      m_params%cD0 = cD0
+      m_params%ScD = ScD
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Pre-run model intermediate variable updates and read boundary 
+   !          conditions.
+   !
+   !------------------------------------------------------------------------------
+   subroutine ModelSetup(zh, pft, Bag, Esed, Dsed, Twav, U10, h0, & 
+                         U0, Hwav0, Css0, Cj0, n)
+      implicit none
+      !f2py intent(in) :: zh, pft, Bag, Esed, Dsed
+      !f2py intent(in) :: Twav, U10, h0, U0, Hwav0
+      !f2py intent(in) :: Css0, Cj0
+      !f2py intent(hide), depend(Zh) :: n = len(Zh)
+      real(kind=8), dimension(n) :: zh, Bag
+      real(kind=8), dimension(n) :: Esed, Dsed
+      integer, dimension(n) :: pft
+      real(kind=8) :: Twav, U10, h0, U0, Hwav0
+      real(kind=8) :: Css0, Cj0
+      integer :: n
+      integer :: ii
+
+      m_forcings%Esed = Esed
+      m_forcings%Dsed = Dsed
+      m_forcings%pft = pft
+      m_forcings%Bag = Bag
+      ! a typical wave period is 2s but increase greatly with the increase
+      ! of wave speed (https://en.wikipedia.org/wiki/Wind_wave)
+      m_forcings%Twav = Twav
+      m_forcings%U10 = U10
+      m_forcings%h0 = h0
+      m_forcings%U0 = U0
+      m_forcings%Hwav0 = Hwav0
+      m_forcings%Css0 = Css0
+      m_forcings%Cj0 = Cj0
+
+      m_Zh = zh
+      do ii = 1, n, 1
+         if (ii==1) then
+            m_dZh(ii) = 0.5 * (m_Zh(ii+1) - m_Zh(ii))
+         else if (ii==n) then
+            m_dZh(ii) = 0.5 * (m_Zh(ii) - m_Zh(ii-1))
+         else
+            m_dZh(ii) = 0.5 * (m_Zh(ii+1) - m_Zh(ii-1))
+         end if
+      end do
+
+      call UpdateGroundRoughness(m_forcings, m_uhydro(1,:), & 
+                                 m_params, m_Cz)
+      !call UpdateWaveNumber(m_forcings, m_uhydro(1,:), m_kwav)
+      call UpdateWaveNumber2(m_forcings, m_uhydro(1,:), m_kwav)
+      !call UpdateWaveBrkProb(m_uhydro(1,:), m_Hwav, m_params, m_Qb)
+      call UpdateWaveBrkProb2(m_uhydro(1,:), m_Hwav, m_params, &
+                              tmp_Qb, m_Qb)
+      call UpdateWaveGeneration(m_forcings, m_uhydro(1,:), m_kwav, &
+                                m_Ewav, m_Swg)
+      call UpdateWaveBtmFriction(m_forcings, m_uhydro(1,:), m_Hwav, &
+                                 m_kwav, m_Ewav, m_Qb, m_params, m_Sbf)
+      call UpdateWaveWhiteCapping(m_forcings, m_Ewav, m_Swc)
+      call UpdateWaveDepthBrking(m_forcings, m_uhydro(1,:), m_Hwav, &
+                                 m_kwav, m_Ewav, m_Qb, m_params, m_Sbrk)
+
+      ! boundary conditions
+      m_uhydro(1,1) = h0
+      m_uhydro(2,1) = U0 * h0
+      m_uhydro(3,1) = 0.125*Roul*G*(Hwav0**2)/(2.0*PI/Twav)
+      m_uhydro(4,1) = Css0
+      m_uhydro(5,1) = Cj0
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Post-run model update.
+   !          At depths smaller than 0.1 m, the flow velocity and sediment 
+   !          transport are taken to zero (linearly interpolated to zero)??
+   !
+   !------------------------------------------------------------------------------
+   subroutine ModelCallback(uhydro, n, m)
+      implicit none
+      !f2py intent(in) :: uhydro
+      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      real(kind=8), dimension(n,m) :: uhydro
+      integer :: n, m
+      ! local variables
+      real(kind=8) :: sigma, Hwav, h
+      integer :: ii
+      
+      m_uhydro = uhydro
+      sigma = 2.0*PI/m_forcings%Twav
+      do ii = 1, m, 1
+         if (m_uhydro(1,ii)<=0) then
+            m_uhydro(2:n,ii) = 0.0d0
+         end if
+      end do
+      m_U = m_uhydro(2,:) / max(0.1,m_uhydro(1,:))
+      m_Ewav = sigma * m_uhydro(3,:)
+      m_Hwav = sqrt(8.0*m_Ewav/G/Roul)
+      do ii = 1, m, 1
+         h = m_uhydro(1,ii)
+         Hwav = m_Hwav(ii)
+         if (h<=0) then
+            m_Uwav(ii) = 0.0d0
+         else
+            m_Uwav(ii) = min(PI*Hwav/m_forcings%Twav/sinh(Karman*h), 20.0)
+         end if
+      end do
+      call UpdateShearStress(m_forcings, m_uhydro(1,:), m_U, m_Hwav, &
+                             m_Uwav, m_params, m_tau)
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate cell edge convection flux. 
+   !          Significant wave height is limited by fr times water depth.
+   !
+   !------------------------------------------------------------------------------
+   subroutine CalcEdgeConvectionFlux(uhydro, fluxes, n, m)
+      implicit none
+      !f2py intent(in) :: uhydro
+      !f2py intent(out) :: fluxes
+      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      real(kind=8), dimension(n,m) :: uhydro, fluxes
+      integer :: n, m
+      ! local variables
+      real(kind=8) :: sigma
+      integer :: indx
+
+      sigma = 2.0*PI/m_forcings%Twav
+      tmp_U = uhydro(2,:) / max(0.1,uhydro(1,:))
+      tmp_Nmax = 0.125*Roul*G*(m_params%fr*uhydro(1,:))**2/sigma
+      indx = count(uhydro(1,:)>0)
+      tmp_Cg(1:indx) = 0.5*sigma*(1.0+2.0*m_kwav(1:indx)*uhydro(1,1:indx)/ &
+         sinh(2.0*m_kwav(1:indx)*uhydro(1,1:indx)))/m_kwav(1:indx)
+      tmp_Cg(indx+1:m) = 0.0d0
+      fluxes(1,:) = uhydro(2,:)
+      fluxes(2,:) = uhydro(1,:)*(tmp_U**2) + 0.5*G*uhydro(1,:)**2
+      fluxes(3,:) = tmp_Cg*min(uhydro(3,:),tmp_Nmax)
+      fluxes(4,:) = uhydro(2,:)*uhydro(4,:)
+      fluxes(5,:) = uhydro(2,:)*uhydro(5,:)
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate cell edge maximum gradient.
+   !          Ignore the non-diagonal Jacobi terms for N, Css and Cj
+   !          
+   !          ZGEEV('N', 'N', nvar, jacobi, nvar, b, DUMMY, 1, DUMMY, 1, &
+   !                WORK, 2*nvar, WORK, err)
+   !          complex(kind=8) :: jacobi(nvar,nvar), b(nvar)
+   !          complex(kind=8) :: DUMMY(1,1), WORK(2*nvar)
+   !          integer :: err
+   !
+   !------------------------------------------------------------------------------
+   subroutine CalcEdgeMaxGradient(uhydro, gradient, n, m)
+      implicit none
+      !f2py intent(in) :: uhydro
+      !f2py intent(out) :: gradient
+      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      real(kind=8), dimension(n,m) :: uhydro
+      real(kind=8), dimension(m) :: gradient
+      integer :: n, m
+      ! local variables
+      real(kind=8) :: sigma
+      integer :: indx
+
+      sigma = 2.0*PI/m_forcings%Twav
+      indx = count(uhydro(1,:)>0)
+      tmp_Cg(1:indx) = 0.5*sigma*(1.0+2.0*m_kwav(1:indx)*uhydro(1,1:indx)/ &
+         sinh(2.0*m_kwav(1:indx)*uhydro(1,1:indx)))/m_kwav(1:indx)
+      tmp_Cg(indx+1:m) = 0.0d0
+      tmp_U = uhydro(2,:) / max(0.1,uhydro(1,:))
+      tmp_eigval(1,:) = 3.0*tmp_U + sqrt(5.0*(tmp_U**2)+G*uhydro(1,:))
+      tmp_eigval(2,:) = 3.0*tmp_U - sqrt(5.0*(tmp_U**2)+G*uhydro(1,:))
+      tmp_eigval(3,:) = tmp_Cg
+      tmp_eigval(4,:) = uhydro(2,:)
+      tmp_eigval(5,:) = uhydro(2,:)
+      gradient = maxval(abs(tmp_eigval), dim=1)
+   end subroutine
+
+   subroutine CalcCellDiffusionFlux(uhydro, fluxes, n, m)
+      implicit none
+      !f2py intent(in) :: uhydro
+      !f2py intent(out) :: fluxes
+      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      real(kind=8), dimension(n,m) :: uhydro, fluxes
+      integer :: n, m
+
+      fluxes = 0.0d0
+      fluxes(4,2:m-1) = 0.5*m_params%Kdf*(uhydro(1,2:m-1)+uhydro(1,3:m))* &
+         (uhydro(4,3:m)-uhydro(4,2:m-1))/m_dX(2:m-1)
+      fluxes(5,2:m-1) = 0.5*m_params%Kdf*(uhydro(1,2:m-1)+uhydro(1,3:m))* &
+         (uhydro(5,3:m)-uhydro(5,2:m-1))/m_dX(2:m-1)
+   end subroutine
+
+   subroutine CalcCellStateSources(uhydro, sources, n, m)
+      implicit none
+      !f2py intent(in) :: uhydro
+      !f2py intent(out) :: sources
+      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      real(kind=8), dimension(n,m) :: uhydro, sources
+      integer :: n, m
+      real(kind=8) :: sigma
+
+      sigma = 2.0*PI/m_forcings%Twav
+      tmp_U = uhydro(2,:) / max(0.1,uhydro(1,:))
+      sources(1,:) = 0.0d0
+      sources(2,:) = -tmp_U*abs(tmp_U)*G/m_Cz**2 - G*uhydro(1,:)*m_dZh/m_dX
+      sources(3,:) = (m_Swg - (m_Sbf+m_Swc+m_Sbrk)) / sigma 
+      sources(4,:) = m_Esed - m_Dsed*uhydro(4,:)/(m_uhydro(4,:)+1d-3)
+      sources(5,:) = 0.0d0
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Use the 1-D Finite Volume Semi-discrete KT central scheme to 
+   !          discretize partial differential equation in the space domain.
+   !
+   !------------------------------------------------------------------------------
+   subroutine TAIHydroEquations(uhydro, duhydro, n, m)
+      implicit none
+      !f2py intent(in) :: uhydro
+      !f2py intent(out) :: duhydro
+      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      real(kind=8), dimension(n,m) :: uhydro, duhydro
+      integer :: n, m
+      ! local variables
+      real(kind=8) :: Fminus(n), Fplus(n)
+      real(kind=8) :: ap, am, dx
+      integer :: ii
+
+      ! calculate slope limiter
+      call FVSKT_Superbee(uhydro, tmp_phi)
+      ! calculate cell edge variable values
+      call FVSKT_celledge(uhydro, tmp_phi, tmp_uhydroL, tmp_uhydroR) 
+      ! calculate cell edge convective fluxes 
+      call CalcEdgeConvectionFlux(tmp_uhydroL, tmp_FL, n, m)
+      call CalcEdgeConvectionFlux(tmp_uhydroR, tmp_FR, n, m)
+      ! calculate cell edge maximum gradient
+      call CalcEdgeMaxGradient(tmp_uhydroL, tmp_aL, n, m)
+      call CalcEdgeMaxGradient(tmp_uhydroR, tmp_aR, n, m)
+      ! calculate cell diffusion flux 
+      call CalcCellDiffusionFlux(uhydro, tmp_P, n, m)
+      ! calculate cell state sources
+      call CalcCellStateSources(uhydro, tmp_SRC, n, m) 
+      ! calculate temporal gradients
+      do ii = 1, m, 1
+         dx = m_dX(ii)
+         ap = max(0.0, tmp_aR(ii), tmp_aL(ii+1))
+         am = max(0.0, tmp_aR(ii-1), tmp_aL(ii))
+         if (ii==0) then
+            ! seaward boundary condition
+            duhydro(:,ii) = 0.0d0
+         else if (ii==m) then
+            ! landward boundary condition
+            Fminus = 0.5*(tmp_FR(:,ii-1)+tmp_FL(:,ii)) - &
+               0.5*am*(tmp_uhydroL(:,ii)-tmp_uhydroR(:,ii-1))
+            duhydro(:,ii) = Fminus/dx - tmp_P(:,ii-1)/dx + tmp_SRC(:,ii)
+         else
+            Fminus = 0.5*(tmp_FR(:,ii-1)+tmp_FL(:,ii)) - &
+               0.5*am*(tmp_uhydroL(:,ii)-tmp_uhydroR(:,ii-1))
+            Fplus = 0.5*(tmp_FR(:,ii)+tmp_FL(:,ii+1)) - &
+               0.5*ap*(tmp_uhydroL(:,ii+1)-tmp_uhydroR(:,ii))
+            duhydro(:,ii) = -(Fplus - Fminus) / dx + (tmp_P(:,ii) - &
+               tmp_P(:,ii-1)) / dx + tmp_SRC(:,ii)
+         end if
+      end do
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: The 4th-order time step variable Runge-Kutta-Fehlberg method 
+   !
+   !------------------------------------------------------------------------------
+   subroutine RK4Fehlberg(invars, mode, tol, curstep, outvars, &
+                          ocurstep, nextstep, outerr, n, m)
+      implicit none
+      !f2py intent(callback) :: odeFunc
       external :: odeFunc
-      real(kind=8), intent(in) :: invars(:,:)
-      real(kind=8), intent(inout) :: outvars(:,:)
-      integer, intent(in)  :: mode
-      real(kind=8), intent(in) :: tol(:)
-      real(kind=8), intent(inout) :: curstep(1)
-      real(kind=8), intent(inout) :: nextstep(1)
-      integer, intent(inout)  :: outerr(1)
-      real(kind=8), dimension(size(invars,1)) :: dy, rdy, dyn
-      real(kind=8), dimension(size(invars,1)) :: rel_tol
-      real(kind=8), dimension(size(invars,1)) :: abs_rate
-      real(kind=8), dimension(size(invars,1)) :: rel_rate
+      !f2py real(kind=8), dimension(xn,xm), intent(in) :: x
+      !f2py real(kind=8), dimension(xn,xm), intent(out) :: y
+      !f2py integer, intent(hide), depend(x) :: xn = shape(x,0)
+      !f2py integer, intent(hide), depend(x) :: xm = shape(x,1)
+      !f2py call odeFunc(x,y,xn,xm)
+      !f2py intent(in) :: invars, mode, tol, curstep
+      !f2py intent(out) :: outvars, ocurstep, nextstep, outerr
+      !f2py intent(hide), depend(invars) :: n = shape(invars,0)
+      !f2py intent(hide), depend(invars) :: m = shape(invars,1)
+      real(kind=8), dimension(n,m) :: invars, outvars
+      real(kind=8), dimension(n) :: tol
+      integer :: mode, n, m, outerr
+      real(kind=8) :: curstep, ocurstep, nextstep
+      ! local variables
+      real(kind=8), dimension(n) :: dy, rdy, dyn
+      real(kind=8), dimension(n) :: rel_tol
+      real(kind=8), dimension(n) :: abs_rate
+      real(kind=8), dimension(n) :: rel_rate
       real(kind=8) :: step, rate, delta
       logical  :: isLargeErr, isConstrainBroken
-      integer  :: iter, ii, nx, ny
+      integer  :: iter, ii
 
-      nx = size(invars,1)
-      ny = size(invars,2)
       isLargeErr = .True.
       isConstrainBroken = .False.
-      outerr(1) = 0
-      step = curstep(1)
+      outerr = 0
+      step = curstep
       iter = 1
       rel_tol = TOL_REL
-      call odeFunc(invars, K1)
+      call odeFunc(invars, rk4_K1)
       do while (isLargeErr .or. isConstrainBroken)
          if (iter>MAXITER) then
-            outerr(1) = 1
+            outerr = 1
             return
          end if
-         curstep(1) = step
-         interim = invars + step*0.25*K1
-         call odeFunc(interim, K2)
-         interim = invars + step*(0.09375*K1+0.28125*K2)
-         call odeFunc(interim, K3)
-         interim = invars + step*(0.87938*K1-3.27720*K2+3.32089*K3)
-         call odeFunc(interim, K4)
-         interim = invars + step*(2.03241*K1-8.0*K2+7.17349*K3-0.20590*K4)
-         call odeFunc(interim, K5)
-         nxt4th = invars + step*(0.11574*K1+0.54893*K3+0.53533*K4-0.2*K5)
+         ocurstep = step
+         rk4_interim = invars + step*0.25*rk4_K1
+         call odeFunc(rk4_interim, rk4_K2)
+         rk4_interim = invars + step*(0.09375*rk4_K1+0.28125*rk4_K2)
+         call odeFunc(rk4_interim, rk4_K3)
+         rk4_interim = invars + step*(0.87938*rk4_K1-3.27720*rk4_K2+ &
+            3.32089*rk4_K3)
+         call odeFunc(rk4_interim, rk4_K4)
+         rk4_interim = invars + step*(2.03241*rk4_K1-8.0*rk4_K2+ &
+            7.17349*rk4_K3-0.20590*rk4_K4)
+         call odeFunc(rk4_interim, rk4_K5)
+         rk4_nxt4th = invars + step*(0.11574*rk4_K1+0.54893*rk4_K3+ &
+            0.53533*rk4_K4-0.2*rk4_K5)
          if (mode==fixed_mode) then
-            nextstep(1) = step
-            outvars = nxt4th
+            nextstep = step
+            outvars = rk4_nxt4th
             return
          end if
-         interim = invars + step*(-0.29630*K1+2.0*K2-1.38168*K3+0.45297*K4-0.275*K5)
-         call odeFunc(interim, K6)
-         nxt5th = invars + step*(0.11852*K1+0.51899*K3+0.50613*K4-0.18*K5+0.03636*K6)
-         rerr = (nxt4th - nxt5th) / (nxt4th + INFTSML)
-         call Norm(rerr, 1, rdy)
-         call Norm(nxt4th-nxt5th, 1, dy)
-         call Minimum(nxt4th, 1, dyn)
+         rk4_interim = invars + step*(-0.29630*rk4_K1+2.0*rk4_K2- &
+            1.38168*rk4_K3+0.45297*rk4_K4-0.275*rk4_K5)
+         call odeFunc(rk4_interim, rk4_K6)
+         rk4_nxt5th = invars + step*(0.11852*rk4_K1+0.51899*rk4_K3+ &
+            0.50613*rk4_K4-0.18*rk4_K5+0.03636*rk4_K6)
+         rk4_rerr = (rk4_nxt4th - rk4_nxt5th) / (rk4_nxt4th + INFTSML)
+         call Norm(rk4_rerr, 1, rdy)
+         call Norm(rk4_nxt4th-rk4_nxt5th, 1, dy)
+         call Minimum(rk4_nxt4th, 1, dyn)
          ! check whether solution is converged
          isLargeErr = .False.
          isConstrainBroken = .False.
-         do ii = 1, nx, 1
+         do ii = 1, n, 1
             if (dy(ii)>tol(ii) .and. rdy(ii)>rel_tol(ii)) then
                isLargeErr = .True.
             end if
@@ -244,548 +582,8 @@ contains
          end if
          iter = iter + 1
       end do
-      nextstep(1) = step
-      outvars = nxt4th
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Set model parameters.
-   ! cbc should be related to 1/Cz0
-   ! d50 = 0.00025   ! m
-   ! Cz0 = 65.0      ! m^0.5/s
-   ! Kdf = 100.0     ! m^2/s
-   ! cbc = 0.015     ! unknown 
-   ! fr = 0.78       ! fraction
-   ! alphaA(:) = 8.0
-   ! betaA(:) = 0.5
-   ! alphaD(:) = 0.005
-   ! betaD(:) = 0.3
-   ! cD0(:) = 1.1
-   ! ScD(:) = -0.3
-   !
-   !------------------------------------------------------------------------------
-   subroutine SetModelParameters(d50, Cz0, Kdf, cbc, fr, alphaA, betaA, &
-                                 alphaD, betaD, cD0, ScD)
-      implicit none
-      real(kind=8), intent(in) :: d50
-      real(kind=8), intent(in) :: Cz0
-      real(kind=8), intent(in) :: Kdf
-      real(kind=8), intent(in) :: cbc
-      real(kind=8), intent(in) :: fr
-      real(kind=8), intent(in) :: alphaA(:)
-      real(kind=8), intent(in) :: betaA(:)
-      real(kind=8), intent(in) :: alphaD(:)
-      real(kind=8), intent(in) :: betaD(:)
-      real(kind=8), intent(in) :: cD0(:)
-      real(kind=8), intent(in) :: ScD(:)
-
-      par_d50 = d50
-      par_Cz0 = Cz0
-      par_Kdf = Kdf
-      par_cbc = cbc
-      par_fr = fr
-      par_alphaA = alphaA
-      par_betaA = betaA
-      par_alphaD = alphaD
-      par_betaD = betaD
-      par_cD0 = cD0
-      par_ScD = ScD
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Pre-run model intermediate variable updates and read boundary 
-   !          conditions.
-   !
-   !------------------------------------------------------------------------------
-   subroutine ModelSetup(Zh, pft, Bag, Ero, Dep, T, U10, h0, U0, Hwav0, &
-                         Css0, Cj0)
-      implicit none
-      real(kind=8), intent(in) :: Zh(:)   ! platform elevation (m)
-      integer, intent(in) :: pft(:)       ! platform vegetation type
-      real(kind=8), intent(in) :: Bag(:)  ! aboveground biomass (kg/m2)
-      real(kind=8), intent(in) :: Ero(:)  ! sediment suspension (kg/m2/s)
-      real(kind=8), intent(in) :: Dep(:)  ! sediment deposition (kg/m2/s)
-      real(kind=8), intent(in) :: T       ! wave period (s)
-      real(kind=8), intent(in) :: U10     ! wind speed (m/s)
-      real(kind=8), intent(in) :: h0      ! seaward water depth (m)
-      real(kind=8), intent(in) :: U0      ! seaward current speed (m/s)
-      real(kind=8), intent(in) :: Hwav0   ! seaward significant wave height (m)
-      real(kind=8), intent(in) :: Css0    ! seaward sediment conc (kg/m3)
-      real(kind=8), intent(in) :: Cj0     ! seaward salinity (PSU)
-      integer :: ii
-
-      m_Zh = Zh
-      m_Esed = Ero
-      m_Dsed = Dep
-      ! a typical wave period is 2s but increase greatly with the increase
-      ! of wave speed (https://en.wikipedia.org/wiki/Wind_wave)
-      force_T = T
-      force_U10 = U10
-      m_uhydro(1,1) = h0
-      m_uhydro(2,1) = U0 * h0
-      m_uhydro(3,1) = 0.125*Roul*G*(Hwav0**2)/(2.0*PI/T)
-      m_uhydro(4,1) = Css0
-      m_uhydro(5,1) = Cj0 
-      do ii = 1, NX, 1
-         if (ii==1) then
-            m_dZh(ii) = 0.5 * (m_Zh(ii+1) - m_Zh(ii))
-         else if (ii==NX) then
-            m_dZh(ii) = 0.5 * (m_Zh(ii) - m_Zh(ii-1))
-         else
-            m_dZh(ii) = 0.5 * (m_Zh(ii+1) - m_Zh(ii-1))
-         end if
-      end do
-      call UpdateGroundRoughness(pft, Bag)
-      !call UpdateWaveNumber()
-      call UpdateWaveNumber2()   ! much more efficient but less accurate
-      !call UpdateWaveBrkProb()
-      call UpdateWaveBrkProb2()  ! much more efficient but less accurate
-      call UpdateWaveGeneration()
-      call UpdateWaveBtmFriction()
-      call UpdateWaveWhiteCapping()
-      call UpdateWaveDepthBrking()
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Post-run model update.
-   !          At depths smaller than 0.1 m, the flow velocity and sediment 
-   !          transport are taken to zero (linearly interpolated to zero)??
-   !
-   !------------------------------------------------------------------------------
-   subroutine ModelCallback(uhydro)
-      implicit none
-      real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8) :: sigma, Hwav, h
-      integer :: ii
-      
-      m_uhydro = uhydro
-      sigma = 2.0*PI/force_T
-      do ii = 1, NX, 1
-         if (m_uhydro(1,ii)<=0) then
-            m_uhydro(2:NVAR,ii) = 0.0d0
-         end if
-      end do
-      m_U = m_uhydro(2,:) / max(0.1,m_uhydro(1,:))
-      m_Ewav = sigma * m_uhydro(3,:)
-      m_Hwav = sqrt(8.0*m_Ewav/G/Roul)
-      do ii = 1, NX, 1
-         h = m_uhydro(1,ii)
-         Hwav = m_Hwav(ii)
-         if (h<=0) then
-            m_Uwav(ii) = 0.0d0
-         else
-            m_Uwav(ii) = min(PI*Hwav/force_T/sinh(Karman*h), 20.0)
-         end if
-      end do
-      call UpdateShearStress()
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Calculate ground roughness and bottom shear stress
-   ! Chézy's coefficient vs manning's coefficient: Cz = h^(1/6) / n
-   ! Chézy's coefficient vs Darcy-Weisbach friction factor: Cz = sqrt(8*G/f)
-   ! From an empirical equation of Froehlich (2012; J. Irrigation and Drainage
-   ! Engineering), Cz0 = sqrt(G)*(5.62*log10(h/1.7/D50) + 6.25
-   ! From van Rijn's formula, Cz0 = 18*log10(12*h/3/D90)
-   !
-   !------------------------------------------------------------------------------
-   subroutine UpdateGroundRoughness(pft, Bag)
-      implicit none
-      integer, intent(in) :: pft(:)          ! vegetation type
-      real(kind=8), intent(in) :: Bag(:)     ! aboveground biomass (kg/m2)
-      real(kind=8), parameter :: Cb = 2.5d-3 ! bed drag coefficient (unitless)
-      real(kind=8) :: cD0, ScD, alphaA, alphaD
-      real(kind=8) :: betaA, betaD
-      real(kind=8) :: asb, dsb, cD, h
-      integer :: ii
-
-      do ii = 1, NX, 1
-         cD0 = par_cD0(pft(ii))
-         ScD = par_ScD(pft(ii))
-         alphaA = par_alphaA(pft(ii))
-         betaA = par_betaA(pft(ii))
-         alphaD = par_alphaD(pft(ii))
-         betaD = par_betaD(pft(ii))
-         h = m_uhydro(1,ii)
-         asb = alphaA * Bag(ii)**betaA
-         dsb = alphaD * Bag(ii)**betaD
-         cD = cD0 + ScD * Bag(ii)
-         m_Cz(ii) = par_Cz0*sqrt(2.0/(cD*asb*h+2.0*(1.0-asb*dsb)*Cb))
-      end do
-   end subroutine
-
-   subroutine UpdateShearStress()
-      implicit none
-      real(kind=8) :: fcurr, fwave
-      real(kind=8) :: h, U, Uwav, Hwav
-      real(kind=8) :: tau_curr, tau_wave
-      integer :: ii
-
-      do ii = 1, NX, 1
-         h = m_uhydro(1,ii)
-         U = m_U(ii)
-         Hwav = m_Hwav(ii)
-         Uwav = m_Uwav(ii)
-         if (h>0) then
-            ! bottom shear stress by currents
-            fcurr = 0.24/(log(4.8*h/par_d50))**2
-            tau_curr = 0.125*Roul*fcurr*U**2
-            ! bottom shear stress by wave
-            fwave = 1.39*(6.0*Uwav*force_T/PI/par_d50)**(-0.52)
-            tau_wave = 0.5*fwave*Roul*Uwav**2
-            m_tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
-         else
-            m_tau(ii) = 0.0d0
-         end if
-      end do
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Calculate wave number.
-   !
-   !------------------------------------------------------------------------------
-   subroutine WaveNumberEQ(kwav, coefs, fval)
-      implicit none
-      real(kind=8), intent(in) :: kwav
-      real(kind=8), intent(in) :: coefs(2)
-      real(kind=8), intent(out) :: fval
-      real(kind=8) :: sigma, T, h
-
-      T = coefs(1) 
-      h = coefs(2)
-      sigma = 2.0*PI/T
-      fval = sqrt(G*kwav*tanh(kwav*h)) - sigma
-   end subroutine
-
-   subroutine UpdateWaveNumber()
-      implicit none
-      real(kind=8) :: coefs(2), xbounds(2)
-      real(kind=8) :: h, sigma
-      integer :: ii
-      
-      sigma = 2.0*PI/force_T     ! wave frequency (dispersion)
-      do ii = 1, NX, 1
-         h = m_uhydro(1,ii)
-         if (h>0) then
-            xbounds = (/sigma**2/G, sigma/sqrt(G*h)/)
-            coefs = (/force_T, h/)
-            call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, m_kwav(ii))
-         else
-            m_kwav(ii) = 0.0d0
-         end if
-      end do
-   end subroutine
-
-   subroutine UpdateWaveNumber2()
-      implicit none
-      real(kind=8) :: coefs(2), xbounds(2)
-      real(kind=8) :: h, h1, sigma
-      integer :: ii
-
-      sigma = 2.0*PI/force_T     ! wave frequency (dispersion)
-      h1 = m_uhydro(1,1)
-      if (h1>0) then
-         xbounds = (/sigma**2/G, sigma/sqrt(G*h1)/)
-         coefs = (/force_T, h1/)
-         call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, m_kwav(1))
-         do ii = 2, NX, 1
-            h = m_uhydro(1,ii)
-            if (h>0) then
-               m_kwav(ii) = m_kwav(1)*sqrt(h1/max(0.1,h))
-            else
-               m_kwav(ii) = 0.0d0
-            end if
-         end do
-      else
-         m_kwav = 0.0d0
-      end if
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Calculate wave depth breaking possibility.
-   !
-   !------------------------------------------------------------------------------
-   subroutine BreakProbEQ(Qb, coefs, fval)
-      implicit none
-      real(kind=8), intent(in) :: Qb
-      real(kind=8), intent(in) :: coefs(2)
-      real(kind=8), intent(out) :: fval
-      real(kind=8) :: Hrms, Hmax
-      
-      Hmax = coefs(1)
-      Hrms = coefs(2)
-      fval = (1-Qb)/log(Qb) + (Hrms/Hmax)**2
-   end subroutine
-
-   subroutine UpdateWaveBrkProb()
-      implicit none
-      real(kind=8) :: xbounds(2), coefs(2)
-      real(kind=8) :: h, Hrms, Hmax
-      integer :: ii
-
-      do ii = 1, NX, 1
-         h = m_uhydro(1,ii)
-         if (h>0) then
-            Hmax = par_fr * h
-            Hrms = m_Hwav(ii)
-            xbounds = (/1d-10, 1.0-1d-10/)
-            coefs = (/Hmax, Hrms/)
-            call NonLRBrents(BreakProbEQ, coefs, xbounds, 1d-4, m_Qb(ii))
-         else
-            m_Qb(ii) = 1.0d0
-         end if
-      end do
-   end subroutine
-
-   subroutine UpdateWaveBrkProb2()
-      implicit none
-      real(kind=8) :: h, fHrms
-      integer :: ii, nQb, idx 
-
-      nQb = size(const_Qb)
-      do ii = 1, NX, 1
-         h = m_uhydro(1,ii)
-         if (h>0) then
-            fHrms = m_Hwav(ii) / (par_fr*h) 
-            if (fHrms<=const_Qb(1)) then
-               m_Qb(ii) = 0.0d0
-            else if (fHrms>=const_Qb(nQb)) then
-               m_Qb(ii) = 1.0d0
-            else
-               call BinarySearch(const_Qb, fHrms, idx)
-               m_Qb(ii) = 0.01*DBLE(idx) - 0.005
-            end if
-         else
-            m_Qb(ii) = 1.0d0
-         end if
-      end do
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Calculate wave sources and sinks.
-   !
-   !------------------------------------------------------------------------------
-   subroutine UpdateWaveGeneration()
-      implicit none
-      real(kind=8), parameter :: Cd = 1.3d-3    ! drag coefficient for U10
-      real(kind=8) :: sigma, alpha, beta
-      real(kind=8) :: kwav, h
-      integer :: ii
-
-      sigma = 2.0*PI/force_T
-      do ii = 1, NX, 1
-         h = m_uhydro(1,ii)
-         if (h>0) then
-            kwav = m_kwav(ii)
-            alpha = 80.0*sigma*(Roua*Cd*force_U10/Roul/G/kwav)**2
-            beta = 5.0*Roua/Roul/force_T*(force_U10*kwav/sigma-0.9)
-            m_Swg(ii) = alpha + beta * m_Ewav(ii)
-         else
-            m_Swg(ii) = 0.0d0
-         end if
-      end do
-   end subroutine
-
-   subroutine UpdateWaveBtmFriction()
-      implicit none
-      real(kind=8) :: Hwav, kwav, Ewav
-      real(kind=8) :: Cf, Qb, h
-      integer :: ii
-
-      do ii = 1, NX, 1
-         h = m_uhydro(1,ii)
-         if (h>0) then
-            Hwav = m_Hwav(ii)
-            kwav = m_kwav(ii)
-            Ewav = m_Ewav(ii)
-            Qb = m_Qb(ii)
-            Cf = 2.0*par_cbc*PI*Hwav/force_T/sinh(kwav*h)
-            m_Sbf(ii) = (1-Qb)*2.0*Cf*kwav*Ewav/sinh(2.0*kwav*h)
-         else
-            m_Sbf(ii) = 0.0d0
-         end if
-      end do
-   end subroutine
-   
-   subroutine UpdateWaveWhiteCapping()
-      implicit none
-      real(kind=8), parameter :: gammaPM = 4.57d-3
-      real(kind=8), parameter :: m = 2.0d0
-      real(kind=8), parameter :: cwc = 3.33d-5
-      real(kind=8) :: sigma
-
-      sigma = 2.0*PI/force_T
-      m_Swc = cwc*sigma*((m_Ewav*(sigma**4)/G**2/gammaPM)**m)*m_Ewav
-   end subroutine
-   
-   subroutine UpdateWaveDepthBrking()
-      implicit none
-      real(kind=8), parameter :: Cd = 1.3d-3    ! drag coefficient for U10
-      real(kind=8) :: sigma, Qb, Hmax, alpha
-      real(kind=8) :: Hwav, Ewav, kwav, h
-      integer :: ii
-
-      sigma = 2.0*PI/force_T
-      do ii = 1, NX, 1
-         h = m_uhydro(1,ii)
-         if (h>0) then
-            Qb = m_Qb(ii)
-            kwav = m_kwav(ii)
-            Hwav = m_Hwav(ii)
-            Ewav = m_Ewav(ii)
-            Hmax = par_fr * h
-            alpha = 80.0*sigma*(Roua*Cd*force_U10/Roul/G/kwav)**2
-            m_Sbrk(ii) = 2.0*alpha/force_T*Qb*((Hmax/Hwav)**2)*Ewav
-         else
-            m_Sbrk(ii) = 0.0d0
-         end if
-      end do
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Calculate cell edge convection flux. 
-   !          Significant wave height is limited by fr times water depth.
-   !
-   !------------------------------------------------------------------------------
-   subroutine CalcEdgeConvectionFlux(uhydro, fluxes)
-      implicit none
-      real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8), intent(inout) :: fluxes(:,:)
-      real(kind=8) :: sigma
-      integer :: indx
-
-      sigma = 2.0*PI/force_T
-      tmp_U = uhydro(2,:) / max(0.1,uhydro(1,:))
-      tmp_Nmax = 0.125*Roul*G*(par_fr*uhydro(1,:))**2/sigma
-      indx = count(uhydro(1,:)>0)
-      tmp_Cg(1:indx) = 0.5*sigma*(1.0+2.0*m_kwav(1:indx)*uhydro(1,1:indx)/ &
-         sinh(2.0*m_kwav(1:indx)*uhydro(1,1:indx)))/m_kwav(1:indx)
-      tmp_Cg(indx+1:NX) = 0.0d0
-      fluxes(1,:) = uhydro(2,:)
-      fluxes(2,:) = uhydro(1,:)*(tmp_U**2) + 0.5*G*uhydro(1,:)**2
-      fluxes(3,:) = tmp_Cg*min(uhydro(3,:),tmp_Nmax)
-      fluxes(4,:) = uhydro(2,:)*uhydro(4,:)
-      fluxes(5,:) = uhydro(2,:)*uhydro(5,:)
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Calculate cell edge maximum gradient.
-   !          Ignore the non-diagonal Jacobi terms for N, Css and Cj
-   !          
-   !          ZGEEV('N', 'N', NVAR, jacobi, NVAR, b, DUMMY, 1, DUMMY, 1, &
-   !                WORK, 2*NVAR, WORK, err)
-   !          complex(kind=8) :: jacobi(NVAR,NVAR), b(NVAR)
-   !          complex(kind=8) :: DUMMY(1,1), WORK(2*NVAR)
-   !          integer :: err
-   !
-   !------------------------------------------------------------------------------
-   subroutine CalcEdgeMaxGradient(uhydro, gradient)
-      implicit none
-      real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8), intent(inout) :: gradient(:)
-      real(kind=8) :: sigma
-      integer :: indx
-
-      sigma = 2.0*PI/force_T
-      indx = count(uhydro(1,:)>0)
-      tmp_Cg(1:indx) = 0.5*sigma*(1.0+2.0*m_kwav(1:indx)*uhydro(1,1:indx)/ &
-         sinh(2.0*m_kwav(1:indx)*uhydro(1,1:indx)))/m_kwav(1:indx)
-      tmp_Cg(indx+1:NX) = 0.0d0
-      tmp_U = uhydro(2,:) / max(0.1,uhydro(1,:))
-      tmp_eigval(1,:) = 3.0*tmp_U + sqrt(5.0*(tmp_U**2)+G*uhydro(1,:))
-      tmp_eigval(2,:) = 3.0*tmp_U - sqrt(5.0*(tmp_U**2)+G*uhydro(1,:))
-      tmp_eigval(3,:) = tmp_Cg
-      tmp_eigval(4,:) = uhydro(2,:)
-      tmp_eigval(5,:) = uhydro(2,:)
-      gradient = maxval(abs(tmp_eigval), dim=1)
-   end subroutine
-
-   subroutine CalcCellDiffusionFlux(uhydro, fluxes)
-      implicit none
-      real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8), intent(inout) :: fluxes(:,:)
-
-      fluxes = 0.0d0
-      fluxes(4,2:NX-1) = 0.5*par_Kdf*(uhydro(1,2:NX-1)+uhydro(1,3:NX))* &
-         (uhydro(4,3:NX)-uhydro(4,2:NX-1))/m_dX(2:NX-1)
-      fluxes(5,2:NX-1) = 0.5*par_Kdf*(uhydro(1,2:NX-1)+uhydro(1,3:NX))* &
-         (uhydro(5,3:NX)-uhydro(5,2:NX-1))/m_dX(2:NX-1)
-   end subroutine
-
-   subroutine CalcCellStateSources(uhydro, sources)
-      implicit none
-      real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8), intent(inout) :: sources(:,:)
-      real(kind=8) :: sigma
-
-      sigma = 2.0*PI/force_T
-      tmp_U = uhydro(2,:) / max(0.1,uhydro(1,:))
-      sources(1,:) = 0.0d0
-      sources(2,:) = -tmp_U*abs(tmp_U)*G/m_Cz**2 - G*uhydro(1,:)*m_dZh/m_dX
-      sources(3,:) = (m_Swg - (m_Sbf+m_Swc+m_Sbrk)) / sigma 
-      sources(4,:) = m_Esed - m_Dsed*uhydro(4,:)/(m_uhydro(4,:)+1d-3)
-      sources(5,:) = 0.0d0
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   !
-   ! Purpose: Use the 1-D Finite Volume Semi-discrete KT central scheme to 
-   !          discretize partial differential equation in the space domain.
-   !
-   !------------------------------------------------------------------------------
-   subroutine TAIHydroEquations(uhydro, duhydro)
-      implicit none
-      real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8), intent(inout) :: duhydro(:,:)
-      real(kind=8) :: Fminus(NVAR), Fplus(NVAR)
-      real(kind=8) :: ap, am, dx
-      integer :: ii
-
-      ! calculate slope limiter
-      call FVSKT_Superbee(uhydro, tmp_phi)
-      ! calculate cell edge variable values
-      call FVSKT_celledge(uhydro, tmp_phi, tmp_uhydroL, tmp_uhydroR) 
-      ! calculate cell edge convective fluxes 
-      call CalcEdgeConvectionFlux(tmp_uhydroL, tmp_FL)
-      call CalcEdgeConvectionFlux(tmp_uhydroR, tmp_FR)
-      ! calculate cell edge maximum gradient
-      call CalcEdgeMaxGradient(tmp_uhydroL, tmp_aL)
-      call CalcEdgeMaxGradient(tmp_uhydroR, tmp_aR)
-      ! calculate cell diffusion flux 
-      call CalcCellDiffusionFlux(uhydro, tmp_P)
-      ! calculate cell state sources
-      call CalcCellStateSources(uhydro, tmp_SRC) 
-      ! calculate temporal gradients
-      do ii = 1, NX, 1
-         dx = m_dX(ii)
-         ap = max(0.0, tmp_aR(ii), tmp_aL(ii+1))
-         am = max(0.0, tmp_aR(ii-1), tmp_aL(ii))
-         if (ii==0) then
-            ! seaward boundary condition
-            duhydro(:,ii) = 0.0d0
-         else if (ii==NX) then
-            ! landward boundary condition
-            Fminus = 0.5*(tmp_FR(:,ii-1)+tmp_FL(:,ii)) - &
-               0.5*am*(tmp_uhydroL(:,ii)-tmp_uhydroR(:,ii-1))
-            duhydro(:,ii) = Fminus/dx - tmp_P(:,ii-1)/dx + tmp_SRC(:,ii)
-         else
-            Fminus = 0.5*(tmp_FR(:,ii-1)+tmp_FL(:,ii)) - &
-               0.5*am*(tmp_uhydroL(:,ii)-tmp_uhydroR(:,ii-1))
-            Fplus = 0.5*(tmp_FR(:,ii)+tmp_FL(:,ii+1)) - &
-               0.5*ap*(tmp_uhydroL(:,ii+1)-tmp_uhydroR(:,ii))
-            duhydro(:,ii) = -(Fplus - Fminus) / dx + (tmp_P(:,ii) - &
-               tmp_P(:,ii-1)) / dx + tmp_SRC(:,ii)
-         end if
-      end do
+      nextstep = step
+      outvars = rk4_nxt4th
    end subroutine
 
 end module TAIHydroMOD

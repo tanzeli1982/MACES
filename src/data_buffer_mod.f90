@@ -5,9 +5,11 @@ module data_buffer_mod
 ! This module serves for the buffer of large temporary data in the model
 !
 !---------------------------------------------------------------------------------
+   use data_type_mod
 
    implicit none
    public
+
    !! allocatable arrays for RungeKutta4 
    real(kind=8), allocatable, dimension(:,:) :: rk4_K1
    real(kind=8), allocatable, dimension(:,:) :: rk4_K2
@@ -19,15 +21,15 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:,:) :: rk4_nxt5th
    real(kind=8), allocatable, dimension(:,:) :: rk4_interim
    real(kind=8), allocatable, dimension(:,:) :: rk4_rerr
+   
    !! allocatable arrays for Hydrodynamic model
-   ! hydrodynamic state variables
+   ! hydrodynamic state variables [h, U*h, N, Css, Cj]
    real(kind=8), allocatable, dimension(:,:) :: m_uhydro
    ! platform coordinate and elevation (m) 
    real(kind=8), allocatable, dimension(:)   :: m_X
    real(kind=8), allocatable, dimension(:)   :: m_dX
    real(kind=8), allocatable, dimension(:)   :: m_Zh
    real(kind=8), allocatable, dimension(:)   :: m_dZh
-   integer, allocatable, dimension(:)        :: m_pft
    ! current speed (m/s)
    real(kind=8), allocatable, dimension(:)   :: m_U
    ! significant wave height (m) and wave energy (W)
@@ -60,7 +62,10 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: tmp_U
    real(kind=8), allocatable, dimension(:)   :: tmp_Cg
    real(kind=8), allocatable, dimension(:)   :: tmp_Nmax
-   ! constants
-   real(kind=8), allocatable, dimension(:)   :: const_Qb
+   real(kind=8), allocatable, dimension(:)   :: tmp_Qb
+
+   !! user-defined data
+   type(ModelParams) :: m_params
+   type(ForcingData) :: m_forcings
 
 end module data_buffer_mod

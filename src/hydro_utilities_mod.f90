@@ -1,12 +1,26 @@
 module hydro_utilities_mod
+!---------------------------------------------------------------------------------
+! Purpose:
+!
+! This module contains hydrodynamic utility subroutines in the model
+!
+!---------------------------------------------------------------------------------
+   use data_type_mod
 
    implicit none
    public
+   ! model control constants
    integer, parameter :: MAXITER = 100
    integer, parameter :: adaptive_mode = 101, fixed_mode = 102
    real(kind=8), parameter :: TOL_REL = 1.d-6
    real(kind=8), parameter :: INFTSML = 1.d-30
-   ! intermediate scalers
+   ! physical constants 
+   real(kind=8), parameter :: PI = 3.14159265d+0
+   real(kind=8), parameter :: e = 2.71828183d+0
+   real(kind=8), parameter :: Roul = 1028.0
+   real(kind=8), parameter :: Roua = 1.225
+   real(kind=8), parameter :: Karman = 0.41
+   real(kind=8), parameter :: G = 9.8
 
 contains
    subroutine Norm(matrix, dir, values)
@@ -240,6 +254,315 @@ contains
          end if
       end do
       idx = last - 1
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate ground roughness and bottom shear stress
+   ! Chézy's coefficient vs manning's coefficient: Cz = h^(1/6) / n
+   ! Chézy's coefficient vs Darcy-Weisbach friction factor: Cz = sqrt(8*G/f)
+   ! From an empirical equation of Froehlich (2012; J. Irrigation and Drainage
+   ! Engineering), Cz0 = sqrt(G)*(5.62*log10(h/1.7/D50) + 6.25
+   ! From van Rijn's formula, Cz0 = 18*log10(12*h/3/D90)
+   !
+   !------------------------------------------------------------------------------
+   subroutine UpdateGroundRoughness(forcings, h, params, Cz)
+      implicit none
+      type(ForcingData), intent(in) :: forcings
+      real(kind=8), intent(in) :: h(:)
+      type(ModelParams), intent(in) :: params
+      real(kind=8), intent(out) :: Cz(:)
+      real(kind=8), parameter :: Cb = 2.5d-3    ! bed drag coefficient (unitless)
+      real(kind=8) :: cD0, ScD, alphaA, alphaD
+      real(kind=8) :: betaA, betaD
+      real(kind=8) :: asb, dsb, cD
+      integer :: nx, ii
+
+      nx = size(h)
+      do ii = 1, nx, 1
+         cD0 = params%cD0(forcings%pft(ii))
+         ScD = params%ScD(forcings%pft(ii))
+         alphaA = params%alphaA(forcings%pft(ii))
+         betaA = params%betaA(forcings%pft(ii))
+         alphaD = params%alphaD(forcings%pft(ii))
+         betaD = params%betaD(forcings%pft(ii))
+         asb = alphaA * forcings%Bag(ii)**betaA
+         dsb = alphaD * forcings%Bag(ii)**betaD
+         cD = cD0 + ScD * forcings%Bag(ii)
+         Cz(ii) = params%Cz0*sqrt(2.0/(cD*asb*h(ii)+2.0*(1.0-asb*dsb)*Cb))
+      end do
+   end subroutine
+
+   subroutine UpdateShearStress(forcings, h, U, Hwav, Uwav, params, tau)
+      implicit none
+      type(ForcingData), intent(in) :: forcings
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(in) :: U(:)
+      real(kind=8), intent(in) :: Hwav(:)
+      real(kind=8), intent(in) :: Uwav(:)
+      type(ModelParams), intent(in) :: params
+      real(kind=8), intent(out) :: tau(:)
+      real(kind=8) :: fcurr, fwave
+      real(kind=8) :: tau_curr, tau_wave
+      integer :: ii, nx
+
+      nx = size(h)
+      do ii = 1, nx, 1
+         if (h(ii)>0) then
+            ! bottom shear stress by currents
+            fcurr = 0.24/(log(4.8*h(ii)/params%d50))**2
+            tau_curr = 0.125*Roul*fcurr*U(ii)**2
+            ! bottom shear stress by wave
+            fwave = 1.39*(6.0*Uwav(ii)*forcings%Twav/PI/params%d50)**(-0.52)
+            tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
+            tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
+         else
+            tau(ii) = 0.0d0
+         end if
+      end do
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate wave number.
+   !          UpdateWaveNumber2() is much more efficient but less accurate.
+   !
+   !------------------------------------------------------------------------------
+   subroutine WaveNumberEQ(kwav, coefs, fval)
+      implicit none
+      real(kind=8), intent(in) :: kwav
+      real(kind=8), intent(in) :: coefs(2)
+      real(kind=8), intent(out) :: fval
+      real(kind=8) :: sigma, T, h
+
+      T = coefs(1)
+      h = coefs(2)
+      sigma = 2.0*PI/T
+      fval = sqrt(G*kwav*tanh(kwav*h)) - sigma
+   end subroutine
+
+   subroutine UpdateWaveNumber(forcings, h, kwav)
+      implicit none
+      type(ForcingData), intent(in) :: forcings
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(out) :: kwav(:)
+      real(kind=8) :: coefs(2), xbounds(2)
+      real(kind=8) :: sigma
+      integer :: ii, nx
+
+      nx = size(h)
+      sigma = 2.0*PI/forcings%Twav     ! wave frequency (dispersion)
+      do ii = 1, nx, 1
+         if (h(ii)>0) then
+            xbounds = (/sigma**2/G, sigma/sqrt(G*h(ii))/)
+            coefs = (/forcings%Twav, h(ii)/)
+            call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(ii))
+         else
+            kwav(ii) = 0.0d0
+         end if
+      end do
+   end subroutine
+
+   subroutine UpdateWaveNumber2(forcings, h, kwav)
+      implicit none
+      type(ForcingData), intent(in) :: forcings
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(out) :: kwav(:)
+      real(kind=8) :: coefs(2), xbounds(2)
+      real(kind=8) :: sigma
+      integer :: ii, nx
+
+      nx = size(h)
+      sigma = 2.0*PI/forcings%Twav     ! wave frequency (dispersion)
+      if (h(1)>0) then
+         xbounds = (/sigma**2/G, sigma/sqrt(G*h(1))/)
+         coefs = (/forcings%Twav, h(1)/)
+         call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(1))
+         do ii = 2, nx, 1
+            if (h(ii)>0) then
+               kwav(ii) = kwav(1)*sqrt(h(1)/max(0.1,h(ii)))
+            else
+               kwav(ii) = 0.0d0
+            end if
+         end do
+      else
+         kwav = 0.0d0
+      end if
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate wave depth breaking possibility.
+   !          UpdateWaveBrkProb2() is much more efficient but less accurate.
+   !
+   !------------------------------------------------------------------------------
+   subroutine BreakProbEQ(Qb, coefs, fval)
+      implicit none
+      real(kind=8), intent(in) :: Qb
+      real(kind=8), intent(in) :: coefs(2)
+      real(kind=8), intent(out) :: fval
+      real(kind=8) :: Hrms, Hmax
+
+      Hmax = coefs(1)
+      Hrms = coefs(2)
+      fval = (1-Qb)/log(Qb) + (Hrms/Hmax)**2
+   end subroutine 
+
+   subroutine UpdateWaveBrkProb(h, Hwav, params, Qb)
+      implicit none
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(in) :: Hwav(:)
+      type(ModelParams), intent(in) :: params
+      real(kind=8), intent(out) :: Qb(:)
+      real(kind=8) :: xbounds(2), coefs(2)
+      real(kind=8) :: Hrms, Hmax
+      integer :: ii, nx
+
+      nx = size(h)
+      do ii = 1, nx, 1
+         if (h(ii)>0) then
+            Hmax = params%fr * h(ii)
+            Hrms = Hwav(ii)
+            xbounds = (/1d-10, 1.0-1d-10/)
+            coefs = (/Hmax, Hrms/)
+            call NonLRBrents(BreakProbEQ, coefs, xbounds, 1d-4, Qb(ii))
+         else
+            Qb(ii) = 1.0d0
+         end if
+      end do
+   end subroutine
+
+   subroutine UpdateWaveBrkProb2(h, Hwav, params, rawQb, Qb)
+      implicit none
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(in) :: Hwav(:)
+      type(ModelParams), intent(in) :: params
+      real(kind=8), intent(in) :: rawQb(:)
+      real(kind=8), intent(out) :: Qb(:)
+      real(kind=8) :: fHrms
+      integer :: ii, nx, nQb, idx
+
+      nQb = size(rawQb)
+      nx = size(h)
+      do ii = 1, nx, 1
+         if (h(ii)>0) then
+            fHrms = Hwav(ii) / (params%fr*h(ii))
+            if (fHrms<=rawQb(1)) then
+               Qb(ii) = 0.0d0
+            else if (fHrms>=rawQb(nQb)) then
+               Qb(ii) = 1.0d0
+            else
+               call BinarySearch(rawQb, fHrms, idx)
+               Qb(ii) = 0.01*DBLE(idx) - 0.005
+            end if
+         else
+            Qb(ii) = 1.0d0
+         end if
+      end do
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate wave sources and sinks.
+   !
+   !------------------------------------------------------------------------------
+   subroutine UpdateWaveGeneration(forcings, h, kwav, Ewav, Swg)
+      implicit none
+      type(ForcingData), intent(in) :: forcings
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(in) :: kwav(:)
+      real(kind=8), intent(in) :: Ewav(:)
+      real(kind=8), intent(out) :: Swg(:)
+      real(kind=8), parameter :: Cd = 1.3d-3    ! drag coefficient for U10
+      real(kind=8) :: sigma, alpha, beta
+      real(kind=8) :: U10, Twav
+      integer :: ii, nx
+
+      nx = size(h)
+      U10 = forcings%U10
+      Twav = forcings%Twav
+      sigma = 2.0*PI/Twav
+      do ii = 1, nx, 1
+         if (h(ii)>0) then
+            alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav(ii))**2
+            beta = 5.0*Roua/Roul/Twav*(U10*kwav(ii)/sigma-0.9)
+            Swg(ii) = alpha + beta * Ewav(ii)
+         else
+            Swg(ii) = 0.0d0
+         end if
+      end do
+   end subroutine
+
+   subroutine UpdateWaveBtmFriction(forcings, h, Hwav, kwav, Ewav, &
+                                    Qb, params, Sbf)
+      implicit none
+      type(ForcingData), intent(in) :: forcings
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(in) :: Hwav(:)
+      real(kind=8), intent(in) :: kwav(:)
+      real(kind=8), intent(in) :: Ewav(:)
+      real(kind=8), intent(in) :: Qb(:)
+      type(ModelParams), intent(in) :: params
+      real(kind=8), intent(out) :: Sbf(:)
+      real(kind=8) :: Cf, Twav
+      integer :: ii, nx
+
+      nx = size(h)
+      Twav = forcings%Twav
+      do ii = 1, nx, 1
+         if (h(ii)>0) then
+            Cf = 2.0*params%cbc*PI*Hwav(ii)/Twav/sinh(kwav(ii)*h(ii))
+            Sbf(ii) = (1-Qb(ii))*2.0*Cf*kwav(ii)*Ewav(ii)/ &
+               sinh(2.0*kwav(ii)*h(ii))
+         else
+            Sbf(ii) = 0.0d0
+         end if
+      end do
+   end subroutine
+
+   subroutine UpdateWaveWhiteCapping(forcings, Ewav, Swc)
+      implicit none
+      type(ForcingData), intent(in) :: forcings
+      real(kind=8), intent(in) :: Ewav(:)
+      real(kind=8), intent(out) :: Swc(:)
+      real(kind=8), parameter :: gammaPM = 4.57d-3
+      real(kind=8), parameter :: m = 2.0d0
+      real(kind=8), parameter :: cwc = 3.33d-5
+      real(kind=8) :: sigma
+
+      sigma = 2.0*PI/forcings%Twav
+      Swc = cwc*sigma*((Ewav*(sigma**4)/G**2/gammaPM)**m)*Ewav
+   end subroutine
+
+   subroutine UpdateWaveDepthBrking(forcings, h, Hwav, kwav, Ewav, &
+                                    Qb, params, Sbrk)
+      implicit none
+      type(ForcingData), intent(in) :: forcings
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(in) :: Hwav(:)
+      real(kind=8), intent(in) :: kwav(:)
+      real(kind=8), intent(in) :: Ewav(:)
+      real(kind=8), intent(in) :: Qb(:)
+      type(ModelParams), intent(in) :: params
+      real(kind=8), intent(out) :: Sbrk(:)
+      real(kind=8), parameter :: Cd = 1.3d-3    ! drag coefficient for U10
+      real(kind=8) :: sigma, Hmax, alpha
+      real(kind=8) :: U10, Twav
+      integer :: ii, nx
+
+      nx = size(h)
+      Twav = forcings%Twav
+      U10 = forcings%U10
+      sigma = 2.0*PI/Twav
+      do ii = 1, nx, 1
+         if (h(ii)>0) then
+            Hmax = params%fr * h(ii)
+            alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav(ii))**2
+            Sbrk(ii) = 2.0*alpha/Twav*Qb(ii)*((Hmax/Hwav(ii))**2)*Ewav(ii)
+         else
+            Sbrk(ii) = 0.0d0
+         end if
+      end do
    end subroutine
 
 end module hydro_utilities_mod
