@@ -33,7 +33,7 @@ class F06MOD(MACMODSuper):
         Returns: mineral suspension rate (kg m-2 s-1)
         """
         x = inputs['x']
-        return np.zeros_like(x, dtype=np.float64)
+        return np.zeros_like(x, dtype=np.float64, order='F')
     
     def mineral_deposition(self, inputs):
         """"Calculate mineral deposition rate.
@@ -69,7 +69,7 @@ class T03MOD(MACMODSuper):
         Returns: mineral suspension rate (kg m-2 s-1)
         """
         x = inputs['x']
-        return np.zeros_like(x, dtype=np.float64)
+        return np.zeros_like(x, dtype=np.float64, order='F')
     
     def mineral_deposition(self, inputs):
         """"Calculate mineral deposition rate.
@@ -108,7 +108,7 @@ class KM12MOD(MACMODSuper):
         Returns: mineral suspension rate (kg m-2 s-1)
         """
         x = inputs['x']
-        rsuspend = np.zeros_like(x, dtype=np.float64)
+        rsuspend = np.zeros_like(x, dtype=np.float64, order='F')
         return rsuspend
     
     def mineral_deposition(self, inputs):
@@ -185,7 +185,7 @@ class M12MOD(MACMODSuper):
         Rous = inputs['Rous']       # sediment density (kg/m3)
         tau = inputs['tau']         # bottom shear stress (Pa)
         pft = inputs['pft']         # platform pft
-        rsuspend = np.zeros_like(tau, dtype=np.float64)
+        rsuspend = np.zeros_like(tau, dtype=np.float64, order='F')
         indice = np.logical_and( tau>tauE_cr, pft==1 )
         rsuspend[indice] = E0 * Rous * (tau[indice]/tauE_cr - 1.0)
         return rsuspend
@@ -226,7 +226,7 @@ class M12MOD(MACMODSuper):
         S = inputs['S']         # platform slope (m/m)
         Rous = inputs['Rous']   # sediment density (kg/m3)
         Nx = np.size(pft)
-        Qsg = np.zeros(Nx, dtype=np.float64)
+        Qsg = np.zeros(Nx, dtype=np.float64, order='F')
         for ii in range(Nx):
             if pft[ii]>0:
                 Qsg[ii] = -Rous*(alphaSG-betaSG*Bag)/3.1536e7*S[ii]
@@ -265,7 +265,7 @@ class F07MOD(MACMODSuper):
         dtau = inputs['dtau']       # bottom shear stress gradient (Pa/s)
         dt = inputs['dt']           # time step (s)
         Eold = inputs['Eold']       # Esilt at the last time step (kg/m2/s)
-        Esand = np.zeros_like(tau, dtype=np.float64)
+        Esand = np.zeros_like(tau, dtype=np.float64, order='F')
         indice = tau > tauE_cr
         Esand[indice] = E0 * (tau[indice] - tauE_cr)**1.5
         Esilt = ((1-0.5*E0*gamma*dt)*Eold + E0*dtau*dt) / (1 + 0.5*E0*gamma*dt)
@@ -284,7 +284,7 @@ class F07MOD(MACMODSuper):
         Rous = inputs['Rous']   # sediment density (kg/m3) 
         ws = self.settling_velocity(tau, 1.25e-4, Rous)
         Qd_sand = 0.3 * Css * ws     # sand deposition (assume 30% of sediment)
-        Qd_silt = np.zeros_like(Css, dtype=np.float64)
+        Qd_silt = np.zeros_like(Css, dtype=np.float64, order='F')
         Qd_silt = KD * (0.7*Css)**(7/3) * (1 - tau/tauD_cr)
         return Qd_sand + Qd_silt
     
@@ -319,8 +319,8 @@ class VDK05MOD(MACMODSuper):
         S = inputs['S']         # platform surface slope (m/m)
         Rous = inputs['Rous']   # sediment density (kg/m3)
         tau_max = np.max(tau)
-        Etide = np.zeros_like(zh, dtype=np.float64)
-        Ewave = np.zeros_like(zh, dtype=np.float64)
+        Etide = np.zeros_like(zh, dtype=np.float64, order='F')
+        Ewave = np.zeros_like(zh, dtype=np.float64, order='F')
         indice = np.logical_and(zh>=0, h>0)
         Etide[indice] = Rous * Emax/3.1536e7 * (aNv/(aNv+Bag[indice])) * \
             (tau[indice]/tau_max) * zh[indice]
@@ -339,7 +339,7 @@ class VDK05MOD(MACMODSuper):
         zh = inputs['zh']           # platform surface elevation (msl)
         Rous = inputs['Rous']       # sediment density (kg/m3)
         Ks = inputs['MHT']          # mean high water level (msl)
-        rdeposit = np.zeros_like(zh, dtype=np.float64)
+        rdeposit = np.zeros_like(zh, dtype=np.float64, order='F')
         indice = np.logical_and(zh>=0, Css>0)
         rdeposit[indice] = Rous * Dmax/3.1536e7 * (1.0 - zh[indice]/Ks)
         return rdeposit
@@ -431,7 +431,7 @@ class DA07MOD(MACMODSuper):
         Cdc = (Karman/(np.log(h/zr)-1))**2  # non-dimensional drag coefficient due to current
         Fsand = Rous * As * U * ((U**2+0.018/Cdc*Urms**2)**0.5 - Ucr)**2.4
         Nx = np.size(x)
-        Qsg = np.zeros(Nx, dtype=np.float64)
+        Qsg = np.zeros(Nx, dtype=np.float64, order='F')
         for ii in range(Nx):
             if ii==0:
                 Qsg[ii] = -(Fsand[ii+1] - Fsand[ii]) / (x[ii+1] - x[ii])

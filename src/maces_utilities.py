@@ -39,9 +39,9 @@ def construct_tai_platform(diva_segments):
         nnode = int( 1e3 * length / xRes )
         Nx = Nx + min( max(nnode,2), nmax )
     Nx = Nx + 1     # the end node
-    x_tai = np.zeros(Nx, dtype=np.float64)
-    zh_tai = np.zeros(Nx, dtype=np.float64)
-    pop_tai = np.zeros(Nx, dtype=np.float64)
+    x_tai = np.zeros(Nx, dtype=np.float64, order='F')
+    zh_tai = np.zeros(Nx, dtype=np.float64, order='F')
+    pop_tai = np.zeros(Nx, dtype=np.float64, order='F')
     indx = 0
     x0 = 0.0
     zhs = diva_segments['zhs']
@@ -61,14 +61,14 @@ def construct_tai_platform(diva_segments):
 def construct_platform_pft(pft_grids, x_tai):
     """Construct the pft on the MACES platform.
     Arguments:
-        pft_grids['x'] : pft grid cell coordinate (m)
+        pft_grids['x'] : pft grid cell coordinate (km)
         pft_grids['pft'] : grid cell pft
         x_tai : coordinate of MACES platform nodes (m)
     Returns : The pft on the MACES platform
     """
-    x_arr = pft_grids['x']
+    x_arr = 1e3 * pft_grids['x']    # km -> m
     pft_arr = pft_grids['pft']
-    pft_tai = np.zeros_like(x_tai, dtype=np.int8)
+    pft_tai = np.zeros_like(x_tai, dtype=np.int8, order='F')
     for ii, x in enumerate(x_tai):
         if x<x_arr[0]:
             pft_tai[ii] = 1     # tidal flats
@@ -82,19 +82,16 @@ def construct_platform_pft(pft_grids, x_tai):
                 pft_tai[ii] = pft_arr[indx+1]
     return pft_tai
             
-def get_refshore_coordinate(diva_segments):
+def get_refshore_coordinate(x, zh):
     """Get the coordinate of the shore at msl.
     Arguments:
-        diva_segments['length'] : DIVA segment length (km)
-        diva_segments['zhs'] : DIVA segment elevation (m)
-    Returns : the coordinate of shore at msl (m)
+        x : longitudinal coordinate (m)
+        zh : platform surface elevation (msl)
+    Returns : the coordinate of shore at msl (km)
     """
-    xlens = diva_segments['length']
-    zhs = diva_segments['zhs']
-    assert len(zhs)-1 == len(xlens), "DIVA segments do not match with elevation nodes"
-    indx = np.nonzero(zhs==0)[0]
+    indx = np.nonzero(zh==0)[0]
     assert len(indx)==1, "Shore node does not exist in DIVA segments"
-    return np.sum(xlens[:indx[0]])
+    return 1e-3 * x[indx[0]]
 
 def get_platform_slope(x, zh):
     """Get the platform slope.
@@ -104,7 +101,7 @@ def get_platform_slope(x, zh):
     Returns : the platform cell slope (m/m)
     """
     Nx = np.size(x)
-    dzh = np.ones(Nx, dtype=np.float64)
+    dzh = np.ones(Nx, dtype=np.float64, order='F')
     for ii in range(Nx):
         if ii>0 and ii<Nx-1:
             dzh[ii] = (zh[ii+1] - zh[ii-1]) / (x[ii+1] - x[ii-1])
@@ -202,7 +199,7 @@ def write_outputs(odir, sid, uhydro_out, ecogeom_out):
         Bbg_var.units = 'kg/m2'
         Bbg_var._FillValue = np.float32(1e20)
         Bbg_var[:] = ecogeom_out['Bbg']
-        SOM_var = nc.createVariable('SOM', 'f4', ('day','pool','x',))
+        SOM_var = nc.createVariable('SOM', 'f4', ('day','x','pool',))
         SOM_var.long_name = r'platform column-integrated soil organic matter'
         SOM_var.units = 'kg/m2'
         SOM_var._FillValue = np.float32(1e20)

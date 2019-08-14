@@ -30,4 +30,17 @@ module data_type_mod
       real(kind=8), pointer :: Bag(:)     ! aboveground biomass (kg/m2)
       integer, pointer :: pft(:)          ! platform pft
    end type
+
+   type RungeKuttaCache
+      real(kind=8), pointer :: K1(:,:)
+      real(kind=8), pointer :: K2(:,:)
+      real(kind=8), pointer :: K3(:,:)
+      real(kind=8), pointer :: K4(:,:)
+      real(kind=8), pointer :: K5(:,:)
+      real(kind=8), pointer :: K6(:,:)
+      real(kind=8), pointer :: nxt4th(:,:)
+      real(kind=8), pointer :: nxt5th(:,:)
+      real(kind=8), pointer :: interim(:,:)
+      real(kind=8), pointer :: rerr(:,:)
+   end type
 end module data_type_mod

@@ -32,7 +32,7 @@ class NULLMOD(OMACMODSuper):
         Returns: organic matter deposition rate (kg m-2 s-1)
         """
         x = inputs['x']
-        return np.zeros_like(x, dtype=np.float64)
+        return np.zeros_like(x, dtype=np.float64, order='F')
     
     def aboveground_biomass(self, inputs):
         """"Calculate aboveground biomass (Morris et al., 2012).
@@ -76,7 +76,7 @@ class VDK05MOD(OMACMODSuper):
         Returns: organic matter deposition rate (kg m-2 s-1)
         """
         x = inputs['x']
-        return np.zeros_like(x, dtype=np.float64)
+        return np.zeros_like(x, dtype=np.float64, order='F')
     
     def aboveground_biomass(self, inputs):
         """"Calculate aboveground biomass.
@@ -279,12 +279,13 @@ class KM12MOD(OMACMODSuper):
         sigmaOM = self.m_params['sigmaOM']  # decay increase due to temperature (K-1)
         SOM = inputs['SOM']     # soil organic matter pools (kg/m2)
         Tsoi = inputs['Tsoi']   # soil temperature (K)
-        Cl = SOM[0]         # labile belowground SOM pool
-        Cr = SOM[1]         # refractory belowground SOM pool
-        Nx = np.shape(SOM)[1]
-        rdC = np.zeros((2,Nx), dtype=np.float64)
-        rdC[0] = ((1.0+(Tsoi-TrefOM)*sigmaOM)*kl0/3.1536e7) * Cl
-        rdC[1] = ((1.0+(Tsoi-TrefOM)*sigmaOM)*kr0/3.1536e7) * Cr
+        Cl = SOM[:,0]           # labile belowground SOM pool
+        Cr = SOM[:,1]           # refractory belowground SOM pool
+        Nx = np.shape(SOM)[0]
+        npool = np.shape(SOM)[1]
+        rdC = np.zeros((Nx,npool), dtype=np.float64, order='F')
+        rdC[:,0] = ((1.0+(Tsoi-TrefOM)*sigmaOM)*kl0/3.1536e7) * Cl
+        rdC[:,1] = ((1.0+(Tsoi-TrefOM)*sigmaOM)*kr0/3.1536e7) * Cr
         return rdC
         
 ###############################################################################
@@ -335,7 +336,7 @@ class K16MOD(OMACMODSuper):
         MHT = inputs['MHT']         # mean high tide water level (msl)
         dt = inputs['dt']           # time step (s)
         Nx = np.size(zh)
-        Bag = np.zeros(Nx, dtype=np.float64)
+        Bag = np.zeros(Nx, dtype=np.float64, order='F')
         for ii in range(Nx):
             if pft[ii]==2:
                 # Spartina alterniflora dominated marshes
@@ -384,7 +385,7 @@ class K16MOD(OMACMODSuper):
         zh = inputs['zh']           # platform surface elevation (msl)
         MHT = inputs['MHT']         # mean high tide water level (msl)
         Nx = np.size(zh)
-        Bbg = np.zeros(Nx, dtype=np.float64)
+        Bbg = np.zeros(Nx, dtype=np.float64, order='F')
         for ii in range(Nx):
             if pft[ii]>=2 and pft[ii]<=4:
                 if zh[ii]>=0 and zh[ii]<=MHT:

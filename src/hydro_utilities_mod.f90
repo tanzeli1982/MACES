@@ -176,16 +176,16 @@ contains
       implicit none
       real(kind=8), intent(in) :: uhydro(:,:)
       real(kind=8), intent(out) :: phi(:,:)
-      real(kind=8) :: rr(size(uhydro,1))
+      real(kind=8) :: rr(size(uhydro,2))
       integer :: ii, NX
 
-      NX = size(uhydro,2)
+      NX = size(uhydro,1)
       do ii = 1, NX, 1
          if (ii==1 .or. ii==NX) then
-            phi(:,ii) = 0.0d0
+            phi(ii,:) = 0.0d0
          else
-            rr = (uhydro(:,ii)-uhydro(:,ii-1))/(uhydro(:,ii+1)-uhydro(:,ii))
-            phi(:,ii) = max(0.0,min(2.0*rr,1.0),min(rr,2.0))
+            rr = (uhydro(ii,:)-uhydro(ii-1,:))/(uhydro(ii+1,:)-uhydro(ii,:))
+            phi(ii,:) = max(0.0,min(2.0*rr,1.0),min(rr,2.0))
          end if
       end do
    end subroutine
@@ -201,18 +201,18 @@ contains
       real(kind=8), intent(in) :: phi(:,:)
       real(kind=8), intent(out) :: uhydroL(:,:)
       real(kind=8), intent(out) :: uhydroR(:,:)
-      real(kind=8) :: duhydro(size(uhydro,1))
+      real(kind=8) :: duhydro(size(uhydro,2))
       integer :: ii, NX
 
-      NX = size(uhydro,2)
+      NX = size(uhydro,1)
       do ii = 1, NX, 1
          if (ii==1 .or. ii==NX) then
-            uhydroL(:,ii) = uhydro(:,ii)
-            uhydroR(:,ii) = uhydro(:,ii)
+            uhydroL(ii,:) = uhydro(ii,:)
+            uhydroR(ii,:) = uhydro(ii,:)
          else
-            duhydro = 0.5*phi(:,ii)*(uhydro(:,ii+1)-uhydro(:,ii))
-            uhydroL(:,ii) = uhydro(:,ii) - duhydro
-            uhydroR(:,ii) = uhydro(:,ii) + duhydro
+            duhydro = 0.5*phi(ii,:)*(uhydro(ii+1,:)-uhydro(ii,:))
+            uhydroL(ii,:) = uhydro(ii,:) - duhydro
+            uhydroR(ii,:) = uhydro(ii,:) + duhydro
          end if
       end do
    end subroutine
@@ -563,6 +563,105 @@ contains
             Sbrk(ii) = 0.0d0
          end if
       end do
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: The 4th-order time step variable Runge-Kutta-Fehlberg method 
+   !
+   !------------------------------------------------------------------------------
+   subroutine RK4Fehlberg(odeFunc, mem, invars, mode, tol, outvars, &
+                          curstep, nextstep, outerr)
+      implicit none
+      external :: odeFunc
+      type(RungeKuttaCache) :: mem     ! memory caches
+      real(kind=8), intent(in) :: invars(:,:)
+      integer, intent(in) :: mode
+      real(kind=8), intent(in) :: tol(:)
+      real(kind=8), intent(out) :: outvars(:,:)
+      real(kind=8), intent(inout) :: curstep
+      real(kind=8), intent(out) :: nextstep
+      integer, intent(out) :: outerr
+      ! local variables
+      real(kind=8), dimension(size(tol)) :: dy, rdy, dyn
+      real(kind=8), dimension(size(tol)) :: rel_tol
+      real(kind=8), dimension(size(tol)) :: abs_rate
+      real(kind=8), dimension(size(tol)) :: rel_rate
+      real(kind=8) :: step, rate, delta
+      logical  :: isLargeErr, isConstrainBroken
+      integer  :: iter, ii, m
+
+      m = size(tol)
+      isLargeErr = .True.
+      isConstrainBroken = .False.
+      outerr = 0
+      step = curstep
+      iter = 1
+      rel_tol = TOL_REL
+      call odeFunc(invars, mem%K1)
+      do while (isLargeErr .or. isConstrainBroken)
+         if (iter>MAXITER) then
+            outerr = 1
+            return
+         end if
+         curstep = step
+         mem%interim = invars + step*0.25*mem%K1
+         call odeFunc(mem%interim, mem%K2)
+         mem%interim = invars + step*(0.09375*mem%K1+0.28125*mem%K2)
+         call odeFunc(mem%interim, mem%K3)
+         mem%interim = invars + step*(0.87938*mem%K1-3.27720*mem%K2+ &
+            3.32089*mem%K3)
+         call odeFunc(mem%interim, mem%K4)
+         mem%interim = invars + step*(2.03241*mem%K1-8.0*mem%K2+ &
+            7.17349*mem%K3-0.20590*mem%K4)
+         call odeFunc(mem%interim, mem%K5)
+         mem%nxt4th = invars + step*(0.11574*mem%K1+0.54893*mem%K3+ &
+            0.53533*mem%K4-0.2*mem%K5)
+         if (mode==fixed_mode) then
+            nextstep = step
+            outvars = mem%nxt4th
+            return
+         end if
+         mem%interim = invars + step*(-0.29630*mem%K1+2.0*mem%K2- &
+            1.38168*mem%K3+0.45297*mem%K4-0.275*mem%K5)
+         call odeFunc(mem%interim, mem%K6)
+         mem%nxt5th = invars + step*(0.11852*mem%K1+0.51899*mem%K3+ &
+            0.50613*mem%K4-0.18*mem%K5+0.03636*mem%K6)
+         mem%rerr = (mem%nxt4th - mem%nxt5th) / (mem%nxt4th + INFTSML)
+         call Norm(mem%rerr, 2, rdy)
+         call Norm(mem%nxt4th-mem%nxt5th, 2, dy)
+         call Minimum(mem%nxt4th, 2, dyn)
+         ! check whether solution is converged
+         isLargeErr = .False.
+         isConstrainBroken = .False.
+         do ii = 1, m, 1
+            if (dy(ii)>tol(ii) .and. rdy(ii)>rel_tol(ii)) then
+               isLargeErr = .True.
+            end if
+            if (dyn(ii)<-100*tol(ii)) then
+               isConstrainBroken = .True.
+            end if
+         end do
+         ! update time step
+         if (isConstrainBroken) then
+            step = 0.5*step
+         else
+            abs_rate = tol / (dy + INFTSML)
+            rel_rate = rel_tol / (rdy + INFTSML)
+            rate = max(minval(abs_rate), minval(rel_rate))
+            delta = 0.84*rate**0.25
+            if (delta<=0.1) then
+               step = 0.1*step
+            else if (delta>=4.0) then
+               step = 4.0*step
+            else
+               step = delta*step
+            end if
+         end if
+         iter = iter + 1
+      end do
+      nextstep = step
+      outvars = mem%nxt4th
    end subroutine
 
 end module hydro_utilities_mod

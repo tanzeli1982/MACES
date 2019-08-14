@@ -84,7 +84,7 @@ class MACMODSuper(object):
         Returns: bed loading rate (kg m-2 s-1)
         """
         x = inputs['x']
-        return np.zeros_like(x, dtype=np.float64)
+        return np.zeros_like(x, dtype=np.float64, order='F')
     
     def settling_velocity(self, tau, d50, Rous):
         """"Calculate effective sediment settling velocity (Mudd et al., 2010).
@@ -162,9 +162,10 @@ class OMACMODSuper(object):
             inputs : driving data for SOC decay rate calculation
         Returns: SOC decay rate (kg m-2 s-1) of two pools
         """
-        x = inputs['x']
-        Nx = np.size(x)
-        return np.zeros((2,Nx), dtype=np.float64)
+        SOM = inputs['SOM']     # soil organic matter pools (kg/m2)
+        Nx = np.shape(SOM)[0]
+        npool = np.shape(SOM)[1]
+        return np.zeros((Nx,npool), dtype=np.float64, order='F')
 
 ###############################################################################    
 class WAVEROMODSuper(object):

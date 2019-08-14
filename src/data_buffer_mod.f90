@@ -10,18 +10,6 @@ module data_buffer_mod
    implicit none
    public
 
-   !! allocatable arrays for RungeKutta4 
-   real(kind=8), allocatable, dimension(:,:) :: rk4_K1
-   real(kind=8), allocatable, dimension(:,:) :: rk4_K2
-   real(kind=8), allocatable, dimension(:,:) :: rk4_K3
-   real(kind=8), allocatable, dimension(:,:) :: rk4_K4
-   real(kind=8), allocatable, dimension(:,:) :: rk4_K5
-   real(kind=8), allocatable, dimension(:,:) :: rk4_K6
-   real(kind=8), allocatable, dimension(:,:) :: rk4_nxt4th
-   real(kind=8), allocatable, dimension(:,:) :: rk4_nxt5th
-   real(kind=8), allocatable, dimension(:,:) :: rk4_interim
-   real(kind=8), allocatable, dimension(:,:) :: rk4_rerr
-   
    !! allocatable arrays for Hydrodynamic model
    ! hydrodynamic state variables [h, U*h, N, Css, Cj]
    real(kind=8), allocatable, dimension(:,:) :: m_uhydro
@@ -49,6 +37,7 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: m_Swc
    real(kind=8), allocatable, dimension(:)   :: m_Sbrk
    ! temporary variables
+   real(kind=8), allocatable, dimension(:,:) :: tmp_uhydro
    real(kind=8), allocatable, dimension(:,:) :: tmp_uhydroL
    real(kind=8), allocatable, dimension(:,:) :: tmp_uhydroR
    real(kind=8), allocatable, dimension(:,:) :: tmp_phi
@@ -65,6 +54,7 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: tmp_Qb
 
    !! user-defined data
+   type(RungeKuttaCache) :: mem_rk4
    type(ModelParams) :: m_params
    type(ForcingData) :: m_forcings
 
