@@ -79,9 +79,6 @@ contains
       allocate(m_forcings%Esed(nx))       ; m_forcings%Esed = 0.0d0
       allocate(m_forcings%Dsed(nx))       ; m_forcings%Dsed = 0.0d0
 
-      print *, size(m_uhydro,1), size(m_uhydro,2)
-      print *, size(mem_rk4%K1,1), size(mem_rk4%K1,2)
-      
       do ii = 1, nx, 1
          if (ii==1) then
             m_dX(ii) = 0.5 * (m_X(ii) + m_X(ii+1))

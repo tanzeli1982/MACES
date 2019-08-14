@@ -81,10 +81,12 @@ omac_mod = omac.NULLMOD(omac_params)
 # hydrodynamic model initialization and set up
 nvar = 5
 taihydro.inithydromod(site_x, site_zh, nvar, npft)
+print('hello')
 taihydro.setmodelparams(hydro_params['d50'], hydro_params['Cz0'], \
     hydro_params['Kdf'], hydro_params['cbc'], hydro_params['fr'], \
     hydro_params['alphaA'], hydro_params['betaA'], hydro_params['alphaD'], \
     hydro_params['betaD'], hydro_params['cD0'], hydro_params['ScD'])
+print('world')
 
 # construct hydrodynamic model boundary conditions
 nyear = 10
@@ -97,7 +99,7 @@ U0 = dh0 / np.max(np.abs(dh0)) * 1.0
 U10 = np.array([icdf_wind_gen(random.uniform(0,1)) for ii in range(nhour)], 
                 dtype=np.float64)
 Twav = 2.0
-Hwav_ocean = 0.27 * U10^2 / utils.G
+Hwav_ocean = 0.27 * U10**2 / utils.G
 Hwav0 = np.sinh(utils.Karman*h0) / np.sinh(utils.Karman*30.0) * Hwav_ocean
 Css0 = 8.0 * np.ones(nhour, dtype=np.float64)
 Cj0 = 28.0 * np.ones(nhour, dtype=np.float64)
@@ -132,6 +134,8 @@ ecogeom_out['DepOM'] = 1e20 * np.ones((nday,nx), dtype=np.float32)
 ecogeom_out['Bag'] = 1e20 * np.ones((nday,nx), dtype=np.float32)
 ecogeom_out['Bbg'] = 1e20 * np.ones((nday,nx), dtype=np.float32)
 ecogeom_out['SOM'] = 1e20 * np.ones((nday,nx,npool), dtype=np.float32)
+
+print('simulation starts')
 
 odir = '/qfs/projects/taim/TAIMOD/test/'
 site_id = 466
@@ -228,3 +232,4 @@ finally:
     utils.write_outputs(odir, site_id, uhydro_out, ecogeom_out)
     # deallocate
     taihydro.finalizehydromod()
+    print('simulation ends')
