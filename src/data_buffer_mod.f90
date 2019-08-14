@@ -5,8 +5,6 @@ module data_buffer_mod
 ! This module serves for the buffer of large temporary data in the model
 !
 !---------------------------------------------------------------------------------
-   use data_type_mod
-
    implicit none
    public
 
@@ -74,8 +72,16 @@ module data_buffer_mod
    real(kind=8) :: par_Kdf
    real(kind=8) :: par_cbc
    real(kind=8) :: par_fr
-
-   !! user-defined data
-   type(RungeKuttaCache) :: mem_rk4
+   ! rungekutta temporary arrays
+   real(kind=8), allocatable, dimension(:,:) :: rk4_K1(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_K2(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_K3(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_K4(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_K5(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_K6(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_nxt4th(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_nxt5th(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_interim(:,:)
+   real(kind=8), allocatable, dimension(:,:) :: rk4_rerr(:,:)
 
 end module data_buffer_mod

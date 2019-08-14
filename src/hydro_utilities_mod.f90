@@ -5,10 +5,12 @@ module hydro_utilities_mod
 ! This module contains hydrodynamic utility subroutines in the model
 !
 !---------------------------------------------------------------------------------
-   use data_type_mod
    use data_buffer_mod,    only : par_d50, par_Cz0, par_Kdf, par_cbc, par_fr
    use data_buffer_mod,    only : par_alphaA, par_betaA, par_alphaD, par_betaD
    use data_buffer_mod,    only : par_cD0, par_ScD
+   use data_buffer_mod,    only : rk4_K1, rk4_K2, rk4_K3, rk4_K4, rk4_K5
+   use data_buffer_mod,    only : rk4_K6, rk4_nxt4th, rk4_nxt5th
+   use data_buffer_mod,    only : rk4_interim, rk4_rerr
 
    implicit none
    public
@@ -563,11 +565,10 @@ contains
    ! Purpose: The 4th-order time step variable Runge-Kutta-Fehlberg method 
    !
    !------------------------------------------------------------------------------
-   subroutine RK4Fehlberg(odeFunc, mem, invars, mode, tol, outvars, &
+   subroutine RK4Fehlberg(odeFunc, invars, mode, tol, outvars, &
                           curstep, nextstep, outerr)
       implicit none
       external :: odeFunc
-      type(RungeKuttaCache) :: mem     ! memory caches
       real(kind=8), intent(in) :: invars(:,:)
       integer, intent(in) :: mode
       real(kind=8), intent(in) :: tol(:)
@@ -582,48 +583,49 @@ contains
       real(kind=8), dimension(size(tol)) :: rel_rate
       real(kind=8) :: step, rate, delta
       logical  :: isLargeErr, isConstrainBroken
-      integer  :: iter, ii, m
+      integer  :: iter, ii, n, m
 
-      m = size(tol)
+      n = size(invars,1)
+      m = size(invars,2)
       isLargeErr = .True.
       isConstrainBroken = .False.
       outerr = 0
       step = curstep
       iter = 1
       rel_tol = TOL_REL
-      call odeFunc(invars, mem%K1)
+      call odeFunc(invars, rk4_K1, n, m)
       do while (isLargeErr .or. isConstrainBroken)
          if (iter>MAXITER) then
             outerr = 1
             return
          end if
          curstep = step
-         mem%interim = invars + step*0.25*mem%K1
-         call odeFunc(mem%interim, mem%K2)
-         mem%interim = invars + step*(0.09375*mem%K1+0.28125*mem%K2)
-         call odeFunc(mem%interim, mem%K3)
-         mem%interim = invars + step*(0.87938*mem%K1-3.27720*mem%K2+ &
-            3.32089*mem%K3)
-         call odeFunc(mem%interim, mem%K4)
-         mem%interim = invars + step*(2.03241*mem%K1-8.0*mem%K2+ &
-            7.17349*mem%K3-0.20590*mem%K4)
-         call odeFunc(mem%interim, mem%K5)
-         mem%nxt4th = invars + step*(0.11574*mem%K1+0.54893*mem%K3+ &
-            0.53533*mem%K4-0.2*mem%K5)
+         rk4_interim = invars + step*0.25*rk4_K1
+         call odeFunc(rk4_interim, rk4_K2, n, m)
+         rk4_interim = invars + step*(0.09375*rk4_K1+0.28125*rk4_K2)
+         call odeFunc(rk4_interim, rk4_K3, n, m)
+         rk4_interim = invars + step*(0.87938*rk4_K1-3.27720*rk4_K2+ &
+            3.32089*rk4_K3)
+         call odeFunc(rk4_interim, rk4_K4, n, m)
+         rk4_interim = invars + step*(2.03241*rk4_K1-8.0*rk4_K2+ &
+            7.17349*rk4_K3-0.20590*rk4_K4)
+         call odeFunc(rk4_interim, rk4_K5, n, m)
+         rk4_nxt4th = invars + step*(0.11574*rk4_K1+0.54893*rk4_K3+ &
+            0.53533*rk4_K4-0.2*rk4_K5)
          if (mode==fixed_mode) then
             nextstep = step
-            outvars = mem%nxt4th
+            outvars = rk4_nxt4th
             return
          end if
-         mem%interim = invars + step*(-0.29630*mem%K1+2.0*mem%K2- &
-            1.38168*mem%K3+0.45297*mem%K4-0.275*mem%K5)
-         call odeFunc(mem%interim, mem%K6)
-         mem%nxt5th = invars + step*(0.11852*mem%K1+0.51899*mem%K3+ &
-            0.50613*mem%K4-0.18*mem%K5+0.03636*mem%K6)
-         mem%rerr = (mem%nxt4th - mem%nxt5th) / (mem%nxt4th + INFTSML)
-         call Norm(mem%rerr, 2, rdy)
-         call Norm(mem%nxt4th-mem%nxt5th, 2, dy)
-         call Minimum(mem%nxt4th, 2, dyn)
+         rk4_interim = invars + step*(-0.29630*rk4_K1+2.0*rk4_K2- &
+            1.38168*rk4_K3+0.45297*rk4_K4-0.275*rk4_K5)
+         call odeFunc(rk4_interim, rk4_K6, n, m)
+         rk4_nxt5th = invars + step*(0.11852*rk4_K1+0.51899*rk4_K3+ &
+            0.50613*rk4_K4-0.18*rk4_K5+0.03636*rk4_K6)
+         rk4_rerr = (rk4_nxt4th - rk4_nxt5th) / (rk4_nxt4th + INFTSML)
+         call Norm(rk4_rerr, 2, rdy)
+         call Norm(rk4_nxt4th-rk4_nxt5th, 2, dy)
+         call Minimum(rk4_nxt4th, 2, dyn)
          ! check whether solution is converged
          isLargeErr = .False.
          isConstrainBroken = .False.
@@ -654,7 +656,7 @@ contains
          iter = iter + 1
       end do
       nextstep = step
-      outvars = mem%nxt4th
+      outvars = rk4_nxt4th
    end subroutine
 
 end module hydro_utilities_mod

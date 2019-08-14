@@ -166,16 +166,17 @@ try:
                             Twav, U10[hindx], h0[hindx], U0[hindx], 
                             Hwav0[hindx], Css0[hindx], Cj0[hindx])
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, curstep)
-        assert error==0, "Runge-Kutta iteration is more than MAXITER"
+        assert error==0, "runge-Kutta iteration is more than MAXITER"
         taihydro.modelcallback()
         sim_h, sim_U, sim_Hwav, sim_tau, sim_Css, sim_Cj = taihydro.getmodelsims(nx)
         # simulate eco-geomorphology
-        mac_inputs = {'Css': sim_Css, 'tau': sim_tau, 
+        mac_inputs = {'x': site_x, 'Css': sim_Css, 'tau': sim_tau, 
                       'd50': hydro_params['d50'], 'Rous': rhoSed}
-        site_Esed = mac_mod.mineral_suspend(mac_inputs)
+        site_Esed = mac_mod.mineral_suspension(mac_inputs)
         site_Dsed = mac_mod.mineral_deposition(mac_inputs)
         site_Lbed = mac_mod.bed_loading(mac_inputs)
-        omac_inputs = {'zh': site_zh, 'MHT': 0.75, 'pft': site_pft}
+        omac_inputs = {'x': site_x, 'zh': site_zh, 'MHT': 0.75, 'pft': site_pft, 
+                       'SOM': site_OM}
         site_Bag = omac_mod.aboveground_biomass(omac_inputs)
         omac_inputs['Bag'] = site_Bag
         site_Bbg = omac_mod.belowground_biomass(omac_inputs)
@@ -196,8 +197,8 @@ try:
             uhydro_out['U'][hindx] = sim_U
             uhydro_out['Hwav'][hindx] = sim_Hwav
             uhydro_out['tau'][hindx] = sim_tau
-            uhydro_out['css'][hindx] = sim_Css
-            uhydro_out['sal'][hindx] = sim_Cj
+            uhydro_out['Css'][hindx] = sim_Css
+            uhydro_out['Cj'][hindx] = sim_Cj
         if isDayNode:
             # archive daily mean eco-geomorphology variables
             ecogeom_out['zh'] = site_zh
@@ -213,7 +214,7 @@ try:
         isDayNode = False
         if curstep<0.1:
             ncount = ncount + 1
-            err_msg = 'Run diverge at step' + '{:d}'.format(hindx)
+            err_msg = 'run diverge at step ' + '{:d}'.format(hindx)
             assert ncount<=100, err_msg
             nextstep = 50.0
         else:

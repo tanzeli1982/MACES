@@ -5,7 +5,6 @@ module TAIHydroMOD
 ! This module implements the 1-D transect-based hydrodynamic model
 !
 !---------------------------------------------------------------------------------
-   use data_type_mod
    use data_buffer_mod
    use hydro_utilities_mod 
 
@@ -32,6 +31,7 @@ contains
       allocate(m_dZh(nx))              ; m_dZh = 0.0d0
       allocate(m_U(nx))                ; m_U = 0.0d0
       allocate(m_Hwav(nx))             ; m_Hwav = 0.0d0
+      allocate(m_kwav(nx))             ; m_kwav = 0.0d0
       allocate(m_Ewav(nx))             ; m_Ewav = 0.0d0
       allocate(m_Uwav(nx))             ; m_Uwav = 0.0d0
       allocate(m_tau(nx))              ; m_tau = 0.0d0
@@ -58,26 +58,26 @@ contains
       allocate(tmp_Nmax(nx))           ; tmp_Nmax = 0.0d0
       allocate(tmp_Qb(101))            ; tmp_Qb = 0.0d0
       ! user-defined allocatable arrays
-      allocate(mem_rk4%K1(nx,nvar))       ; mem_rk4%K1 = 0.0d0
-      allocate(mem_rk4%K2(nx,nvar))       ; mem_rk4%K2 = 0.0d0
-      allocate(mem_rk4%K3(nx,nvar))       ; mem_rk4%K3 = 0.0d0
-      allocate(mem_rk4%K4(nx,nvar))       ; mem_rk4%K4 = 0.0d0
-      allocate(mem_rk4%K5(nx,nvar))       ; mem_rk4%K5 = 0.0d0
-      allocate(mem_rk4%K6(nx,nvar))       ; mem_rk4%K6 = 0.0d0
-      allocate(mem_rk4%nxt4th(nx,nvar))   ; mem_rk4%nxt4th = 0.0d0
-      allocate(mem_rk4%nxt5th(nx,nvar))   ; mem_rk4%nxt5th = 0.0d0
-      allocate(mem_rk4%interim(nx,nvar))  ; mem_rk4%interim = 0.0d0
-      allocate(mem_rk4%rerr(nx,nvar))     ; mem_rk4%rerr = 0.0d0
-      allocate(par_cD0(npft))             ; par_cD0 = 0.0d0
-      allocate(par_ScD(npft))             ; par_ScD = 0.0d0
-      allocate(par_alphaA(npft))          ; par_alphaA = 0.0d0
-      allocate(par_betaA(npft))           ; par_betaA = 0.0d0
-      allocate(par_alphaD(npft))          ; par_alphaD = 0.0d0
-      allocate(par_betaD(npft))           ; par_betaD = 0.0d0
-      allocate(force_pft(nx))             ; force_pft = -1
-      allocate(force_Bag(nx))             ; force_Bag = 0.0d0
-      allocate(force_Esed(nx))            ; force_Esed = 0.0d0
-      allocate(force_Dsed(nx))            ; force_Dsed = 0.0d0
+      allocate(rk4_K1(nx,nvar))        ; rk4_K1 = 0.0d0
+      allocate(rk4_K2(nx,nvar))        ; rk4_K2 = 0.0d0
+      allocate(rk4_K3(nx,nvar))        ; rk4_K3 = 0.0d0
+      allocate(rk4_K4(nx,nvar))        ; rk4_K4 = 0.0d0
+      allocate(rk4_K5(nx,nvar))        ; rk4_K5 = 0.0d0
+      allocate(rk4_K6(nx,nvar))        ; rk4_K6 = 0.0d0
+      allocate(rk4_nxt4th(nx,nvar))    ; rk4_nxt4th = 0.0d0
+      allocate(rk4_nxt5th(nx,nvar))    ; rk4_nxt5th = 0.0d0
+      allocate(rk4_interim(nx,nvar))   ; rk4_interim = 0.0d0
+      allocate(rk4_rerr(nx,nvar))      ; rk4_rerr = 0.0d0
+      allocate(par_cD0(npft))          ; par_cD0 = 0.0d0
+      allocate(par_ScD(npft))          ; par_ScD = 0.0d0
+      allocate(par_alphaA(npft))       ; par_alphaA = 0.0d0
+      allocate(par_betaA(npft))        ; par_betaA = 0.0d0
+      allocate(par_alphaD(npft))       ; par_alphaD = 0.0d0
+      allocate(par_betaD(npft))        ; par_betaD = 0.0d0
+      allocate(force_pft(nx))          ; force_pft = -1
+      allocate(force_Bag(nx))          ; force_Bag = 0.0d0
+      allocate(force_Esed(nx))         ; force_Esed = 0.0d0
+      allocate(force_Dsed(nx))         ; force_Dsed = 0.0d0
 
       do ii = 1, nx, 1
          if (ii==1) then
@@ -117,6 +117,7 @@ contains
       deallocate(m_dZh)
       deallocate(m_U)
       deallocate(m_Hwav)
+      deallocate(m_kwav)
       deallocate(m_Ewav)
       deallocate(m_Uwav)
       deallocate(m_tau)
@@ -143,16 +144,16 @@ contains
       deallocate(tmp_Nmax)
       deallocate(tmp_Qb)
       ! deallocate user-defined arrays
-      deallocate(mem_rk4%K1)
-      deallocate(mem_rk4%K2)
-      deallocate(mem_rk4%K3)
-      deallocate(mem_rk4%K4)
-      deallocate(mem_rk4%K5)
-      deallocate(mem_rk4%K6)
-      deallocate(mem_rk4%nxt4th)
-      deallocate(mem_rk4%nxt5th)
-      deallocate(mem_rk4%interim)
-      deallocate(mem_rk4%rerr)
+      deallocate(rk4_K1)
+      deallocate(rk4_K2)
+      deallocate(rk4_K3)
+      deallocate(rk4_K4)
+      deallocate(rk4_K5)
+      deallocate(rk4_K6)
+      deallocate(rk4_nxt4th)
+      deallocate(rk4_nxt5th)
+      deallocate(rk4_interim)
+      deallocate(rk4_rerr)
       deallocate(par_cD0)
       deallocate(par_ScD)
       deallocate(par_alphaA)
@@ -349,8 +350,8 @@ contains
       integer :: n
 
       ncurstep = curstep
-      call RK4Fehlberg(TAIHydroEquations, mem_rk4, m_uhydro, mode, &
-                       tol, tmp_uhydro, ncurstep, nextstep, error)
+      call RK4Fehlberg(TAIHydroEquations, m_uhydro, mode, tol, &
+                       tmp_uhydro, ncurstep, nextstep, error)
       if (error==0) then
          m_uhydro = tmp_uhydro
       end if
