@@ -68,16 +68,16 @@ contains
       allocate(mem_rk4%nxt5th(nx,nvar))   ; mem_rk4%nxt5th = 0.0d0
       allocate(mem_rk4%interim(nx,nvar))  ; mem_rk4%interim = 0.0d0
       allocate(mem_rk4%rerr(nx,nvar))     ; mem_rk4%rerr = 0.0d0
-      allocate(m_params%cD0(npft))        ; m_params%cD0 = 0.0d0
-      allocate(m_params%ScD(npft))        ; m_params%ScD = 0.0d0
-      allocate(m_params%alphaA(npft))     ; m_params%alphaA = 0.0d0
-      allocate(m_params%betaA(npft))      ; m_params%betaA = 0.0d0
-      allocate(m_params%alphaD(npft))     ; m_params%alphaD = 0.0d0
-      allocate(m_params%betaD(npft))      ; m_params%betaD = 0.0d0
-      allocate(m_forcings%pft(nx))        ; m_forcings%pft = -1
-      allocate(m_forcings%Bag(nx))        ; m_forcings%Bag = 0.0d0
-      allocate(m_forcings%Esed(nx))       ; m_forcings%Esed = 0.0d0
-      allocate(m_forcings%Dsed(nx))       ; m_forcings%Dsed = 0.0d0
+      allocate(par_cD0(npft))             ; par_cD0 = 0.0d0
+      allocate(par_ScD(npft))             ; par_ScD = 0.0d0
+      allocate(par_alphaA(npft))          ; par_alphaA = 0.0d0
+      allocate(par_betaA(npft))           ; par_betaA = 0.0d0
+      allocate(par_alphaD(npft))          ; par_alphaD = 0.0d0
+      allocate(par_betaD(npft))           ; par_betaD = 0.0d0
+      allocate(force_pft(nx))             ; force_pft = -1
+      allocate(force_Bag(nx))             ; force_Bag = 0.0d0
+      allocate(force_Esed(nx))            ; force_Esed = 0.0d0
+      allocate(force_Dsed(nx))            ; force_Dsed = 0.0d0
 
       do ii = 1, nx, 1
          if (ii==1) then
@@ -153,16 +153,16 @@ contains
       deallocate(mem_rk4%nxt5th)
       deallocate(mem_rk4%interim)
       deallocate(mem_rk4%rerr)
-      deallocate(m_params%cD0)
-      deallocate(m_params%ScD)
-      deallocate(m_params%alphaA)
-      deallocate(m_params%betaA)
-      deallocate(m_params%alphaD)
-      deallocate(m_params%betaD)
-      deallocate(m_forcings%Esed)
-      deallocate(m_forcings%Dsed)
-      deallocate(m_forcings%Bag)
-      deallocate(m_forcings%pft)
+      deallocate(par_cD0)
+      deallocate(par_ScD)
+      deallocate(par_alphaA)
+      deallocate(par_betaA)
+      deallocate(par_alphaD)
+      deallocate(par_betaD)
+      deallocate(force_Esed)
+      deallocate(force_Dsed)
+      deallocate(force_Bag)
+      deallocate(force_pft)
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -216,17 +216,17 @@ contains
       real(kind=8), dimension(n) :: cD0, ScD
       integer :: n
 
-      m_params%d50 = d50
-      m_params%Cz0 = Cz0
-      m_params%Kdf = Kdf
-      m_params%cbc = cbc
-      m_params%fr = fr
-      m_params%alphaA = alphaA
-      m_params%betaA = betaA
-      m_params%alphaD = alphaD
-      m_params%betaD = betaD
-      m_params%cD0 = cD0
-      m_params%ScD = ScD
+      par_d50 = d50
+      par_Cz0 = Cz0
+      par_Kdf = Kdf
+      par_cbc = cbc
+      par_fr = fr
+      par_alphaA = alphaA
+      par_betaA = betaA
+      par_alphaD = alphaD
+      par_betaD = betaD
+      par_cD0 = cD0
+      par_ScD = ScD
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -250,19 +250,19 @@ contains
       integer :: n
       integer :: ii
 
-      m_forcings%Esed = Esed
-      m_forcings%Dsed = Dsed
-      m_forcings%pft = pft
-      m_forcings%Bag = Bag
+      force_Esed = Esed
+      force_Dsed = Dsed
+      force_pft = pft
+      force_Bag = Bag
       ! a typical wave period is 2s but increase greatly with the increase
       ! of wave speed (https://en.wikipedia.org/wiki/Wind_wave)
-      m_forcings%Twav = Twav
-      m_forcings%U10 = U10
-      m_forcings%h0 = h0
-      m_forcings%U0 = U0
-      m_forcings%Hwav0 = Hwav0
-      m_forcings%Css0 = Css0
-      m_forcings%Cj0 = Cj0
+      force_Twav = Twav
+      force_U10 = U10
+      force_h0 = h0
+      force_U0 = U0
+      force_Hwav0 = Hwav0
+      force_Css0 = Css0
+      force_Cj0 = Cj0
 
       m_Zh = zh
       do ii = 1, n, 1
@@ -275,20 +275,17 @@ contains
          end if
       end do
 
-      call UpdateGroundRoughness(m_forcings, m_uhydro(:,1), & 
-                                 m_params, m_Cz)
-      !call UpdateWaveNumber(m_forcings, m_uhydro(:,1), m_kwav)
-      call UpdateWaveNumber2(m_forcings, m_uhydro(:,1), m_kwav)
-      !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_params, m_Qb)
-      call UpdateWaveBrkProb2(m_uhydro(:,1), m_Hwav, m_params, &
-                              tmp_Qb, m_Qb)
-      call UpdateWaveGeneration(m_forcings, m_uhydro(:,1), m_kwav, &
-                                m_Ewav, m_Swg)
-      call UpdateWaveBtmFriction(m_forcings, m_uhydro(:,1), m_Hwav, &
-                                 m_kwav, m_Ewav, m_Qb, m_params, m_Sbf)
-      call UpdateWaveWhiteCapping(m_forcings, m_Ewav, m_Swc)
-      call UpdateWaveDepthBrking(m_forcings, m_uhydro(:,1), m_Hwav, &
-                                 m_kwav, m_Ewav, m_Qb, m_params, m_Sbrk)
+      call UpdateGroundRoughness(pft, Bag, m_uhydro(:,1), m_Cz)
+      !call UpdateWaveNumber(Twav, m_uhydro(:,1), m_kwav)
+      call UpdateWaveNumber2(Twav, m_uhydro(:,1), m_kwav)
+      !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_Qb)
+      call UpdateWaveBrkProb2(m_uhydro(:,1), m_Hwav, tmp_Qb, m_Qb)
+      call UpdateWaveGeneration(Twav, U10, m_uhydro(:,1), m_kwav, m_Ewav, m_Swg)
+      call UpdateWaveBtmFriction(Twav, m_uhydro(:,1), m_Hwav, &
+                                 m_kwav, m_Ewav, m_Qb, m_Sbf)
+      call UpdateWaveWhiteCapping(Twav, m_Ewav, m_Swc)
+      call UpdateWaveDepthBrking(Twav, U10, m_uhydro(:,1), m_Hwav, &
+                                 m_kwav, m_Ewav, m_Qb, m_Sbrk)
 
       ! boundary conditions
       m_uhydro(1,1) = h0
@@ -313,7 +310,7 @@ contains
       
       n = size(m_uhydro,1)
       m = size(m_uhydro,2)
-      sigma = 2.0*PI/m_forcings%Twav
+      sigma = 2.0*PI/force_Twav
       do ii = 1, n, 1
          if (m_uhydro(ii,1)<=0) then
             m_uhydro(ii,2:m) = 0.0d0
@@ -328,11 +325,11 @@ contains
          if (h<=0) then
             m_Uwav(ii) = 0.0d0
          else
-            m_Uwav(ii) = min(PI*Hwav/m_forcings%Twav/sinh(Karman*h), 20.0)
+            m_Uwav(ii) = min(PI*Hwav/force_Twav/sinh(Karman*h), 20.0)
          end if
       end do
-      call UpdateShearStress(m_forcings, m_uhydro(:,1), m_U, m_Hwav, &
-                             m_Uwav, m_params, m_tau)
+      call UpdateShearStress(force_Twav, m_uhydro(:,1), m_U, m_Hwav, &
+                             m_Uwav, m_tau)
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -377,9 +374,9 @@ contains
       real(kind=8) :: sigma
       integer :: indx
 
-      sigma = 2.0*PI/m_forcings%Twav
+      sigma = 2.0*PI/force_Twav
       tmp_U = uhydro(:,2) / max(0.1,uhydro(:,1))
-      tmp_Nmax = 0.125*Roul*G*(m_params%fr*uhydro(:,1))**2/sigma
+      tmp_Nmax = 0.125*Roul*G*(par_fr*uhydro(:,1))**2/sigma
       indx = count(uhydro(:,1)>0)
       tmp_Cg(1:indx) = 0.5*sigma*(1.0+2.0*m_kwav(1:indx)*uhydro(1:indx,1)/ &
          sinh(2.0*m_kwav(1:indx)*uhydro(1:indx,1)))/m_kwav(1:indx)
@@ -416,7 +413,7 @@ contains
       real(kind=8) :: sigma
       integer :: indx
 
-      sigma = 2.0*PI/m_forcings%Twav
+      sigma = 2.0*PI/force_Twav
       indx = count(uhydro(:,1)>0)
       tmp_Cg(1:indx) = 0.5*sigma*(1.0+2.0*m_kwav(1:indx)*uhydro(1:indx,1)/ &
          sinh(2.0*m_kwav(1:indx)*uhydro(1:indx,1)))/m_kwav(1:indx)
@@ -440,9 +437,9 @@ contains
       integer :: n, m
 
       fluxes = 0.0d0
-      fluxes(2:n-1,4) = 0.5*m_params%Kdf*(uhydro(2:n-1,1)+uhydro(3:n,1))* &
+      fluxes(2:n-1,4) = 0.5*par_Kdf*(uhydro(2:n-1,1)+uhydro(3:n,1))* &
          (uhydro(3:n,4)-uhydro(2:n-1,4))/m_dX(2:n-1)
-      fluxes(2:n-1,5) = 0.5*m_params%Kdf*(uhydro(2:n-1,1)+uhydro(3:n,1))* &
+      fluxes(2:n-1,5) = 0.5*par_Kdf*(uhydro(2:n-1,1)+uhydro(3:n,1))* &
          (uhydro(3:n,5)-uhydro(2:n-1,5))/m_dX(2:n-1)
    end subroutine
 
@@ -456,12 +453,12 @@ contains
       integer :: n, m
       real(kind=8) :: sigma
 
-      sigma = 2.0*PI/m_forcings%Twav
+      sigma = 2.0*PI/force_Twav
       tmp_U = uhydro(:,2) / max(0.1,uhydro(:,1))
       sources(:,1) = 0.0d0
       sources(:,2) = -tmp_U*abs(tmp_U)*G/m_Cz**2 - G*uhydro(:,1)*m_dZh/m_dX
       sources(:,3) = (m_Swg - (m_Sbf+m_Swc+m_Sbrk)) / sigma 
-      sources(:,4) = m_Esed - m_Dsed*uhydro(:,4)/(m_uhydro(:,4)+1d-3)
+      sources(:,4) = force_Esed - force_Dsed*uhydro(:,4)/(m_uhydro(:,4)+1d-3)
       sources(:,5) = 0.0d0
    end subroutine
 

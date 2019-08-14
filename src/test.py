@@ -81,12 +81,10 @@ omac_mod = omac.NULLMOD(omac_params)
 # hydrodynamic model initialization and set up
 nvar = 5
 taihydro.inithydromod(site_x, site_zh, nvar, npft)
-print('hello')
 taihydro.setmodelparams(hydro_params['d50'], hydro_params['Cz0'], \
     hydro_params['Kdf'], hydro_params['cbc'], hydro_params['fr'], \
     hydro_params['alphaA'], hydro_params['betaA'], hydro_params['alphaD'], \
     hydro_params['betaD'], hydro_params['cD0'], hydro_params['ScD'])
-print('world')
 
 # construct hydrodynamic model boundary conditions
 nyear = 10
@@ -157,9 +155,9 @@ nextstep = MAX_OF_STEP
 try:
     while t < tf:
         if t>=3.6e3*hindx and hindx<nhour:
-            print('time step', int(hindx))
             isHourNode = True
             hindx = hindx + 1
+            print('time step', int(hindx))
             if np.mod(hindx,24)==0:
                 isDayNode = True
                 dindx = dindx + 1
