@@ -152,7 +152,7 @@ curstep = 50.0
 nextstep = MAX_OF_STEP
 try:
     while t < tf:
-        if t>=3.6e3*hindx and hindx<nhour:
+        if t>=3.6e3*(hindx+1) and hindx+1<nhour:
             isHourNode = True
             hindx = hindx + 1
             print('time step', int(hindx))
@@ -160,14 +160,12 @@ try:
                 isDayNode = True
                 dindx = dindx + 1
         # simulate hydrodynamics
-        site_Esed[:] = 0.0
-        site_Dsed[:] = 0.0
         if isHourNode:
             h0_abs = -site_zh[0] + h0[hindx]
             Hwav0 = utils.estimate_Hwav_seaward(U10[dindx], h0_abs)
-            print(U10[dindx], h0_abs, U0[hindx], Hwav0, Css0[dindx], Cj0[dindx])
-            if hindx==1:
-                print(sim_U)
+            #np.set_printoptions(precision=3, suppress=True)
+            np.set_printoptions(precision=3, suppress=False)
+            print(np.array([U10[dindx],h0_abs,U0[hindx],Hwav0,Css0[dindx],Cj0[dindx]]))
         taihydro.modelsetup(site_zh, site_pft, site_Bag, site_Esed, site_Dsed, 
                             Twav, U10[dindx], h0_abs, U0[hindx], Hwav0, 
                             Css0[dindx], Cj0[dindx])
@@ -175,6 +173,13 @@ try:
         assert error==0, "runge-Kutta iteration is more than MAXITER"
         taihydro.modelcallback()
         sim_h, sim_U, sim_Hwav, sim_tau, sim_Css, sim_Cj = taihydro.getmodelsims(nx)
+        #print(sim_Hwav[:10])
+        assert np.all(np.isfinite(sim_h)), "NaN h found"
+        assert np.all(np.isfinite(sim_U)), "NaN U found"
+        assert np.all(np.isfinite(sim_Hwav)), "NaN Hwav found"
+        assert np.all(np.isfinite(sim_tau)), "NaN tau found"
+        assert np.all(np.isfinite(sim_Css)), "NaN Css found"
+        assert np.all(np.isfinite(sim_Cj)), "NaN Cj found"
         # simulate eco-geomorphology
         mac_inputs = {'x': site_x, 'Css': sim_Css, 'tau': sim_tau, 
                       'd50': hydro_params['d50'], 'Rous': rhoSed}
@@ -194,6 +199,10 @@ try:
         DepOM_pools[:,1] = 0.842 * site_DepOM
         site_OM = site_OM + (DepOM_pools - site_DecayOM) * curstep
         # update platform elevation
+        site_Esed[:] = 0.0
+        site_Dsed[:] = 0.0
+        site_Lbed[:] = 0.0
+        site_DepOM[:] = 0.0
         site_zh = site_zh + ((site_Dsed/rhoSed + site_Lbed/rhoSed + \
             site_DepOM/rhoOM - site_Esed/rhoSed)/(1.0-porSed) - \
             site_rslr) * curstep

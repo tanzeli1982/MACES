@@ -183,14 +183,26 @@ contains
       real(kind=8), intent(in) :: uhydro(:,:)
       real(kind=8), intent(out) :: phi(:,:)
       real(kind=8) :: rr(size(uhydro,2))
-      integer :: ii, NX
+      real(kind=8) :: r0, r1
+      integer :: ii, jj, n, m
 
-      NX = size(uhydro,1)
-      do ii = 1, NX, 1
-         if (ii==1 .or. ii==NX) then
+      n = size(uhydro,1)
+      m = size(uhydro,2)
+      do ii = 1, n, 1
+         if (ii==1 .or. ii==n) then
             phi(ii,:) = 0.0d0
          else
-            rr = (uhydro(ii,:)-uhydro(ii-1,:))/(uhydro(ii+1,:)-uhydro(ii,:))
+            do jj = 1, m, 1
+               r0 = uhydro(ii,jj) - uhydro(ii-1,jj)
+               r1 = uhydro(ii+1,jj) - uhydro(ii,jj)
+               if (abs(r0)>0 .and. abs(r1)>0) then
+                  rr(jj) = r0 / r1
+               else if (abs(r0)==0) then
+                  rr(jj) = 0.0
+               else
+                  rr(jj) = 1.0 / INFTSML
+               end if
+            end do
             phi(ii,:) = max(0.0,min(2.0*rr,1.0),min(rr,2.0))
          end if
       end do
@@ -286,12 +298,12 @@ contains
 
       nx = size(h)
       do ii = 1, nx, 1
-         cD0 = par_cD0(pft(ii))
-         ScD = par_ScD(pft(ii))
-         alphaA = par_alphaA(pft(ii))
-         betaA = par_betaA(pft(ii))
-         alphaD = par_alphaD(pft(ii))
-         betaD = par_betaD(pft(ii))
+         cD0 = par_cD0(pft(ii)+1)
+         ScD = par_ScD(pft(ii)+1)
+         alphaA = par_alphaA(pft(ii)+1)
+         betaA = par_betaA(pft(ii)+1)
+         alphaD = par_alphaD(pft(ii)+1)
+         betaD = par_betaD(pft(ii)+1)
          asb = alphaA * Bag(ii)**betaA
          dsb = alphaD * Bag(ii)**betaD
          cD = cD0 + ScD * Bag(ii)
@@ -320,7 +332,11 @@ contains
             ! bottom shear stress by wave
             fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
             tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
-            tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
+            if (tau_curr+tau_wave>0) then
+               tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
+            else
+               tau(ii) = 0.0
+            end if
          else
             tau(ii) = 0.0d0
          end if
@@ -490,7 +506,7 @@ contains
       nx = size(h)
       sigma = 2.0*PI/Twav
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>0 .and. kwav(ii)>0) then
             alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav(ii))**2
             beta = 5.0*Roua/Roul/Twav*(U10*kwav(ii)/sigma-0.9)
             Swg(ii) = alpha + beta * Ewav(ii)
@@ -515,7 +531,7 @@ contains
 
       nx = size(h)
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>0 .and. kwav(ii)>0) then
             Cf = 2.0*par_cbc*PI*Hwav(ii)/Twav/sinh(kwav(ii)*h(ii))
             Sbf(ii) = (1-Qb(ii))*2.0*Cf*kwav(ii)*Ewav(ii)/ &
                sinh(2.0*kwav(ii)*h(ii))
@@ -557,7 +573,7 @@ contains
       nx = size(h)
       sigma = 2.0*PI/Twav
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>0 .and. kwav(ii)>0 .and. Hwav(ii)>0) then
             Hmax = par_fr * h(ii)
             alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav(ii))**2
             Sbrk(ii) = 2.0*alpha/Twav*Qb(ii)*((Hmax/Hwav(ii))**2)*Ewav(ii)

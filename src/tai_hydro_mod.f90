@@ -79,6 +79,7 @@ contains
       allocate(force_Bag(nx))          ; force_Bag = 0.0d0
       allocate(force_Esed(nx))         ; force_Esed = 0.0d0
       allocate(force_Dsed(nx))         ; force_Dsed = 0.0d0
+      allocate(force_Fminus(nvar))     ; force_Fminus = 0.0d0
 
       do ii = 1, nx, 1
          if (ii==1) then
@@ -89,9 +90,6 @@ contains
             m_dX(ii) = 0.5 * (m_X(ii+1) - m_X(ii-1))
          end if
          m_uhydro(ii,1) = max(-m_Zh(ii), 0.0)
-         if (m_uhydro(ii,1)>0) then
-            m_uhydro(ii,5) = 35.0d0
-         end if
       end do
       tmp_Qb = (/0.0,0.4637,0.5005,0.5260,0.5461,0.5631,0.5780,0.5914, &
          0.6035,0.6147,0.6252,0.6350,0.6442,0.6530,0.6614,0.6694,0.6770, &
@@ -165,27 +163,7 @@ contains
       deallocate(force_Dsed)
       deallocate(force_Bag)
       deallocate(force_pft)
-   end subroutine
-
-   !------------------------------------------------------------------------------
-   ! 
-   ! Purpose: Return model simulations
-   !
-   !------------------------------------------------------------------------------
-   subroutine GetModelSims(n, h, U, Hwav, tau, Css, Cj)
-      implicit none
-      !f2py intent(in) :: n
-      !f2py intent(out) :: h, U, Hwav, tau, Css, Cj
-      real(kind=8), dimension(n) :: h, U, Hwav
-      real(kind=8), dimension(n) :: tau, Css, Cj
-      integer :: n
-
-      h = m_uhydro(:,1)
-      U = m_U
-      Hwav = m_Hwav
-      tau = m_tau
-      Css = m_uhydro(:,4)
-      Cj = m_uhydro(:,5)
+      deallocate(force_Fminus)
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -250,6 +228,7 @@ contains
       integer, dimension(n) :: pft
       real(kind=8) :: Twav, U10, h0, U0, Hwav0
       real(kind=8) :: Css0, Cj0
+      real(kind=8) :: Cg, sigma, Nwav
       integer :: n
       integer :: ii
 
@@ -261,11 +240,6 @@ contains
       ! of wave speed (https://en.wikipedia.org/wiki/Wind_wave)
       force_Twav = Twav
       force_U10 = U10
-      force_h0 = h0
-      force_U0 = U0
-      force_Hwav0 = Hwav0
-      force_Css0 = Css0
-      force_Cj0 = Cj0
 
       m_Zh = zh
       do ii = 1, n, 1
@@ -291,9 +265,21 @@ contains
                                  m_kwav, m_Ewav, m_Qb, m_Sbrk)
 
       ! boundary conditions
+      force_Fminus(1) = h0 * U0
+      force_Fminus(2) = h0*U0**2 + 0.5*G*h0**2
+      sigma = 2.0*PI/Twav
+      if (m_kwav(1)>0) then
+          Cg = 0.5*sigma*(1.0+2.0*m_kwav(1)*h0/sinh(2.0*m_kwav(1)*h0))/m_kwav(1)
+      else
+          Cg = 0.0
+      end if
+      Nwav = 0.125*Roul*G*(Hwav0**2)/sigma
+      force_Fminus(3) = Cg*Nwav
+      force_Fminus(4) = U0*h0*Css0
+      force_Fminus(5) = U0*h0*Cj0
       m_uhydro(1,1) = h0
-      m_uhydro(1,2) = U0 * h0
-      m_uhydro(1,3) = 0.125*Roul*G*(Hwav0**2)/(2.0*PI/Twav)
+      m_uhydro(1,2) = h0*U0
+      m_uhydro(1,3) = Nwav
       m_uhydro(1,4) = Css0
       m_uhydro(1,5) = Cj0
    end subroutine
@@ -313,7 +299,12 @@ contains
       
       n = size(m_uhydro,1)
       m = size(m_uhydro,2)
+      
       sigma = 2.0*PI/force_Twav
+      where (m_uhydro(:,1)<0) m_uhydro(:,1) = 0.0
+      where (m_uhydro(:,3)<0) m_uhydro(:,3) = 0.0
+      where (m_uhydro(:,4)<0) m_uhydro(:,4) = 0.0
+      where (m_uhydro(:,5)<0) m_uhydro(:,5) = 0.0
       do ii = 1, n, 1
          if (m_uhydro(ii,1)<=0) then
             m_uhydro(ii,2:m) = 0.0d0
@@ -360,6 +351,27 @@ contains
          m_uhydro = tmp_uhydro
       end if
    end subroutine
+   
+   !------------------------------------------------------------------------------
+   ! 
+   ! Purpose: Return model simulations
+   !
+   !------------------------------------------------------------------------------
+   subroutine GetModelSims(n, h, U, Hwav, tau, Css, Cj)
+      implicit none
+      !f2py intent(in) :: n
+      !f2py intent(out) :: h, U, Hwav, tau, Css, Cj
+      real(kind=8), dimension(n) :: h, U, Hwav
+      real(kind=8), dimension(n) :: tau, Css, Cj
+      integer :: n
+
+      h = m_uhydro(:,1)
+      U = m_U
+      Hwav = m_Hwav
+      tau = m_tau
+      Css = m_uhydro(:,4)
+      Cj = m_uhydro(:,5)
+   end subroutine
 
    !------------------------------------------------------------------------------
    !
@@ -377,15 +389,19 @@ contains
       integer :: n, m
       ! local variables
       real(kind=8) :: sigma
-      integer :: indx
+      integer :: ii
 
       sigma = 2.0*PI/force_Twav
       tmp_U = uhydro(:,2) / max(0.1,uhydro(:,1))
       tmp_Nmax = 0.125*Roul*G*(par_fr*uhydro(:,1))**2/sigma
-      indx = count(uhydro(:,1)>0)
-      tmp_Cg(1:indx) = 0.5*sigma*(1.0+2.0*m_kwav(1:indx)*uhydro(1:indx,1)/ &
-         sinh(2.0*m_kwav(1:indx)*uhydro(1:indx,1)))/m_kwav(1:indx)
-      tmp_Cg(indx+1:n) = 0.0d0
+      do ii = 1, n, 1
+         if (uhydro(ii,1)>0 .and. m_kwav(ii)>0) then
+            tmp_Cg(ii) = 0.5*sigma*(1.0+2.0*m_kwav(ii)*uhydro(ii,1)/ &
+               sinh(2.0*m_kwav(ii)*uhydro(ii,1)))/m_kwav(ii)
+         else
+            tmp_Cg(ii) = 0.0
+         end if
+      end do
       fluxes(:,1) = uhydro(:,2)
       fluxes(:,2) = uhydro(:,1)*(tmp_U**2) + 0.5*G*uhydro(:,1)**2
       fluxes(:,3) = tmp_Cg*min(uhydro(:,3),tmp_Nmax)
@@ -416,16 +432,24 @@ contains
       integer :: n, m
       ! local variables
       real(kind=8) :: sigma
-      integer :: indx
+      integer :: ii
 
       sigma = 2.0*PI/force_Twav
-      indx = count(uhydro(:,1)>0)
-      tmp_Cg(1:indx) = 0.5*sigma*(1.0+2.0*m_kwav(1:indx)*uhydro(1:indx,1)/ &
-         sinh(2.0*m_kwav(1:indx)*uhydro(1:indx,1)))/m_kwav(1:indx)
-      tmp_Cg(indx+1:n) = 0.0d0
-      tmp_U = uhydro(:,2) / max(0.1,uhydro(:,1))
-      tmp_eigval(:,1) = 3.0*tmp_U + sqrt(5.0*(tmp_U**2)+G*uhydro(:,1))
-      tmp_eigval(:,2) = 3.0*tmp_U - sqrt(5.0*(tmp_U**2)+G*uhydro(:,1))
+      do ii = 1, n, 1
+         if (uhydro(ii,1)>0 .and. m_kwav(ii)>0) then
+            tmp_Cg(ii) = 0.5*sigma*(1.0+2.0*m_kwav(ii)*uhydro(ii,1)/ &
+               sinh(2.0*m_kwav(ii)*uhydro(ii,1)))/m_kwav(ii)
+         else
+            tmp_Cg(ii) = 0.0
+         end if
+         if (uhydro(ii,1)>0) then
+            tmp_U(ii) = uhydro(ii,2) / max(0.1,uhydro(ii,1))
+         else
+            tmp_U(ii) = 0.0
+         end if
+      end do
+      tmp_eigval(:,1) = 3.0*tmp_U + sqrt(5.0*(tmp_U**2)+G*max(uhydro(:,1),0.0))
+      tmp_eigval(:,2) = 3.0*tmp_U - sqrt(5.0*(tmp_U**2)+G*max(uhydro(:,1),0.0))      
       tmp_eigval(:,3) = tmp_Cg
       tmp_eigval(:,4) = uhydro(:,2)
       tmp_eigval(:,5) = uhydro(:,2)
@@ -461,7 +485,7 @@ contains
       sigma = 2.0*PI/force_Twav
       tmp_U = uhydro(:,2) / max(0.1,uhydro(:,1))
       sources(:,1) = 0.0d0
-      sources(:,2) = -tmp_U*abs(tmp_U)*G/m_Cz**2 - G*uhydro(:,1)*m_dZh/m_dX
+      sources(:,2) = -tmp_U*abs(tmp_U)*G/m_Cz**2 !- G*uhydro(:,1)*m_dZh/m_dX
       sources(:,3) = (m_Swg - (m_Sbf+m_Swc+m_Sbrk)) / sigma 
       sources(:,4) = force_Esed - force_Dsed*uhydro(:,4)/(m_uhydro(:,4)+1d-3)
       sources(:,5) = 0.0d0
@@ -489,7 +513,7 @@ contains
       ! calculate slope limiter
       call FVSKT_Superbee(uhydro, tmp_phi)
       ! calculate cell edge variable values
-      call FVSKT_celledge(uhydro, tmp_phi, tmp_uhydroL, tmp_uhydroR) 
+      call FVSKT_celledge(uhydro, tmp_phi, tmp_uhydroL, tmp_uhydroR)
       ! calculate cell edge convective fluxes 
       call CalcEdgeConvectionFlux(tmp_uhydroL, tmp_FL, n, m)
       call CalcEdgeConvectionFlux(tmp_uhydroR, tmp_FR, n, m)
@@ -503,17 +527,22 @@ contains
       ! calculate temporal gradients
       do ii = 1, n, 1
          dx = m_dX(ii)
-         ap = max(0.0, tmp_aR(ii), tmp_aL(ii+1))
-         am = max(0.0, tmp_aR(ii-1), tmp_aL(ii))
          if (ii==1) then
             ! seaward boundary condition
-            duhydro(ii,:) = 0.0d0
+            !ap = max(0.0, tmp_aR(ii), tmp_aL(ii+1))
+            !Fplus = 0.5*(tmp_FR(ii,:)+tmp_FL(ii+1,:)) - &
+            !   0.5*ap*(tmp_uhydroL(ii+1,:)-tmp_uhydroR(ii,:))
+            duhydro(ii,:) = 0.0 !-(Fplus - force_Fminus) / dx + tmp_SRC(ii,:)
          else if (ii==n) then
             ! landward boundary condition
+            am = max(0.0, tmp_aR(ii-1), tmp_aL(ii))
             Fminus = 0.5*(tmp_FR(ii-1,:)+tmp_FL(ii,:)) - &
                0.5*am*(tmp_uhydroL(ii,:)-tmp_uhydroR(ii-1,:))
             duhydro(ii,:) = Fminus/dx - tmp_P(ii-1,:)/dx + tmp_SRC(ii,:)
          else
+            ! inner grid cells
+            ap = max(0.0, tmp_aR(ii), tmp_aL(ii+1))
+            am = max(0.0, tmp_aR(ii-1), tmp_aL(ii))
             Fminus = 0.5*(tmp_FR(ii-1,:)+tmp_FL(ii,:)) - &
                0.5*am*(tmp_uhydroL(ii,:)-tmp_uhydroR(ii-1,:))
             Fplus = 0.5*(tmp_FR(ii,:)+tmp_FL(ii+1,:)) - &
@@ -522,6 +551,11 @@ contains
                tmp_P(ii-1,:)) / dx + tmp_SRC(ii,:)
          end if
       end do
+      duhydro(:,3) = 0.0
+      !where (uhydro(:,1)<=0 .and. duhydro(:,1)<0) duhydro(:,1) = 0.0
+      !where (uhydro(:,3)<=0 .and. duhydro(:,3)<0) duhydro(:,3) = 0.0
+      !where (uhydro(:,4)<=0 .and. duhydro(:,4)<0) duhydro(:,4) = 0.0
+      !where (uhydro(:,5)<=0 .and. duhydro(:,5)<0) duhydro(:,5) = 0.0
    end subroutine
 
 end module TAIHydroMOD
