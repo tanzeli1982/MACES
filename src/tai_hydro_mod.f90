@@ -268,7 +268,7 @@ contains
       force_Fminus(1) = h0 * U0
       force_Fminus(2) = h0*U0**2 + 0.5*G*h0**2
       sigma = 2.0*PI/Twav
-      if (m_kwav(1)>0) then
+      if (m_kwav(1)>TOL_REL) then
           Cg = 0.5*sigma*(1.0+2.0*m_kwav(1)*h0/sinh(2.0*m_kwav(1)*h0))/m_kwav(1)
       else
           Cg = 0.0
@@ -299,14 +299,13 @@ contains
       
       n = size(m_uhydro,1)
       m = size(m_uhydro,2)
-      
       sigma = 2.0*PI/force_Twav
       where (m_uhydro(:,1)<0) m_uhydro(:,1) = 0.0
       where (m_uhydro(:,3)<0) m_uhydro(:,3) = 0.0
       where (m_uhydro(:,4)<0) m_uhydro(:,4) = 0.0
       where (m_uhydro(:,5)<0) m_uhydro(:,5) = 0.0
       do ii = 1, n, 1
-         if (m_uhydro(ii,1)<=0) then
+         if (m_uhydro(ii,1)<=TOL_REL) then
             m_uhydro(ii,2:m) = 0.0d0
          end if
       end do
@@ -316,10 +315,10 @@ contains
       do ii = 1, n, 1
          h = m_uhydro(ii,1)
          Hwav = m_Hwav(ii)
-         if (h<=0) then
-            m_Uwav(ii) = 0.0d0
-         else
+         if (h>TOL_REL) then
             m_Uwav(ii) = min(PI*Hwav/force_Twav/sinh(Karman*h), 20.0)
+         else
+            m_Uwav(ii) = 0.0
          end if
       end do
       call UpdateShearStress(force_Twav, m_uhydro(:,1), m_U, m_Hwav, &
@@ -395,7 +394,7 @@ contains
       tmp_U = uhydro(:,2) / max(0.1,uhydro(:,1))
       tmp_Nmax = 0.125*Roul*G*(par_fr*uhydro(:,1))**2/sigma
       do ii = 1, n, 1
-         if (uhydro(ii,1)>0 .and. m_kwav(ii)>0) then
+         if (uhydro(ii,1)>TOL_REL .and. m_kwav(ii)>TOL_REL) then
             tmp_Cg(ii) = 0.5*sigma*(1.0+2.0*m_kwav(ii)*uhydro(ii,1)/ &
                sinh(2.0*m_kwav(ii)*uhydro(ii,1)))/m_kwav(ii)
          else
@@ -436,13 +435,13 @@ contains
 
       sigma = 2.0*PI/force_Twav
       do ii = 1, n, 1
-         if (uhydro(ii,1)>0 .and. m_kwav(ii)>0) then
+         if (uhydro(ii,1)>TOL_REL .and. m_kwav(ii)>TOL_REL) then
             tmp_Cg(ii) = 0.5*sigma*(1.0+2.0*m_kwav(ii)*uhydro(ii,1)/ &
                sinh(2.0*m_kwav(ii)*uhydro(ii,1)))/m_kwav(ii)
          else
             tmp_Cg(ii) = 0.0
          end if
-         if (uhydro(ii,1)>0) then
+         if (uhydro(ii,1)>TOL_REL) then
             tmp_U(ii) = uhydro(ii,2) / max(0.1,uhydro(ii,1))
          else
             tmp_U(ii) = 0.0
@@ -511,9 +510,9 @@ contains
       integer :: ii
 
       ! calculate slope limiter
-      call FVSKT_Superbee(uhydro, tmp_phi)
+      call FVSKT_Superbee(uhydro, tmp_phi, n, m)
       ! calculate cell edge variable values
-      call FVSKT_celledge(uhydro, tmp_phi, tmp_uhydroL, tmp_uhydroR)
+      call FVSKT_celledge(uhydro, tmp_phi, tmp_uhydroL, tmp_uhydroR, n, m)
       ! calculate cell edge convective fluxes 
       call CalcEdgeConvectionFlux(tmp_uhydroL, tmp_FL, n, m)
       call CalcEdgeConvectionFlux(tmp_uhydroR, tmp_FR, n, m)
@@ -551,7 +550,6 @@ contains
                tmp_P(ii-1,:)) / dx + tmp_SRC(ii,:)
          end if
       end do
-      duhydro(:,3) = 0.0
       !where (uhydro(:,1)<=0 .and. duhydro(:,1)<0) duhydro(:,1) = 0.0
       !where (uhydro(:,3)<=0 .and. duhydro(:,3)<0) duhydro(:,3) = 0.0
       !where (uhydro(:,4)<=0 .and. duhydro(:,4)<0) duhydro(:,4) = 0.0

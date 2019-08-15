@@ -173,7 +173,6 @@ try:
         assert error==0, "runge-Kutta iteration is more than MAXITER"
         taihydro.modelcallback()
         sim_h, sim_U, sim_Hwav, sim_tau, sim_Css, sim_Cj = taihydro.getmodelsims(nx)
-        #print(sim_Hwav[:10])
         assert np.all(np.isfinite(sim_h)), "NaN h found"
         assert np.all(np.isfinite(sim_U)), "NaN U found"
         assert np.all(np.isfinite(sim_Hwav)), "NaN Hwav found"
