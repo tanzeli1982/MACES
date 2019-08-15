@@ -1,21 +1,9 @@
 !    -*- f90 -*-
 ! Note: the context of this file is case sensitive.
 
-python module RK4Fehlberg__user__routines 
-    interface RK4Fehlberg_user_interface 
-        subroutine odeFunc(x,y,xn,xm) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD:RK4Fehlberg:unknown_interface
-            intent(callback) odeFunc
-            real(kind=8) dimension(xn,xm),intent(in) :: x
-            real(kind=8) dimension(xn,xm),intent(out),depend(xn,xm) :: y
-            integer, optional,intent(hide),depend(x) :: xn=shape(x,0)
-            integer, optional,intent(hide),depend(x) :: xm=shape(x,1)
-        end subroutine odeFunc
-    end interface RK4Fehlberg_user_interface
-end python module RK4Fehlberg__user__routines
 python module TAIHydroMOD ! in 
     interface  ! in :TAIHydroMOD
         module TAIHydroMOD ! in :TAIHydroMOD:tai_hydro_mod.f90
-            use data_type_mod
             use data_buffer_mod
             use hydro_utilities_mod
             subroutine InitHydroMod(xin,zhin,nvar,npft,nx) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
@@ -23,10 +11,19 @@ python module TAIHydroMOD ! in
                 real(kind=8) dimension(nx),intent(in),depend(nx) :: zhin
                 integer intent(in) :: nvar
                 integer intent(in) :: npft
-                integer, optional,intent(hide),check(len(xin)>=nx),depend(xin) :: nx=len(xin)
+                integer, optional,intent(hide),depend(xin) :: nx=len(xin)
             end subroutine InitHydroMod
             subroutine FinalizeHydroMod ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
             end subroutine FinalizeHydroMod
+            subroutine GetModelSims(n,h,U,Hwav,tau,Css,Cj) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
+                integer intent(in) :: n
+                real(kind=8) dimension(n),intent(out),depend(n) :: h
+                real(kind=8) dimension(n),intent(out),depend(n) :: U
+                real(kind=8) dimension(n),intent(out),depend(n) :: Hwav
+                real(kind=8) dimension(n),intent(out),depend(n) :: tau
+                real(kind=8) dimension(n),intent(out),depend(n) :: Css
+                real(kind=8) dimension(n),intent(out),depend(n) :: Cj
+            end subroutine GetModelSims
             subroutine SetModelParams(d50,Cz0,Kdf,cbc,fr,alphaA,betaA,alphaD,betaD,cD0,ScD,n) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
                 real(kind=8) intent(in) :: d50
                 real(kind=8) intent(in) :: Cz0
@@ -39,11 +36,11 @@ python module TAIHydroMOD ! in
                 real(kind=8) dimension(n),intent(in),depend(n) :: betaD
                 real(kind=8) dimension(n),intent(in),depend(n) :: cD0
                 real(kind=8) dimension(n),intent(in),depend(n) :: ScD
-                integer, optional,intent(hide),check(len(alphaA)>=n),depend(alphaA) :: n=len(alphaA)
+                integer, optional,intent(hide),depend(alphaA) :: n=len(alphaA)
             end subroutine SetModelParams
             subroutine ModelSetup(zh,pft,Bag,Esed,Dsed,Twav,U10,h0,U0,Hwav0,Css0,Cj0,n) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
                 real(kind=8) dimension(n),intent(in) :: zh
-                real(kind=8) dimension(n),intent(in),depend(n) :: pft
+                integer dimension(n),intent(in),depend(n) :: pft
                 real(kind=8) dimension(n),intent(in),depend(n) :: Bag
                 real(kind=8) dimension(n),intent(in),depend(n) :: Esed
                 real(kind=8) dimension(n),intent(in),depend(n) :: Dsed
@@ -54,58 +51,49 @@ python module TAIHydroMOD ! in
                 real(kind=8) intent(in) :: Hwav0
                 real(kind=8) intent(in) :: Css0
                 real(kind=8) intent(in) :: Cj0
-                integer, optional,intent(hide),check(len(zh)>=n),depend(zh) :: n=len(zh)
+                integer, optional,intent(hide),depend(zh) :: n=len(zh)
             end subroutine ModelSetup
-            subroutine ModelCallback(uhydro,n,m) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
-                real(kind=8) dimension(n,m),intent(in) :: uhydro
-                integer, optional,intent(hide),check(shape(uhydro,0)==n),depend(uhydro) :: n=shape(uhydro,0)
-                integer, optional,intent(hide),check(shape(uhydro,1)==m),depend(uhydro) :: m=shape(uhydro,1)
+            subroutine ModelCallback ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
             end subroutine ModelCallback
+            subroutine ModelRun(mode,tol,curstep,ncurstep,nextstep,error,n) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
+                integer intent(in) :: mode
+                real(kind=8) dimension(n),intent(in) :: tol
+                real(kind=8) intent(in) :: curstep
+                real(kind=8) intent(out) :: ncurstep
+                real(kind=8) intent(out) :: nextstep
+                integer intent(out) :: error
+                integer, optional,intent(hide),depend(tol) :: n=len(tol)
+            end subroutine ModelRun
             subroutine CalcEdgeConvectionFlux(uhydro,fluxes,n,m) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
                 real(kind=8) dimension(n,m),intent(in) :: uhydro
                 real(kind=8) dimension(n,m),intent(out),depend(n,m) :: fluxes
-                integer, optional,intent(hide),check(shape(uhydro,0)==n),depend(uhydro) :: n=shape(uhydro,0)
-                integer, optional,intent(hide),check(shape(uhydro,1)==m),depend(uhydro) :: m=shape(uhydro,1)
+                integer, optional,intent(hide),depend(uhydro) :: n=shape(uhydro,0)
+                integer, optional,intent(hide),depend(uhydro) :: m=shape(uhydro,1)
             end subroutine CalcEdgeConvectionFlux
             subroutine CalcEdgeMaxGradient(uhydro,gradient,n,m) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
                 real(kind=8) dimension(n,m),intent(in) :: uhydro
-                real(kind=8) dimension(m),intent(out),depend(m) :: gradient
-                integer, optional,intent(hide),check(shape(uhydro,0)==n),depend(uhydro) :: n=shape(uhydro,0)
-                integer, optional,intent(hide),check(shape(uhydro,1)==m),depend(uhydro) :: m=shape(uhydro,1)
+                real(kind=8) dimension(n),intent(out),depend(n) :: gradient
+                integer, optional,intent(hide),depend(uhydro) :: n=shape(uhydro,0)
+                integer, optional,intent(hide),depend(uhydro) :: m=shape(uhydro,1)
             end subroutine CalcEdgeMaxGradient
             subroutine CalcCellDiffusionFlux(uhydro,fluxes,n,m) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
                 real(kind=8) dimension(n,m),intent(in) :: uhydro
                 real(kind=8) dimension(n,m),intent(out),depend(n,m) :: fluxes
-                integer, optional,intent(hide),check(shape(uhydro,0)==n),depend(uhydro) :: n=shape(uhydro,0)
-                integer, optional,intent(hide),check(shape(uhydro,1)==m),depend(uhydro) :: m=shape(uhydro,1)
+                integer, optional,intent(hide),depend(uhydro) :: n=shape(uhydro,0)
+                integer, optional,intent(hide),depend(uhydro) :: m=shape(uhydro,1)
             end subroutine CalcCellDiffusionFlux
             subroutine CalcCellStateSources(uhydro,sources,n,m) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
                 real(kind=8) dimension(n,m),intent(in) :: uhydro
                 real(kind=8) dimension(n,m),intent(out),depend(n,m) :: sources
-                integer, optional,intent(hide),check(shape(uhydro,0)==n),depend(uhydro) :: n=shape(uhydro,0)
-                integer, optional,intent(hide),check(shape(uhydro,1)==m),depend(uhydro) :: m=shape(uhydro,1)
+                integer, optional,intent(hide),depend(uhydro) :: n=shape(uhydro,0)
+                integer, optional,intent(hide),depend(uhydro) :: m=shape(uhydro,1)
             end subroutine CalcCellStateSources
             subroutine TAIHydroEquations(uhydro,duhydro,n,m) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
                 real(kind=8) dimension(n,m),intent(in) :: uhydro
                 real(kind=8) dimension(n,m),intent(out),depend(n,m) :: duhydro
-                integer, optional,intent(hide),check(shape(uhydro,0)==n),depend(uhydro) :: n=shape(uhydro,0)
-                integer, optional,intent(hide),check(shape(uhydro,1)==m),depend(uhydro) :: m=shape(uhydro,1)
+                integer, optional,intent(hide),depend(uhydro) :: n=shape(uhydro,0)
+                integer, optional,intent(hide),depend(uhydro) :: m=shape(uhydro,1)
             end subroutine TAIHydroEquations
-            subroutine RK4Fehlberg(invars,mode,tol,curstep,outvars,ocurstep,nextstep,outerr,n,m) ! in :TAIHydroMOD:tai_hydro_mod.f90:TAIHydroMOD
-                use RK4Fehlberg__user__routines
-                real(kind=8) dimension(n,m),intent(in) :: invars
-                integer intent(in) :: mode
-                real(kind=8) dimension(n),intent(in),depend(n) :: tol
-                real(kind=8) intent(in) :: curstep
-                real(kind=8) dimension(n,m),intent(out),depend(n,m) :: outvars
-                real(kind=8) intent(out) :: ocurstep
-                real(kind=8) intent(out) :: nextstep
-                integer intent(out) :: outerr
-                integer, optional,intent(hide),check(shape(invars,0)==n),depend(invars) :: n=shape(invars,0)
-                integer, optional,intent(hide),check(shape(invars,1)==m),depend(invars) :: m=shape(invars,1)
-                intent(callback) odeFunc
-                external odeFunc
-            end subroutine RK4Fehlberg
         end module TAIHydroMOD
     end interface 
 end python module TAIHydroMOD

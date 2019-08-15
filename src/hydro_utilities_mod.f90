@@ -83,13 +83,14 @@ contains
       real(kind=8), intent(out) :: root
       real(kind=8) :: xa, xb, ya, yb
       real(kind=8) :: xc, yc, xd, ys
+      character(len=32) :: fname
       integer :: iter
       logical :: mflag
 
       xa = xbounds(1)
       xb = xbounds(2)
-      call NonLREQ(xa, coefs, ya)
-      call NonLREQ(xb, coefs, yb)
+      call NonLREQ(xa, coefs, ya, fname)
+      call NonLREQ(xb, coefs, yb, fname)
       if (abs(ya)<1d-3 .or. abs(yb)<1d-3) then
          ! root at the boundary
          if (abs(ya)<=abs(yb)) then
@@ -104,7 +105,7 @@ contains
          else
             root = xb
          end if
-         print *, "Root is not within xbounds"
+         print *, trim(fname) // ": Root is not within xbounds"
       else
          if (abs(ya)<abs(yb)) then
             call swap(xa, xb)
@@ -332,13 +333,16 @@ contains
    !          UpdateWaveNumber2() is much more efficient but less accurate.
    !
    !------------------------------------------------------------------------------
-   subroutine WaveNumberEQ(kwav, coefs, fval)
+   subroutine WaveNumberEQ(kwav, coefs, fval, fname)
       implicit none
       real(kind=8), intent(in) :: kwav
       real(kind=8), intent(in) :: coefs(2)
       real(kind=8), intent(out) :: fval
+      character(len=*), optional, intent(out) :: fname
+      character(len=32), parameter :: fstr = "WaveNumberEQ"
       real(kind=8) :: sigma, T, h
 
+      if (present(fname)) fname = fstr
       T = coefs(1)
       h = coefs(2)
       sigma = 2.0*PI/T
@@ -358,7 +362,7 @@ contains
       sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
       do ii = 1, nx, 1
          if (h(ii)>0) then
-            xbounds = (/sigma**2/G, sigma/sqrt(G*h(ii))/)
+            xbounds = (/sigma**2/G, sigma/sqrt(G*0.1)/)
             coefs = (/Twav, h(ii)/)
             call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(ii))
          else
@@ -379,7 +383,7 @@ contains
       nx = size(h)
       sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
       if (h(1)>0) then
-         xbounds = (/sigma**2/G, sigma/sqrt(G*h(1))/)
+         xbounds = (/sigma**2/G, sigma/sqrt(G*0.1)/)
          coefs = (/Twav, h(1)/)
          call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(1))
          do ii = 2, nx, 1
@@ -400,13 +404,16 @@ contains
    !          UpdateWaveBrkProb2() is much more efficient but less accurate.
    !
    !------------------------------------------------------------------------------
-   subroutine BreakProbEQ(Qb, coefs, fval)
+   subroutine BreakProbEQ(Qb, coefs, fval, fname)
       implicit none
       real(kind=8), intent(in) :: Qb
       real(kind=8), intent(in) :: coefs(2)
       real(kind=8), intent(out) :: fval
+      character(len=*), optional, intent(out) :: fname
+      character(len=32), parameter :: fstr = "BreakProbEQ"
       real(kind=8) :: Hrms, Hmax
 
+      if (present(fname)) fname = fstr
       Hmax = coefs(1)
       Hrms = coefs(2)
       fval = (1-Qb)/log(Qb) + (Hrms/Hmax)**2

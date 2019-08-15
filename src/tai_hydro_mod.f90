@@ -13,8 +13,9 @@ module TAIHydroMOD
 contains
    subroutine InitHydroMod(xin, zhin, nvar, npft, nx)
       implicit none
-      !f2py intent(in) :: xin, zhin, nvar, npft
-      !f2py intent(hide), depend(xin) :: nx = len(xin)
+      !f2py real(kind=8), intent(in) :: xin, zhin
+      !f2py integer, intent(in) :: nvar, npft
+      !f2py integer, intent(hide), depend(xin) :: nx = len(xin)
       real(kind=8), dimension(nx) :: xin     ! platform x coordinate (m) 
       real(kind=8), dimension(nx) :: zhin    ! platform surface elevation (msl)
       integer :: nvar               ! state variable number
@@ -207,10 +208,10 @@ contains
    subroutine SetModelParams(d50, Cz0, Kdf, cbc, fr, alphaA, betaA, &
                              alphaD, betaD, cD0, ScD, n)
       implicit none
-      !f2py intent(in) :: d50, Cz0, Kdf, cbc, fr
-      !f2py intent(in) :: alphaA, betaA, alphaD, betaD
-      !f2py intent(in) :: cD0, ScD
-      !f2py intent(hide), depend(alphaA) :: n = len(alphaA)
+      !f2py real(kind=8), intent(in) :: d50, Cz0, Kdf, cbc, fr
+      !f2py real(kind=8), intent(in) :: alphaA, betaA, alphaD, betaD
+      !f2py real(kind=8), intent(in) :: cD0, ScD
+      !f2py integer, intent(hide), depend(alphaA) :: n = len(alphaA)
       real(kind=8) :: d50, Cz0, Kdf, cbc, fr
       real(kind=8), dimension(n) :: alphaA, betaA
       real(kind=8), dimension(n) :: alphaD, betaD
@@ -239,10 +240,11 @@ contains
    subroutine ModelSetup(zh, pft, Bag, Esed, Dsed, Twav, U10, h0, & 
                          U0, Hwav0, Css0, Cj0, n)
       implicit none
-      !f2py intent(in) :: zh, pft, Bag, Esed, Dsed
-      !f2py intent(in) :: Twav, U10, h0, U0, Hwav0
-      !f2py intent(in) :: Css0, Cj0
-      !f2py intent(hide), depend(Zh) :: n = len(Zh)
+      !f2py real(kind=8), intent(in) :: zh, Bag, Esed, Dsed
+      !f2py integer, intent(in) :: pft
+      !f2py real(kind=8), intent(in) :: Twav, U10, h0, U0, Hwav0
+      !f2py real(kind=8), intent(in) :: Css0, Cj0
+      !f2py integer, intent(hide), depend(zh) :: n = len(zh)
       real(kind=8), dimension(n) :: zh, Bag
       real(kind=8), dimension(n) :: Esed, Dsed
       integer, dimension(n) :: pft
@@ -341,9 +343,11 @@ contains
    !------------------------------------------------------------------------------
    subroutine ModelRun(mode, tol, curstep, ncurstep, nextstep, error, n)
       implicit none
-      !f2py intent(in) :: mode, tol, curstep
-      !f2py intent(out) :: ncurstep, nextstep, error
-      !f2py intent(hide), depend(tol) :: n = len(tol)
+      !f2py integer, intent(in) :: mode
+      !f2py real(kind=8), intent(in) :: tol, curstep
+      !f2py real(kind=8), intent(out) :: ncurstep, nextstep
+      !f2py integer, intent(out) :: error
+      !f2py integer, intent(hide), depend(tol) :: n = len(tol)
       integer :: mode, error
       real(kind=8), dimension(n) :: tol
       real(kind=8) :: curstep, ncurstep, nextstep
@@ -365,10 +369,10 @@ contains
    !------------------------------------------------------------------------------
    subroutine CalcEdgeConvectionFlux(uhydro, fluxes, n, m)
       implicit none
-      !f2py intent(in) :: uhydro
-      !f2py intent(out) :: fluxes
-      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
-      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      !f2py real(kind=8), intent(in) :: uhydro
+      !f2py real(kind=8), intent(out) :: fluxes
+      !f2py integer, intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py integer, intent(hide), depend(uhydro) :: m = shape(uhydro,1)
       real(kind=8), dimension(n,m) :: uhydro, fluxes
       integer :: n, m
       ! local variables
@@ -403,10 +407,10 @@ contains
    !------------------------------------------------------------------------------
    subroutine CalcEdgeMaxGradient(uhydro, gradient, n, m)
       implicit none
-      !f2py intent(in) :: uhydro
-      !f2py intent(out) :: gradient
-      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
-      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      !f2py real(kind=8), intent(in) :: uhydro
+      !f2py real(kind=8), intent(out) :: gradient
+      !f2py integer, intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py integer, intent(hide), depend(uhydro) :: m = shape(uhydro,1)
       real(kind=8), dimension(n,m) :: uhydro
       real(kind=8), dimension(n) :: gradient
       integer :: n, m
@@ -430,10 +434,10 @@ contains
 
    subroutine CalcCellDiffusionFlux(uhydro, fluxes, n, m)
       implicit none
-      !f2py intent(in) :: uhydro
-      !f2py intent(out) :: fluxes
-      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
-      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      !f2py real(kind=8), intent(in) :: uhydro
+      !f2py real(kind=8), intent(out) :: fluxes
+      !f2py integer, intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py integer, intent(hide), depend(uhydro) :: m = shape(uhydro,1)
       real(kind=8), dimension(n,m) :: uhydro, fluxes
       integer :: n, m
 
@@ -446,10 +450,10 @@ contains
 
    subroutine CalcCellStateSources(uhydro, sources, n, m)
       implicit none
-      !f2py intent(in) :: uhydro
-      !f2py intent(out) :: sources
-      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
-      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      !f2py real(kind=8), intent(in) :: uhydro
+      !f2py real(kind=8), intent(out) :: sources
+      !f2py integer, intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py integer, intent(hide), depend(uhydro) :: m = shape(uhydro,1)
       real(kind=8), dimension(n,m) :: uhydro, sources
       integer :: n, m
       real(kind=8) :: sigma
@@ -471,10 +475,10 @@ contains
    !------------------------------------------------------------------------------
    subroutine TAIHydroEquations(uhydro, duhydro, n, m)
       implicit none
-      !f2py intent(in) :: uhydro
-      !f2py intent(out) :: duhydro
-      !f2py intent(hide), depend(uhydro) :: n = shape(uhydro,0)
-      !f2py intent(hide), depend(uhydro) :: m = shape(uhydro,1)
+      !f2py real(kind=8), intent(in) :: uhydro
+      !f2py real(kind=8), intent(out) :: duhydro
+      !f2py integer, intent(hide), depend(uhydro) :: n = shape(uhydro,0)
+      !f2py integer, intent(hide), depend(uhydro) :: m = shape(uhydro,1)
       real(kind=8), dimension(n,m) :: uhydro, duhydro
       integer :: n, m
       ! local variables

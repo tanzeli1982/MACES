@@ -94,13 +94,11 @@ Ttide = 12.0
 h0 = 0.75 * np.sin(2*np.pi*np.arange(nhour)/Ttide)
 dh0 = np.gradient(h0)
 U0 = dh0 / np.max(np.abs(dh0)) * 1.0
-U10 = np.array([icdf_wind_gen(random.uniform(0,1)) for ii in range(nhour)], 
+U10 = np.array([icdf_wind_gen(random.uniform(0,1)) for ii in range(nday)], 
                 dtype=np.float64)
 Twav = 2.0
-Hwav_ocean = 0.27 * U10**2 / utils.G
-Hwav0 = np.sinh(utils.Karman*h0) / np.sinh(utils.Karman*30.0) * Hwav_ocean
-Css0 = 8.0 * np.ones(nhour, dtype=np.float64)
-Cj0 = 28.0 * np.ones(nhour, dtype=np.float64)
+Css0 = 8.0 * np.ones(nday, dtype=np.float64)
+Cj0 = 28.0 * np.ones(nday, dtype=np.float64)
 
 # driving data for eco-geomorphology model
 # In an old version of ALBM, I have a method to calculate Tsoi from Tair
@@ -135,7 +133,7 @@ ecogeom_out['SOM'] = 1e20 * np.ones((nday,nx,npool), dtype=np.float32)
 
 print('simulation starts')
 
-odir = '/qfs/projects/taim/TAIMOD/test/'
+odir = '/Users/tanz151/Downloads/'
 site_id = 466
 
 # run simulation
@@ -162,9 +160,17 @@ try:
                 isDayNode = True
                 dindx = dindx + 1
         # simulate hydrodynamics
+        site_Esed[:] = 0.0
+        site_Dsed[:] = 0.0
+        if isHourNode:
+            h0_abs = -site_zh[0] + h0[hindx]
+            Hwav0 = utils.estimate_Hwav_seaward(U10[dindx], h0_abs)
+            print(U10[dindx], h0_abs, U0[hindx], Hwav0, Css0[dindx], Cj0[dindx])
+            if hindx==1:
+                print(sim_U)
         taihydro.modelsetup(site_zh, site_pft, site_Bag, site_Esed, site_Dsed, 
-                            Twav, U10[hindx], h0[hindx], U0[hindx], 
-                            Hwav0[hindx], Css0[hindx], Cj0[hindx])
+                            Twav, U10[dindx], h0_abs, U0[hindx], Hwav0, 
+                            Css0[dindx], Cj0[dindx])
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, curstep)
         assert error==0, "runge-Kutta iteration is more than MAXITER"
         taihydro.modelcallback()
@@ -201,7 +207,7 @@ try:
             uhydro_out['Cj'][hindx] = sim_Cj
         if isDayNode:
             # archive daily mean eco-geomorphology variables
-            ecogeom_out['zh'] = site_zh
+            ecogeom_out['zh'][dindx] = site_zh
             ecogeom_out['Esed'][dindx] = site_Esed
             ecogeom_out['Dsed'][dindx] = site_Dsed
             ecogeom_out['DepOM'][dindx] = site_DepOM
@@ -228,7 +234,7 @@ except AssertionError as errstr:
     print("Model stops due to that", errstr)
 finally:
     # write simulation outputs
-    utils.write_outputs(odir, site_id, uhydro_out, ecogeom_out)
+    #utils.write_outputs(odir, site_id, uhydro_out, ecogeom_out)
     # deallocate
     taihydro.finalizehydromod()
     print('simulation ends')
