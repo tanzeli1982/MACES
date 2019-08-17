@@ -1,4 +1,4 @@
-module TAIHydroMOD
+module tai_hydro_mod 
 !---------------------------------------------------------------------------------
 ! Purpose:
 !
@@ -42,6 +42,10 @@ contains
       allocate(m_Swc(nx))              ; m_Swc = 0.0d0
       allocate(m_Sbrk(nx))             ; m_Sbrk = 0.0d0
       allocate(m_Cz(nx))               ; m_Cz = 0.0d0
+      allocate(m_Cg(nx))               ; m_Cg = 0.0d0
+      allocate(m_Nmax(nx))             ; m_Nmax = 0.0d0
+      allocate(m_Css(nx))              ; m_Css = 0.0d0
+      allocate(m_Cj(nx))               ; m_Cj = 0.0d0
       ! hydrodynamics temporary allocatable arrays
       allocate(tmp_uhydro(nx,nvar))    ; tmp_uhydro = 0.0d0
       allocate(tmp_uhydroL(nx,nvar))   ; tmp_uhydroL = 0.0d0
@@ -55,8 +59,9 @@ contains
       allocate(tmp_aL(nx))             ; tmp_aL = 0.0d0
       allocate(tmp_aR(nx))             ; tmp_aR = 0.0d0
       allocate(tmp_U(nx))              ; tmp_U = 0.0d0
-      allocate(tmp_Cg(nx))             ; tmp_Cg = 0.0d0
-      allocate(tmp_Nmax(nx))           ; tmp_Nmax = 0.0d0
+      allocate(tmp_B(nx))              ; tmp_B = 0.0d0
+      allocate(tmp_Css(nx))            ; tmp_Css = 0.0d0
+      allocate(tmp_Cj(nx))             ; tmp_Cj = 0.0d0
       allocate(tmp_Qb(101))            ; tmp_Qb = 0.0d0
       ! user-defined allocatable arrays
       allocate(rk4_K1(nx,nvar))        ; rk4_K1 = 0.0d0
@@ -126,6 +131,10 @@ contains
       deallocate(m_Swc)
       deallocate(m_Sbrk)
       deallocate(m_Cz)
+      deallocate(m_Cg)
+      deallocate(m_Nmax)
+      deallocate(m_Css)
+      deallocate(m_Cj)
       ! deallocate hydrodynamics temporary arrays
       deallocate(tmp_uhydro)
       deallocate(tmp_uhydroL)
@@ -139,9 +148,10 @@ contains
       deallocate(tmp_aL)
       deallocate(tmp_aR)
       deallocate(tmp_U)
-      deallocate(tmp_Cg)
-      deallocate(tmp_Nmax)
+      deallocate(tmp_B)
       deallocate(tmp_Qb)
+      deallocate(tmp_Css)
+      deallocate(tmp_Cj)
       ! deallocate user-defined arrays
       deallocate(rk4_K1)
       deallocate(rk4_K2)
@@ -228,7 +238,7 @@ contains
       integer, dimension(n) :: pft
       real(kind=8) :: Twav, U10, h0, U0, Hwav0
       real(kind=8) :: Css0, Cj0
-      real(kind=8) :: Cg, sigma, Nwav
+      real(kind=8) :: sigma, Nwav
       integer :: n
       integer :: ii
 
@@ -264,24 +274,32 @@ contains
       call UpdateWaveDepthBrking(Twav, U10, m_uhydro(:,1), m_Hwav, &
                                  m_kwav, m_Ewav, m_Qb, m_Sbrk)
 
+      sigma = 2.0*PI/Twav
+      do ii = 1, n, 1
+         if (m_uhydro(ii,1)>TOL_REL .and. m_kwav(ii)>TOL_REL) then
+            m_Cg(ii) = 0.5*sigma*(1.0+2.0*m_kwav(ii)*m_uhydro(ii,1)/ &
+               sinh(2.0*m_kwav(ii)*m_uhydro(ii,1)))/m_kwav(ii)
+         else
+            m_Cg(ii) = 0.0
+         end if
+         if (m_uhydro(ii,1)>TOL_REL) then
+            m_Nmax(ii) = 0.125*Roul*G*(par_fr*m_uhydro(ii,1))**2/sigma
+         else
+            m_Nmax(ii) = 0.0
+         end if
+      end do
+      Nwav = 0.125*Roul*G*(Hwav0**2)/sigma
       ! boundary conditions
       force_Fminus(1) = h0 * U0
       force_Fminus(2) = h0*U0**2 + 0.5*G*h0**2
-      sigma = 2.0*PI/Twav
-      if (m_kwav(1)>TOL_REL) then
-          Cg = 0.5*sigma*(1.0+2.0*m_kwav(1)*h0/sinh(2.0*m_kwav(1)*h0))/m_kwav(1)
-      else
-          Cg = 0.0
-      end if
-      Nwav = 0.125*Roul*G*(Hwav0**2)/sigma
-      force_Fminus(3) = Cg*Nwav
+      force_Fminus(3) = m_Cg(1)*Nwav
       force_Fminus(4) = U0*h0*Css0
       force_Fminus(5) = U0*h0*Cj0
       m_uhydro(1,1) = h0
       m_uhydro(1,2) = h0*U0
       m_uhydro(1,3) = Nwav
-      m_uhydro(1,4) = Css0
-      m_uhydro(1,5) = Cj0
+      m_uhydro(1,4) = h0*Css0
+      m_uhydro(1,5) = h0*Cj0
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -294,32 +312,40 @@ contains
    subroutine ModelCallback()
       implicit none
       ! local variables
-      real(kind=8) :: sigma, Hwav, h
+      real(kind=8) :: sigma, h
       integer :: ii, n, m
       
       n = size(m_uhydro,1)
       m = size(m_uhydro,2)
       sigma = 2.0*PI/force_Twav
-      where (m_uhydro(:,1)<0) m_uhydro(:,1) = 0.0
+      do ii = 1, n, 1
+         if (m_uhydro(ii,1)<=TOL_REL) then
+            m_uhydro(ii:n,1) = 0.0
+            exit
+         end if
+      end do
+      !where (m_uhydro(:,1)<0) m_uhydro(:,1) = 0.0
       where (m_uhydro(:,3)<0) m_uhydro(:,3) = 0.0
       where (m_uhydro(:,4)<0) m_uhydro(:,4) = 0.0
       where (m_uhydro(:,5)<0) m_uhydro(:,5) = 0.0
       do ii = 1, n, 1
-         if (m_uhydro(ii,1)<=TOL_REL) then
-            m_uhydro(ii,2:m) = 0.0d0
-         end if
-      end do
-      m_U = m_uhydro(:,2) / max(0.1,m_uhydro(:,1))
-      m_Ewav = sigma * m_uhydro(:,3)
-      m_Hwav = sqrt(8.0*m_Ewav/G/Roul)
-      do ii = 1, n, 1
          h = m_uhydro(ii,1)
-         Hwav = m_Hwav(ii)
-         if (h>TOL_REL) then
-            m_Uwav(ii) = min(PI*Hwav/force_Twav/sinh(Karman*h), 20.0)
-         else
+         if (h<=TOL_REL) then
+            m_uhydro(ii,2:m) = 0.0
+            m_U(ii) = 0.0
+            m_Css(ii) = 0.0
+            m_Cj(ii) = 0.0
+            m_Ewav(ii) = 0.0
+            m_Hwav(ii) = 0.0
             m_Uwav(ii) = 0.0
-         end if
+         else
+            m_U(ii) = m_uhydro(ii,2) / max(0.1,h)
+            m_Css(ii) = m_uhydro(ii,4) / max(0.1,h)
+            m_Cj(ii) = m_uhydro(ii,5) / max(0.1,h)
+            m_Ewav(ii) = sigma * m_uhydro(ii,3)
+            m_Hwav(ii) = sqrt(8.0*m_Ewav(ii)/G/Roul)
+            m_Uwav(ii) = min(PI*m_Hwav(ii)/force_Twav/sinh(Karman*h), 20.0)
+         end if 
       end do
       call UpdateShearStress(force_Twav, m_uhydro(:,1), m_U, m_Hwav, &
                              m_Uwav, m_tau)
@@ -331,21 +357,22 @@ contains
    !          method.
    !
    !------------------------------------------------------------------------------
-   subroutine ModelRun(mode, tol, curstep, ncurstep, nextstep, error, n)
+   subroutine ModelRun(mode, tol, dyncheck, curstep, ncurstep, nextstep, error, n)
       implicit none
-      !f2py integer, intent(in) :: mode
+      !f2py integer, intent(in) :: mode, dyncheck
       !f2py real(kind=8), intent(in) :: tol, curstep
       !f2py real(kind=8), intent(out) :: ncurstep, nextstep
       !f2py integer, intent(out) :: error
       !f2py integer, intent(hide), depend(tol) :: n = len(tol)
       integer :: mode, error
+      integer, dimension(n) :: dyncheck
       real(kind=8), dimension(n) :: tol
       real(kind=8) :: curstep, ncurstep, nextstep
       integer :: n
 
       ncurstep = curstep
       call RK4Fehlberg(TAIHydroEquations, m_uhydro, mode, tol, &
-                       tmp_uhydro, ncurstep, nextstep, error)
+                       dyncheck, tmp_uhydro, ncurstep, nextstep, error)
       if (error==0) then
          m_uhydro = tmp_uhydro
       end if
@@ -368,8 +395,8 @@ contains
       U = m_U
       Hwav = m_Hwav
       tau = m_tau
-      Css = m_uhydro(:,4)
-      Cj = m_uhydro(:,5)
+      Css = m_Css
+      Cj = m_Cj
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -387,25 +414,24 @@ contains
       real(kind=8), dimension(n,m) :: uhydro, fluxes
       integer :: n, m
       ! local variables
-      real(kind=8) :: sigma
+      real(kind=8) :: sigma, U, B
       integer :: ii
 
       sigma = 2.0*PI/force_Twav
-      tmp_U = uhydro(:,2) / max(0.1,uhydro(:,1))
-      tmp_Nmax = 0.125*Roul*G*(par_fr*uhydro(:,1))**2/sigma
       do ii = 1, n, 1
-         if (uhydro(ii,1)>TOL_REL .and. m_kwav(ii)>TOL_REL) then
-            tmp_Cg(ii) = 0.5*sigma*(1.0+2.0*m_kwav(ii)*uhydro(ii,1)/ &
-               sinh(2.0*m_kwav(ii)*uhydro(ii,1)))/m_kwav(ii)
+         if (uhydro(ii,1)>TOL_REL) then
+            U = uhydro(ii,2) / max(0.1,uhydro(ii,1))
+            B = 0.5*G*uhydro(ii,1)**2
          else
-            tmp_Cg(ii) = 0.0
+            U = 0.0
+            B = 0.0
          end if
+         fluxes(ii,1) = uhydro(ii,2)
+         fluxes(ii,2) = uhydro(ii,1)*(U**2) + B
+         fluxes(ii,3) = m_Cg(ii)*min(uhydro(ii,3),m_Nmax(ii))
+         fluxes(ii,4) = U*uhydro(ii,4)
+         fluxes(ii,5) = U*uhydro(ii,5)
       end do
-      fluxes(:,1) = uhydro(:,2)
-      fluxes(:,2) = uhydro(:,1)*(tmp_U**2) + 0.5*G*uhydro(:,1)**2
-      fluxes(:,3) = tmp_Cg*min(uhydro(:,3),tmp_Nmax)
-      fluxes(:,4) = uhydro(:,2)*uhydro(:,4)
-      fluxes(:,5) = uhydro(:,2)*uhydro(:,5)
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -430,28 +456,24 @@ contains
       real(kind=8), dimension(n) :: gradient
       integer :: n, m
       ! local variables
-      real(kind=8) :: sigma
+      real(kind=8) :: sigma, U, B
       integer :: ii
 
       sigma = 2.0*PI/force_Twav
       do ii = 1, n, 1
-         if (uhydro(ii,1)>TOL_REL .and. m_kwav(ii)>TOL_REL) then
-            tmp_Cg(ii) = 0.5*sigma*(1.0+2.0*m_kwav(ii)*uhydro(ii,1)/ &
-               sinh(2.0*m_kwav(ii)*uhydro(ii,1)))/m_kwav(ii)
-         else
-            tmp_Cg(ii) = 0.0
-         end if
          if (uhydro(ii,1)>TOL_REL) then
-            tmp_U(ii) = uhydro(ii,2) / max(0.1,uhydro(ii,1))
+            U = uhydro(ii,2) / max(0.1,uhydro(ii,1))
+            B = G*uhydro(ii,1)
          else
-            tmp_U(ii) = 0.0
+            U = 0.0
+            B = 0.0
          end if
+         tmp_eigval(ii,1) = 1.5*U + sqrt(1.25*(U**2)+B)
+         tmp_eigval(ii,2) = 1.5*U - sqrt(1.25*(U**2)+B)      
+         tmp_eigval(ii,3) = m_Cg(ii)
+         tmp_eigval(ii,4) = U
+         tmp_eigval(ii,5) = U
       end do
-      tmp_eigval(:,1) = 3.0*tmp_U + sqrt(5.0*(tmp_U**2)+G*max(uhydro(:,1),0.0))
-      tmp_eigval(:,2) = 3.0*tmp_U - sqrt(5.0*(tmp_U**2)+G*max(uhydro(:,1),0.0))      
-      tmp_eigval(:,3) = tmp_Cg
-      tmp_eigval(:,4) = uhydro(:,2)
-      tmp_eigval(:,5) = uhydro(:,2)
       gradient = maxval(abs(tmp_eigval), dim=2)
    end subroutine
 
@@ -463,12 +485,22 @@ contains
       !f2py integer, intent(hide), depend(uhydro) :: m = shape(uhydro,1)
       real(kind=8), dimension(n,m) :: uhydro, fluxes
       integer :: n, m
+      integer :: ii
 
+      do ii = 1, n, 1
+         if (uhydro(ii,1)>TOL_REL) then
+            tmp_Css(ii) = uhydro(ii,4) / max(0.1,uhydro(ii,1))
+            tmp_Cj(ii) = uhydro(ii,5) / max(0.1,uhydro(ii,1))
+         else
+            tmp_Css(ii) = 0.0
+            tmp_Cj(ii) = 0.0
+         end if
+      end do
       fluxes = 0.0d0
       fluxes(2:n-1,4) = 0.5*par_Kdf*(uhydro(2:n-1,1)+uhydro(3:n,1))* &
-         (uhydro(3:n,4)-uhydro(2:n-1,4))/m_dX(2:n-1)
+         (tmp_Css(3:n)-tmp_Css(2:n-1))/m_dX(2:n-1)
       fluxes(2:n-1,5) = 0.5*par_Kdf*(uhydro(2:n-1,1)+uhydro(3:n,1))* &
-         (uhydro(3:n,5)-uhydro(2:n-1,5))/m_dX(2:n-1)
+         (tmp_Cj(3:n)-tmp_Cj(2:n-1))/m_dX(2:n-1)
    end subroutine
 
    subroutine CalcCellStateSources(uhydro, sources, n, m)
@@ -479,15 +511,54 @@ contains
       !f2py integer, intent(hide), depend(uhydro) :: m = shape(uhydro,1)
       real(kind=8), dimension(n,m) :: uhydro, sources
       integer :: n, m
-      real(kind=8) :: sigma
+      real(kind=8) :: sigma, scaler
+      integer :: ii
 
       sigma = 2.0*PI/force_Twav
-      tmp_U = uhydro(:,2) / max(0.1,uhydro(:,1))
+      do ii = 1, n, 1
+         if (uhydro(ii,1)>TOL_REL) then
+            tmp_U(ii) = uhydro(ii,2) / max(0.1,uhydro(ii,1))
+            tmp_B(ii) = m_dZh(ii)
+         else
+            tmp_U(ii) = 0.0
+            tmp_B(ii) = 0.0
+         end if
+      end do
+      
       sources(:,1) = 0.0d0
-      sources(:,2) = -tmp_U*abs(tmp_U)*G/m_Cz**2 !- G*uhydro(:,1)*m_dZh/m_dX
-      sources(:,3) = (m_Swg - (m_Sbf+m_Swc+m_Sbrk)) / sigma 
-      sources(:,4) = force_Esed - force_Dsed*uhydro(:,4)/(m_uhydro(:,4)+1d-3)
       sources(:,5) = 0.0d0
+      do ii = 1, n, 1
+         scaler = max(0.0,uhydro(ii,4))/(m_uhydro(ii,4)+TOL_REL)
+         if (ii==1) then
+            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
+               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2) - &
+               0.5*G*(uhydro(ii,1)+uhydro(ii+1,1))*tmp_B(ii)/m_dX(ii)
+            sources(ii,3) = (0.75*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
+               0.25*(m_Swg(ii+1)-m_Sbf(ii+1)-m_Swc(ii+1)-m_Sbrk(ii+1))) / sigma
+            sources(ii,4) = (0.75*force_Esed(ii)+0.25*force_Esed(ii+1)) - &
+               (0.75*force_Dsed(ii)+0.25*force_Dsed(ii+1))*scaler
+         else if (ii==n) then
+            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
+               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2) - &
+               0.5*G*(uhydro(ii,1)+uhydro(ii-1,1))*tmp_B(ii)/m_dX(ii)
+            sources(ii,3) = (0.75*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
+               0.25*(m_Swg(ii-1)-m_Sbf(ii-1)-m_Swc(ii-1)-m_Sbrk(ii-1))) / sigma
+            sources(ii,4) = (0.25*force_Esed(ii-1)+0.75*force_Esed(ii)) - &
+               (0.25*force_Dsed(ii-1)+0.75*force_Dsed(ii))*scaler
+         else
+            sources(ii,2) = -(0.5*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
+               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2+ &
+               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2) - &
+               0.5*G*(uhydro(ii,1)+0.5*uhydro(ii-1,1)+0.5*uhydro(ii+1,1))* &
+               tmp_B(ii)/m_dX(ii)
+            sources(ii,3) = (0.5*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
+               0.25*(m_Swg(ii+1)-m_Sbf(ii+1)-m_Swc(ii+1)-m_Sbrk(ii+1)) + &
+               0.25*(m_Swg(ii-1)-m_Sbf(ii-1)-m_Swc(ii-1)-m_Sbrk(ii-1))) / sigma
+            sources(ii,4) = (0.25*force_Esed(ii-1)+0.5*force_Esed(ii)+ &
+               0.25*force_Esed(ii+1)) - (0.25*force_Dsed(ii-1)+ &
+               0.5*force_Dsed(ii)+0.25*force_Dsed(ii+1))*scaler
+         end if
+      end do
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -550,10 +621,6 @@ contains
                tmp_P(ii-1,:)) / dx + tmp_SRC(ii,:)
          end if
       end do
-      !where (uhydro(:,1)<=0 .and. duhydro(:,1)<0) duhydro(:,1) = 0.0
-      !where (uhydro(:,3)<=0 .and. duhydro(:,3)<0) duhydro(:,3) = 0.0
-      !where (uhydro(:,4)<=0 .and. duhydro(:,4)<0) duhydro(:,4) = 0.0
-      !where (uhydro(:,5)<=0 .and. duhydro(:,5)<0) duhydro(:,5) = 0.0
    end subroutine
 
-end module TAIHydroMOD
+end module tai_hydro_mod 

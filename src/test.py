@@ -3,7 +3,7 @@ import maces_utilities as utils
 import random
 import minac_mod as mac
 import omac_mod as omac
-from TAIHydroMOD import taihydromod as taihydro
+from TAIHydroMOD import tai_hydro_mod as taihydro
 
 # https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2012JF002363
 # Test case: Venice Lagoon
@@ -50,7 +50,7 @@ rhoOM = 1200.0      # OM density (kg/m3)
 porSed = 0.4        # porosity
 npft = 9
 hydro_params = {}
-hydro_params['d50'] = 1e-4
+hydro_params['d50'] = 25e-6
 hydro_params['Cz0'] = 65.0
 hydro_params['Kdf'] = 100.0
 hydro_params['cbc'] = 0.015
@@ -139,7 +139,8 @@ site_id = 466
 # run simulation
 MAX_OF_STEP = 1800  # maximum simulation time step (s)
 rk4_mode = 101      # adaptive mode
-uhydro_tol = np.array([1e-6,1e-6,1e-6,1e-6,1e-6], order='F')  # tolerance
+uhydro_tol = np.array([1e-3,1e-4,1e-6,1e-3,1e-3], dtype=np.float64, order='F')  # tolerance
+dyncheck = np.array([1,0,1,1,1], dtype=np.int32, order='F') # check negative value
 assert len(uhydro_tol)==nvar, "size of uhydro_tol is not equal to # of variables"
 t = 0
 tf = 8.64e4 * nday
@@ -165,11 +166,13 @@ try:
             Hwav0 = utils.estimate_Hwav_seaward(U10[dindx], h0_abs)
             #np.set_printoptions(precision=3, suppress=True)
             np.set_printoptions(precision=3, suppress=False)
-            print(np.array([U10[dindx],h0_abs,U0[hindx],Hwav0,Css0[dindx],Cj0[dindx]]))
+            #print(np.array([U10[dindx],h0_abs,U0[hindx],Hwav0,Css0[dindx],Cj0[dindx]]))
+            #print(np.array([h0_abs,U0[hindx],Hwav0]))
         taihydro.modelsetup(site_zh, site_pft, site_Bag, site_Esed, site_Dsed, 
                             Twav, U10[dindx], h0_abs, U0[hindx], Hwav0, 
                             Css0[dindx], Cj0[dindx])
-        curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, curstep)
+        curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
+                                                     dyncheck, curstep)
         assert error==0, "runge-Kutta iteration is more than MAXITER"
         taihydro.modelcallback()
         sim_h, sim_U, sim_Hwav, sim_tau, sim_Css, sim_Cj = taihydro.getmodelsims(nx)
@@ -184,6 +187,8 @@ try:
                       'd50': hydro_params['d50'], 'Rous': rhoSed}
         site_Esed = mac_mod.mineral_suspension(mac_inputs)
         site_Dsed = mac_mod.mineral_deposition(mac_inputs)
+        if isHourNode:
+            print(sim_h)
         site_Lbed = mac_mod.bed_loading(mac_inputs)
         omac_inputs = {'x': site_x, 'zh': site_zh, 'MHT': 0.75, 'pft': site_pft, 
                        'SOM': site_OM}
@@ -198,8 +203,6 @@ try:
         DepOM_pools[:,1] = 0.842 * site_DepOM
         site_OM = site_OM + (DepOM_pools - site_DecayOM) * curstep
         # update platform elevation
-        site_Esed[:] = 0.0
-        site_Dsed[:] = 0.0
         site_Lbed[:] = 0.0
         site_DepOM[:] = 0.0
         site_zh = site_zh + ((site_Dsed/rhoSed + site_Lbed/rhoSed + \

@@ -141,7 +141,7 @@ contains
             else
                mflag = .False.
             end if
-            call NonLREQ(root, coefs, ys)
+            call NonLREQ(root, coefs, ys, fname)
             xd = xc  ! first time xd is being used
             xc = xb  ! set xc equal to upper bound
             yc = yb
@@ -328,10 +328,14 @@ contains
             ! bottom shear stress by currents
             fcurr = 0.24/(log(4.8*h(ii)/par_d50))**2
             tau_curr = 0.125*Roul*fcurr*U(ii)**2
-            ! bottom shear stress by wave
-            fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
-            tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
             if (tau_curr>TOL_REL) then
+               ! bottom shear stress by wave
+               if (Uwav(ii)>TOL_REL) then
+                  fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
+                  tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
+               else
+                  tau_wave = 0.0
+               end if
                tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
             else
                tau(ii) = 0.0
@@ -353,11 +357,10 @@ contains
       real(kind=8), intent(in) :: kwav
       real(kind=8), intent(in) :: coefs(2)
       real(kind=8), intent(out) :: fval
-      character(len=*), optional, intent(out) :: fname
-      character(len=32), parameter :: fstr = "WaveNumberEQ"
+      character(len=32), intent(out) :: fname
       real(kind=8) :: sigma, T, h
 
-      if (present(fname)) fname = fstr
+      fname = "WaveNumberEQ" 
       T = coefs(1)
       h = coefs(2)
       sigma = 2.0*PI/T
@@ -397,7 +400,7 @@ contains
 
       nx = size(h)
       sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
-      if (h(1)>0) then
+      if (h(1)>TOL_REL) then
          xbounds = (/sigma**2/G, sigma/sqrt(G*0.1)/)
          coefs = (/Twav, h(1)/)
          call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(1))
@@ -424,11 +427,10 @@ contains
       real(kind=8), intent(in) :: Qb
       real(kind=8), intent(in) :: coefs(2)
       real(kind=8), intent(out) :: fval
-      character(len=*), optional, intent(out) :: fname
-      character(len=32), parameter :: fstr = "BreakProbEQ"
+      character(len=32), intent(out) :: fname
       real(kind=8) :: Hrms, Hmax
 
-      if (present(fname)) fname = fstr
+      fname = "BreakProbEQ"
       Hmax = coefs(1)
       Hrms = coefs(2)
       fval = (1-Qb)/log(Qb) + (Hrms/Hmax)**2
@@ -587,13 +589,14 @@ contains
    ! Purpose: The 4th-order time step variable Runge-Kutta-Fehlberg method 
    !
    !------------------------------------------------------------------------------
-   subroutine RK4Fehlberg(odeFunc, invars, mode, tol, outvars, &
+   subroutine RK4Fehlberg(odeFunc, invars, mode, tol, dyncheck, outvars, &
                           curstep, nextstep, outerr)
       implicit none
       external :: odeFunc
       real(kind=8), intent(in) :: invars(:,:)
       integer, intent(in) :: mode
       real(kind=8), intent(in) :: tol(:)
+      integer, intent(in) :: dyncheck(:)
       real(kind=8), intent(out) :: outvars(:,:)
       real(kind=8), intent(inout) :: curstep
       real(kind=8), intent(out) :: nextstep
@@ -655,7 +658,7 @@ contains
             if (dy(ii)>tol(ii) .and. rdy(ii)>rel_tol(ii)) then
                isLargeErr = .True.
             end if
-            if (dyn(ii)<-100*tol(ii)) then
+            if (dyn(ii)<-100*tol(ii) .and. dyncheck(ii)==1) then
                isConstrainBroken = .True.
             end if
          end do

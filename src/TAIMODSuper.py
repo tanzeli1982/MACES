@@ -105,7 +105,7 @@ class MACMODSuper(object):
               - 0.5*(A/F)**(1/m))**m) * nv / d50
         ustar = np.sqrt(tau/utils.Roul)
         wup = utils.Karman * ustar
-        return ws - wup
+        return np.maximum(ws - wup, 0.0)
 
 ###############################################################################    
 class OMACMODSuper(object):
