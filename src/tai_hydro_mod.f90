@@ -9,6 +9,7 @@ module tai_hydro_mod
    use hydro_utilities_mod 
 
    implicit none
+   real(kind=8) :: bd_h0, bd_U0, bd_Hwav0, bd_Css0, bd_Cj0
 
 contains
    subroutine InitHydroMod(xin, zhin, nvar, npft, nx)
@@ -84,7 +85,6 @@ contains
       allocate(force_Bag(nx))          ; force_Bag = 0.0d0
       allocate(force_Esed(nx))         ; force_Esed = 0.0d0
       allocate(force_Dsed(nx))         ; force_Dsed = 0.0d0
-      allocate(force_Fminus(nvar))     ; force_Fminus = 0.0d0
 
       do ii = 1, nx, 1
          if (ii==1) then
@@ -173,7 +173,6 @@ contains
       deallocate(force_Dsed)
       deallocate(force_Bag)
       deallocate(force_pft)
-      deallocate(force_Fminus)
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -290,16 +289,16 @@ contains
       end do
       Nwav = 0.125*Roul*G*(Hwav0**2)/sigma
       ! boundary conditions
-      force_Fminus(1) = h0 * U0
-      force_Fminus(2) = h0*U0**2 + 0.5*G*h0**2
-      force_Fminus(3) = m_Cg(1)*Nwav
-      force_Fminus(4) = U0*h0*Css0
-      force_Fminus(5) = U0*h0*Cj0
       m_uhydro(1,1) = h0
       m_uhydro(1,2) = h0*U0
       m_uhydro(1,3) = Nwav
       m_uhydro(1,4) = h0*Css0
       m_uhydro(1,5) = h0*Cj0
+      bd_h0 = h0
+      bd_U0 = U0
+      bd_Hwav0 = Hwav0
+      bd_Css0 = Css0
+      bd_Cj0 = Cj0
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -324,8 +323,12 @@ contains
             exit
          end if
       end do
-      !where (m_uhydro(:,1)<0) m_uhydro(:,1) = 0.0
-      where (m_uhydro(:,3)<0) m_uhydro(:,3) = 0.0
+      do ii = 1, n, 1
+         if (m_uhydro(ii,3)<0) then
+            m_uhydro(ii:n,3) = 0.0
+            exit
+         end if
+      end do
       where (m_uhydro(:,4)<0) m_uhydro(:,4) = 0.0
       where (m_uhydro(:,5)<0) m_uhydro(:,5) = 0.0
       do ii = 1, n, 1
@@ -414,20 +417,18 @@ contains
       real(kind=8), dimension(n,m) :: uhydro, fluxes
       integer :: n, m
       ! local variables
-      real(kind=8) :: sigma, U, B
+      real(kind=8) :: sigma, U
       integer :: ii
 
       sigma = 2.0*PI/force_Twav
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             U = uhydro(ii,2) / max(0.1,uhydro(ii,1))
-            B = 0.5*G*uhydro(ii,1)**2
          else
             U = 0.0
-            B = 0.0
          end if
          fluxes(ii,1) = uhydro(ii,2)
-         fluxes(ii,2) = uhydro(ii,1)*(U**2) + B
+         fluxes(ii,2) = uhydro(ii,1)*(U**2)
          fluxes(ii,3) = m_Cg(ii)*min(uhydro(ii,3),m_Nmax(ii))
          fluxes(ii,4) = U*uhydro(ii,4)
          fluxes(ii,5) = U*uhydro(ii,5)
@@ -456,20 +457,18 @@ contains
       real(kind=8), dimension(n) :: gradient
       integer :: n, m
       ! local variables
-      real(kind=8) :: sigma, U, B
+      real(kind=8) :: sigma, U
       integer :: ii
 
       sigma = 2.0*PI/force_Twav
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             U = uhydro(ii,2) / max(0.1,uhydro(ii,1))
-            B = G*uhydro(ii,1)
          else
             U = 0.0
-            B = 0.0
          end if
-         tmp_eigval(ii,1) = 1.5*U + sqrt(1.25*(U**2)+B)
-         tmp_eigval(ii,2) = 1.5*U - sqrt(1.25*(U**2)+B)      
+         tmp_eigval(ii,1) = 1.5*U + sqrt(1.25*(U**2))
+         tmp_eigval(ii,2) = 1.5*U - sqrt(1.25*(U**2))      
          tmp_eigval(ii,3) = m_Cg(ii)
          tmp_eigval(ii,4) = U
          tmp_eigval(ii,5) = U
@@ -497,10 +496,10 @@ contains
          end if
       end do
       fluxes = 0.0d0
-      fluxes(2:n-1,4) = 0.5*par_Kdf*(uhydro(2:n-1,1)+uhydro(3:n,1))* &
-         (tmp_Css(3:n)-tmp_Css(2:n-1))/m_dX(2:n-1)
-      fluxes(2:n-1,5) = 0.5*par_Kdf*(uhydro(2:n-1,1)+uhydro(3:n,1))* &
-         (tmp_Cj(3:n)-tmp_Cj(2:n-1))/m_dX(2:n-1)
+      fluxes(1:n-1,4) = 0.5*par_Kdf*(uhydro(1:n-1,1)+uhydro(2:n,1))* &
+         (tmp_Css(2:n)-tmp_Css(1:n-1))/m_dX(1:n-1)
+      fluxes(1:n-1,5) = 0.5*par_Kdf*(uhydro(1:n-1,1)+uhydro(2:n,1))* &
+         (tmp_Cj(2:n)-tmp_Cj(1:n-1))/m_dX(1:n-1)
    end subroutine
 
    subroutine CalcCellStateSources(uhydro, sources, n, m)
@@ -518,10 +517,18 @@ contains
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             tmp_U(ii) = uhydro(ii,2) / max(0.1,uhydro(ii,1))
-            tmp_B(ii) = m_dZh(ii)
          else
             tmp_U(ii) = 0.0
-            tmp_B(ii) = 0.0
+         end if
+         if (ii==1) then
+            tmp_B(ii) = 0.5*(m_Zh(ii+1) + uhydro(ii+1,1) - &
+               m_Zh(ii) - uhydro(ii,1))
+         else if (ii==n) then
+            tmp_B(ii) = 0.5*(m_Zh(ii) + uhydro(ii,1) - &
+               m_Zh(ii-1) - uhydro(ii-1,1))
+         else
+            tmp_B(ii) = 0.5*(m_Zh(ii+1) + uhydro(ii+1,1) - &
+               m_Zh(ii-1) - uhydro(ii-1,1))
          end if
       end do
       
@@ -532,7 +539,7 @@ contains
          if (ii==1) then
             sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
                0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2) - &
-               0.5*G*(uhydro(ii,1)+uhydro(ii+1,1))*tmp_B(ii)/m_dX(ii)
+               G*(0.75*uhydro(ii,1)+0.25*uhydro(ii+1,1))*tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.75*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
                0.25*(m_Swg(ii+1)-m_Sbf(ii+1)-m_Swc(ii+1)-m_Sbrk(ii+1))) / sigma
             sources(ii,4) = (0.75*force_Esed(ii)+0.25*force_Esed(ii+1)) - &
@@ -540,16 +547,16 @@ contains
          else if (ii==n) then
             sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
                0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2) - &
-               0.5*G*(uhydro(ii,1)+uhydro(ii-1,1))*tmp_B(ii)/m_dX(ii)
+               G*(0.75*uhydro(ii,1)+0.25*uhydro(ii-1,1))*tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.75*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
                0.25*(m_Swg(ii-1)-m_Sbf(ii-1)-m_Swc(ii-1)-m_Sbrk(ii-1))) / sigma
             sources(ii,4) = (0.25*force_Esed(ii-1)+0.75*force_Esed(ii)) - &
                (0.25*force_Dsed(ii-1)+0.75*force_Dsed(ii))*scaler
          else
             sources(ii,2) = -(0.5*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
-               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2+ &
-               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2) - &
-               0.5*G*(uhydro(ii,1)+0.5*uhydro(ii-1,1)+0.5*uhydro(ii+1,1))* &
+               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2+ &
+               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2) - &
+               G*(0.5*uhydro(ii,1)+0.25*uhydro(ii-1,1)+0.25*uhydro(ii+1,1))* &
                tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.5*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
                0.25*(m_Swg(ii+1)-m_Sbf(ii+1)-m_Swc(ii+1)-m_Sbrk(ii+1)) + &
@@ -577,6 +584,7 @@ contains
       integer :: n, m
       ! local variables
       real(kind=8) :: Fminus(m), Fplus(m)
+      real(kind=8) :: Fminus_bd(m)
       real(kind=8) :: ap, am, dx
       integer :: ii
 

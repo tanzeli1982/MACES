@@ -163,13 +163,14 @@ try:
         # simulate hydrodynamics
         if isHourNode:
             h0_abs = -site_zh[0] + h0[hindx]
-            Hwav0 = utils.estimate_Hwav_seaward(U10[dindx], h0_abs)
+            U10_hr = U10[dindx] + (hindx/24-dindx)*(U10[dindx+1]-U10[dindx])
+            Hwav0 = utils.estimate_Hwav_seaward(U10_hr, h0_abs)
             #np.set_printoptions(precision=3, suppress=True)
             np.set_printoptions(precision=3, suppress=False)
             #print(np.array([U10[dindx],h0_abs,U0[hindx],Hwav0,Css0[dindx],Cj0[dindx]]))
             #print(np.array([h0_abs,U0[hindx],Hwav0]))
         taihydro.modelsetup(site_zh, site_pft, site_Bag, site_Esed, site_Dsed, 
-                            Twav, U10[dindx], h0_abs, U0[hindx], Hwav0, 
+                            Twav, U10_hr, h0_abs, U0[hindx], Hwav0, 
                             Css0[dindx], Cj0[dindx])
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
                                                      dyncheck, curstep)
@@ -182,13 +183,17 @@ try:
         assert np.all(np.isfinite(sim_tau)), "NaN tau found"
         assert np.all(np.isfinite(sim_Css)), "NaN Css found"
         assert np.all(np.isfinite(sim_Cj)), "NaN Cj found"
+        # get wet area length
+        if isHourNode:
+            wetL = site_x[sim_h>1e-6][-1]
+            tmp_zh = site_zh - h0[hindx]
+            wetL_potential = site_x[tmp_zh<0][-1]
+            print(wetL_potential, wetL, Hwav0, np.max(sim_Hwav))
         # simulate eco-geomorphology
         mac_inputs = {'x': site_x, 'Css': sim_Css, 'tau': sim_tau, 
                       'd50': hydro_params['d50'], 'Rous': rhoSed}
         site_Esed = mac_mod.mineral_suspension(mac_inputs)
         site_Dsed = mac_mod.mineral_deposition(mac_inputs)
-        if isHourNode:
-            print(sim_h)
         site_Lbed = mac_mod.bed_loading(mac_inputs)
         omac_inputs = {'x': site_x, 'zh': site_zh, 'MHT': 0.75, 'pft': site_pft, 
                        'SOM': site_OM}

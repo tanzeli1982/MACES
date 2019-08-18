@@ -59,7 +59,6 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: force_Dsed
    real(kind=8), allocatable, dimension(:)   :: force_Bag
    integer, allocatable, dimension(:)        :: force_pft
-   real(kind=8), allocatable, dimension(:)   :: force_Fminus
    real(kind=8) :: force_Twav
    real(kind=8) :: force_U10
    ! parameter variables
