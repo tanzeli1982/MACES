@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#SBATCH  --job-name=maces
+#SBATCH  --nodes=1
+#SBATCH  --ntasks-per-node=1
+#SBATCH  --exclusive
+#SBATCH  --time=03:00:00
+#SBATCH  --partition=short
+#SBATCH -A  taim 
+#SBATCH --mail-type=END
+#SBATCH --mail-user=zeli.tan@pnnl.gov
+#SBATCH --output=slurm.out
+#SBATCH --error=slurm.out
+
+module load intel/15.0.1
+module load openmpi/1.8.3 
+module load netcdf/4.3.2
+module load git
+
+export PATH=$HOME/.conda/envs/work_env/bin:$PATH
+
+source activate work_env
+
+python test.py 
+
+source deactivate
