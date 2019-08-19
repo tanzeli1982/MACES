@@ -111,6 +111,17 @@ def get_platform_slope(x, zh):
             dzh[ii] = (zh[ii] - zh[ii-1]) / (x[ii] - x[ii-1])
     return dzh
 
+def estimate_Hwav_seaward(U10, h0):
+    """Estimate the significant wave height at the seaward side.
+    Arguments:
+        U10 : 10-m wind speed (m/s)
+        h0 : water depth at the seaward side (m)
+    Returns : significant wave height (m)
+    """
+    Hwav_ocean = 0.27 * U10**2 / G
+    Hwav0 = np.sinh(Karman*h0) / np.sinh(Karman*30.0) * Hwav_ocean
+    return Hwav0
+
 def write_outputs(odir, sid, uhydro_out, ecogeom_out):
     """Write model outputs into a nc file.
     Arguments:
@@ -125,7 +136,7 @@ def write_outputs(odir, sid, uhydro_out, ecogeom_out):
     nx = np.shape(zh)[1]
     filename = odir + '{:d}'.format(sid) + '.nc'
     try:
-        nc = netcdf.netcdf_file(filename, version=2)
+        nc = netcdf.netcdf_file(filename, 'w', version=2)
         nc.history = r'Simulated hourly hydrodynamics and daily eco-geomorphology by MACES'
         nc.contact = r'Zeli.Tan@pnnl.gov'
         nc.createDimension('hour', None)

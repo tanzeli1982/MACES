@@ -3,7 +3,7 @@ import maces_utilities as utils
 import random
 import minac_mod as mac
 import omac_mod as omac
-from TAIHydroMOD import taihydromod as taihydro
+from TAIHydroMOD import tai_hydro_mod as taihydro
 
 # https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2012JF002363
 # Test case: Venice Lagoon
@@ -50,7 +50,7 @@ rhoOM = 1200.0      # OM density (kg/m3)
 porSed = 0.4        # porosity
 npft = 9
 hydro_params = {}
-hydro_params['d50'] = 1e-4
+hydro_params['d50'] = 25e-6
 hydro_params['Cz0'] = 65.0
 hydro_params['Kdf'] = 100.0
 hydro_params['cbc'] = 0.015
@@ -94,13 +94,11 @@ Ttide = 12.0
 h0 = 0.75 * np.sin(2*np.pi*np.arange(nhour)/Ttide)
 dh0 = np.gradient(h0)
 U0 = dh0 / np.max(np.abs(dh0)) * 1.0
-U10 = np.array([icdf_wind_gen(random.uniform(0,1)) for ii in range(nhour)], 
+U10 = np.array([icdf_wind_gen(random.uniform(0,1)) for ii in range(nday)], 
                 dtype=np.float64)
 Twav = 2.0
-Hwav_ocean = 0.27 * U10**2 / utils.G
-Hwav0 = np.sinh(utils.Karman*h0) / np.sinh(utils.Karman*30.0) * Hwav_ocean
-Css0 = 8.0 * np.ones(nhour, dtype=np.float64)
-Cj0 = 28.0 * np.ones(nhour, dtype=np.float64)
+Css0 = 8.0 * np.ones(nday, dtype=np.float64)
+Cj0 = 28.0 * np.ones(nday, dtype=np.float64)
 
 # driving data for eco-geomorphology model
 # In an old version of ALBM, I have a method to calculate Tsoi from Tair
@@ -135,13 +133,14 @@ ecogeom_out['SOM'] = 1e20 * np.ones((nday,nx,npool), dtype=np.float32)
 
 print('simulation starts')
 
-odir = '/qfs/projects/taim/TAIMOD/test/'
+odir = '/Users/tanz151/Downloads/'
 site_id = 466
 
 # run simulation
 MAX_OF_STEP = 1800  # maximum simulation time step (s)
 rk4_mode = 101      # adaptive mode
-uhydro_tol = np.array([1e-6,1e-6,1e-6,1e-6,1e-6], order='F')  # tolerance
+uhydro_tol = np.array([1e-3,1e-4,1e-6,1e-3,1e-3], dtype=np.float64, order='F')  # tolerance
+dyncheck = np.array([1,0,1,1,1], dtype=np.int32, order='F') # check negative value
 assert len(uhydro_tol)==nvar, "size of uhydro_tol is not equal to # of variables"
 t = 0
 tf = 8.64e4 * nday
@@ -154,7 +153,7 @@ curstep = 50.0
 nextstep = MAX_OF_STEP
 try:
     while t < tf:
-        if t>=3.6e3*hindx and hindx<nhour:
+        if t>=3.6e3*(hindx+1) and hindx+1<nhour:
             isHourNode = True
             hindx = hindx + 1
             print('time step', int(hindx))
@@ -162,13 +161,35 @@ try:
                 isDayNode = True
                 dindx = dindx + 1
         # simulate hydrodynamics
+        if isHourNode:
+            h0_abs = -site_zh[0] + h0[hindx]
+            U10_hr = U10[dindx] + (hindx/24-dindx)*(U10[dindx+1]-U10[dindx])
+            Hwav0 = utils.estimate_Hwav_seaward(U10_hr, h0_abs)
+            #np.set_printoptions(precision=3, suppress=True)
+            np.set_printoptions(precision=3, suppress=False)
+            #print(np.array([U10[dindx],h0_abs,U0[hindx],Hwav0,Css0[dindx],Cj0[dindx]]))
+            #print(np.array([h0_abs,U0[hindx],Hwav0]))
         taihydro.modelsetup(site_zh, site_pft, site_Bag, site_Esed, site_Dsed, 
-                            Twav, U10[hindx], h0[hindx], U0[hindx], 
-                            Hwav0[hindx], Css0[hindx], Cj0[hindx])
-        curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, curstep)
+                            Twav, U10_hr, h0_abs, U0[hindx], Hwav0, 
+                            Css0[dindx], Cj0[dindx])
+        curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
+                                                     dyncheck, curstep)
         assert error==0, "runge-Kutta iteration is more than MAXITER"
         taihydro.modelcallback()
         sim_h, sim_U, sim_Hwav, sim_tau, sim_Css, sim_Cj = taihydro.getmodelsims(nx)
+        assert np.all(np.isfinite(sim_h)), "NaN h found"
+        assert np.all(np.isfinite(sim_U)), "NaN U found"
+        assert np.all(np.isfinite(sim_Hwav)), "NaN Hwav found"
+        assert np.all(np.isfinite(sim_tau)), "NaN tau found"
+        assert np.all(np.isfinite(sim_Css)), "NaN Css found"
+        assert np.all(np.isfinite(sim_Cj)), "NaN Cj found"
+        # get wet area length
+        if isHourNode:
+            wetL = site_x[sim_h>1e-6][-1]
+            tmp_zh = site_zh - h0[hindx]
+            wetL_potential = site_x[tmp_zh<0][-1]
+            #print(np.array([wetL_potential, wetL, Hwav0, np.max(sim_Hwav)]))
+            print(np.array([h0_abs, U0[hindx], sim_h[1], sim_U[1]]))
         # simulate eco-geomorphology
         mac_inputs = {'x': site_x, 'Css': sim_Css, 'tau': sim_tau, 
                       'd50': hydro_params['d50'], 'Rous': rhoSed}
@@ -188,6 +209,8 @@ try:
         DepOM_pools[:,1] = 0.842 * site_DepOM
         site_OM = site_OM + (DepOM_pools - site_DecayOM) * curstep
         # update platform elevation
+        site_Lbed[:] = 0.0
+        site_DepOM[:] = 0.0
         site_zh = site_zh + ((site_Dsed/rhoSed + site_Lbed/rhoSed + \
             site_DepOM/rhoOM - site_Esed/rhoSed)/(1.0-porSed) - \
             site_rslr) * curstep
@@ -201,7 +224,7 @@ try:
             uhydro_out['Cj'][hindx] = sim_Cj
         if isDayNode:
             # archive daily mean eco-geomorphology variables
-            ecogeom_out['zh'] = site_zh
+            ecogeom_out['zh'][dindx] = site_zh
             ecogeom_out['Esed'][dindx] = site_Esed
             ecogeom_out['Dsed'][dindx] = site_Dsed
             ecogeom_out['DepOM'][dindx] = site_DepOM
@@ -228,7 +251,7 @@ except AssertionError as errstr:
     print("Model stops due to that", errstr)
 finally:
     # write simulation outputs
-    utils.write_outputs(odir, site_id, uhydro_out, ecogeom_out)
+    #utils.write_outputs(odir, site_id, uhydro_out, ecogeom_out)
     # deallocate
     taihydro.finalizehydromod()
     print('simulation ends')

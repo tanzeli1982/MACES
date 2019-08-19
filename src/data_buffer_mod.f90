@@ -24,7 +24,7 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: m_Uwav
    ! bottom shear stress (Pa)
    real(kind=8), allocatable, dimension(:)   :: m_tau
-   ! sediment source and sink (kg/m2/s)
+   ! wave source and sink
    real(kind=8), allocatable, dimension(:)   :: m_Cz
    real(kind=8), allocatable, dimension(:)   :: m_kwav
    real(kind=8), allocatable, dimension(:)   :: m_Qb
@@ -32,6 +32,11 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: m_Sbf
    real(kind=8), allocatable, dimension(:)   :: m_Swc
    real(kind=8), allocatable, dimension(:)   :: m_Sbrk
+   real(kind=8), allocatable, dimension(:)   :: m_Cg
+   real(kind=8), allocatable, dimension(:)   :: m_Nmax
+   ! sediment and constituents
+   real(kind=8), allocatable, dimension(:)   :: m_Css
+   real(kind=8), allocatable, dimension(:)   :: m_Cj
    ! temporary variables
    real(kind=8), allocatable, dimension(:,:) :: tmp_uhydro
    real(kind=8), allocatable, dimension(:,:) :: tmp_uhydroL
@@ -45,9 +50,10 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: tmp_aL
    real(kind=8), allocatable, dimension(:)   :: tmp_aR
    real(kind=8), allocatable, dimension(:)   :: tmp_U
-   real(kind=8), allocatable, dimension(:)   :: tmp_Cg
-   real(kind=8), allocatable, dimension(:)   :: tmp_Nmax
+   real(kind=8), allocatable, dimension(:)   :: tmp_B
    real(kind=8), allocatable, dimension(:)   :: tmp_Qb
+   real(kind=8), allocatable, dimension(:)   :: tmp_Css
+   real(kind=8), allocatable, dimension(:)   :: tmp_Cj
    ! forcing variables
    real(kind=8), allocatable, dimension(:)   :: force_Esed
    real(kind=8), allocatable, dimension(:)   :: force_Dsed
@@ -55,11 +61,6 @@ module data_buffer_mod
    integer, allocatable, dimension(:)        :: force_pft
    real(kind=8) :: force_Twav
    real(kind=8) :: force_U10
-   real(kind=8) :: force_h0
-   real(kind=8) :: force_U0
-   real(kind=8) :: force_Hwav0
-   real(kind=8) :: force_Css0
-   real(kind=8) :: force_Cj0
    ! parameter variables
    real(kind=8), allocatable, dimension(:)   :: par_alphaA
    real(kind=8), allocatable, dimension(:)   :: par_betaA

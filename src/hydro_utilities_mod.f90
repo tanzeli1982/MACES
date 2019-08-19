@@ -83,13 +83,14 @@ contains
       real(kind=8), intent(out) :: root
       real(kind=8) :: xa, xb, ya, yb
       real(kind=8) :: xc, yc, xd, ys
+      character(len=32) :: fname
       integer :: iter
       logical :: mflag
 
       xa = xbounds(1)
       xb = xbounds(2)
-      call NonLREQ(xa, coefs, ya)
-      call NonLREQ(xb, coefs, yb)
+      call NonLREQ(xa, coefs, ya, fname)
+      call NonLREQ(xb, coefs, yb, fname)
       if (abs(ya)<1d-3 .or. abs(yb)<1d-3) then
          ! root at the boundary
          if (abs(ya)<=abs(yb)) then
@@ -104,7 +105,7 @@ contains
          else
             root = xb
          end if
-         print *, "Root is not within xbounds"
+         print *, trim(fname) // ": Root is not within xbounds"
       else
          if (abs(ya)<abs(yb)) then
             call swap(xa, xb)
@@ -140,7 +141,7 @@ contains
             else
                mflag = .False.
             end if
-            call NonLREQ(root, coefs, ys)
+            call NonLREQ(root, coefs, ys, fname)
             xd = xc  ! first time xd is being used
             xc = xb  ! set xc equal to upper bound
             yc = yb
@@ -177,19 +178,30 @@ contains
    !          Tadmor (KT) central scheme.
    !
    !------------------------------------------------------------------------------
-   subroutine FVSKT_Superbee(uhydro, phi)
+   subroutine FVSKT_Superbee(uhydro, phi, n, m)
       implicit none
-      real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8), intent(out) :: phi(:,:)
-      real(kind=8) :: rr(size(uhydro,2))
-      integer :: ii, NX
+      real(kind=8), intent(in) :: uhydro(n,m)
+      real(kind=8), intent(out) :: phi(n,m)
+      integer, intent(in) :: n, m
+      real(kind=8) :: rr(m)
+      real(kind=8) :: r0, r1
+      integer :: ii, jj
 
-      NX = size(uhydro,1)
-      do ii = 1, NX, 1
-         if (ii==1 .or. ii==NX) then
+      do ii = 1, n, 1
+         if (ii==1 .or. ii==n) then
             phi(ii,:) = 0.0d0
          else
-            rr = (uhydro(ii,:)-uhydro(ii-1,:))/(uhydro(ii+1,:)-uhydro(ii,:))
+            do jj = 1, m, 1
+               r0 = uhydro(ii,jj) - uhydro(ii-1,jj)
+               r1 = uhydro(ii+1,jj) - uhydro(ii,jj)
+               if (abs(r0)>INFTSML .and. abs(r1)>INFTSML) then
+                  rr(jj) = r0 / r1
+               else if (abs(r0)<=INFTSML) then
+                  rr(jj) = 0.0
+               else
+                  rr(jj) = 1.0 / INFTSML
+               end if
+            end do
             phi(ii,:) = max(0.0,min(2.0*rr,1.0),min(rr,2.0))
          end if
       end do
@@ -200,18 +212,18 @@ contains
    ! Purpose: Calculate cell edge state variables.
    !
    !------------------------------------------------------------------------------
-   subroutine FVSKT_celledge(uhydro, phi, uhydroL, uhydroR)
+   subroutine FVSKT_celledge(uhydro, phi, uhydroL, uhydroR, n, m)
       implicit none
-      real(kind=8), intent(in) :: uhydro(:,:)
-      real(kind=8), intent(in) :: phi(:,:)
-      real(kind=8), intent(out) :: uhydroL(:,:)
-      real(kind=8), intent(out) :: uhydroR(:,:)
-      real(kind=8) :: duhydro(size(uhydro,2))
-      integer :: ii, NX
+      real(kind=8), intent(in) :: uhydro(n,m)
+      real(kind=8), intent(in) :: phi(n,m)
+      real(kind=8), intent(out) :: uhydroL(n,m)
+      real(kind=8), intent(out) :: uhydroR(n,m)
+      integer, intent(in) :: n, m
+      real(kind=8) :: duhydro(m)
+      integer :: ii
 
-      NX = size(uhydro,1)
-      do ii = 1, NX, 1
-         if (ii==1 .or. ii==NX) then
+      do ii = 1, n, 1
+         if (ii==1 .or. ii==n) then
             uhydroL(ii,:) = uhydro(ii,:)
             uhydroR(ii,:) = uhydro(ii,:)
          else
@@ -285,12 +297,12 @@ contains
 
       nx = size(h)
       do ii = 1, nx, 1
-         cD0 = par_cD0(pft(ii))
-         ScD = par_ScD(pft(ii))
-         alphaA = par_alphaA(pft(ii))
-         betaA = par_betaA(pft(ii))
-         alphaD = par_alphaD(pft(ii))
-         betaD = par_betaD(pft(ii))
+         cD0 = par_cD0(pft(ii)+1)
+         ScD = par_ScD(pft(ii)+1)
+         alphaA = par_alphaA(pft(ii)+1)
+         betaA = par_betaA(pft(ii)+1)
+         alphaD = par_alphaD(pft(ii)+1)
+         betaD = par_betaD(pft(ii)+1)
          asb = alphaA * Bag(ii)**betaA
          dsb = alphaD * Bag(ii)**betaD
          cD = cD0 + ScD * Bag(ii)
@@ -312,14 +324,22 @@ contains
 
       nx = size(h)
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>TOL_REL) then
             ! bottom shear stress by currents
             fcurr = 0.24/(log(4.8*h(ii)/par_d50))**2
             tau_curr = 0.125*Roul*fcurr*U(ii)**2
-            ! bottom shear stress by wave
-            fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
-            tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
-            tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
+            if (tau_curr>TOL_REL) then
+               ! bottom shear stress by wave
+               if (Uwav(ii)>TOL_REL) then
+                  fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
+                  tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
+               else
+                  tau_wave = 0.0
+               end if
+               tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
+            else
+               tau(ii) = 0.0
+            end if
          else
             tau(ii) = 0.0d0
          end if
@@ -332,13 +352,15 @@ contains
    !          UpdateWaveNumber2() is much more efficient but less accurate.
    !
    !------------------------------------------------------------------------------
-   subroutine WaveNumberEQ(kwav, coefs, fval)
+   subroutine WaveNumberEQ(kwav, coefs, fval, fname)
       implicit none
       real(kind=8), intent(in) :: kwav
       real(kind=8), intent(in) :: coefs(2)
       real(kind=8), intent(out) :: fval
+      character(len=32), intent(out) :: fname
       real(kind=8) :: sigma, T, h
 
+      fname = "WaveNumberEQ" 
       T = coefs(1)
       h = coefs(2)
       sigma = 2.0*PI/T
@@ -357,8 +379,8 @@ contains
       nx = size(h)
       sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
       do ii = 1, nx, 1
-         if (h(ii)>0) then
-            xbounds = (/sigma**2/G, sigma/sqrt(G*h(ii))/)
+         if (h(ii)>TOL_REL) then
+            xbounds = (/sigma**2/G, sigma/sqrt(G*0.1)/)
             coefs = (/Twav, h(ii)/)
             call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(ii))
          else
@@ -378,12 +400,12 @@ contains
 
       nx = size(h)
       sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
-      if (h(1)>0) then
-         xbounds = (/sigma**2/G, sigma/sqrt(G*h(1))/)
+      if (h(1)>TOL_REL) then
+         xbounds = (/sigma**2/G, sigma/sqrt(G*0.1)/)
          coefs = (/Twav, h(1)/)
          call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(1))
          do ii = 2, nx, 1
-            if (h(ii)>0) then
+            if (h(ii)>TOL_REL) then
                kwav(ii) = kwav(1)*sqrt(h(1)/max(0.1,h(ii)))
             else
                kwav(ii) = 0.0d0
@@ -400,13 +422,15 @@ contains
    !          UpdateWaveBrkProb2() is much more efficient but less accurate.
    !
    !------------------------------------------------------------------------------
-   subroutine BreakProbEQ(Qb, coefs, fval)
+   subroutine BreakProbEQ(Qb, coefs, fval, fname)
       implicit none
       real(kind=8), intent(in) :: Qb
       real(kind=8), intent(in) :: coefs(2)
       real(kind=8), intent(out) :: fval
+      character(len=32), intent(out) :: fname
       real(kind=8) :: Hrms, Hmax
 
+      fname = "BreakProbEQ"
       Hmax = coefs(1)
       Hrms = coefs(2)
       fval = (1-Qb)/log(Qb) + (Hrms/Hmax)**2
@@ -423,7 +447,7 @@ contains
 
       nx = size(h)
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>TOL_REL) then
             Hmax = par_fr * h(ii)
             Hrms = Hwav(ii)
             xbounds = (/1d-10, 1.0-1d-10/)
@@ -447,7 +471,7 @@ contains
       nQb = size(rawQb)
       nx = size(h)
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>TOL_REL) then
             fHrms = Hwav(ii) / (par_fr*h(ii))
             if (fHrms<=rawQb(1)) then
                Qb(ii) = 0.0d0
@@ -483,7 +507,7 @@ contains
       nx = size(h)
       sigma = 2.0*PI/Twav
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>TOL_REL .and. kwav(ii)>TOL_REL) then
             alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav(ii))**2
             beta = 5.0*Roua/Roul/Twav*(U10*kwav(ii)/sigma-0.9)
             Swg(ii) = alpha + beta * Ewav(ii)
@@ -508,7 +532,7 @@ contains
 
       nx = size(h)
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>TOL_REL .and. kwav(ii)>TOL_REL) then
             Cf = 2.0*par_cbc*PI*Hwav(ii)/Twav/sinh(kwav(ii)*h(ii))
             Sbf(ii) = (1-Qb(ii))*2.0*Cf*kwav(ii)*Ewav(ii)/ &
                sinh(2.0*kwav(ii)*h(ii))
@@ -550,7 +574,7 @@ contains
       nx = size(h)
       sigma = 2.0*PI/Twav
       do ii = 1, nx, 1
-         if (h(ii)>0) then
+         if (h(ii)>TOL_REL .and. kwav(ii)>TOL_REL .and. Hwav(ii)>TOL_REL) then
             Hmax = par_fr * h(ii)
             alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav(ii))**2
             Sbrk(ii) = 2.0*alpha/Twav*Qb(ii)*((Hmax/Hwav(ii))**2)*Ewav(ii)
@@ -565,13 +589,14 @@ contains
    ! Purpose: The 4th-order time step variable Runge-Kutta-Fehlberg method 
    !
    !------------------------------------------------------------------------------
-   subroutine RK4Fehlberg(odeFunc, invars, mode, tol, outvars, &
+   subroutine RK4Fehlberg(odeFunc, invars, mode, tol, dyncheck, outvars, &
                           curstep, nextstep, outerr)
       implicit none
       external :: odeFunc
       real(kind=8), intent(in) :: invars(:,:)
       integer, intent(in) :: mode
       real(kind=8), intent(in) :: tol(:)
+      integer, intent(in) :: dyncheck(:)
       real(kind=8), intent(out) :: outvars(:,:)
       real(kind=8), intent(inout) :: curstep
       real(kind=8), intent(out) :: nextstep
@@ -633,7 +658,7 @@ contains
             if (dy(ii)>tol(ii) .and. rdy(ii)>rel_tol(ii)) then
                isLargeErr = .True.
             end if
-            if (dyn(ii)<-100*tol(ii)) then
+            if (dyn(ii)<-100*tol(ii) .and. dyncheck(ii)==1) then
                isConstrainBroken = .True.
             end if
          end do
