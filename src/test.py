@@ -188,7 +188,8 @@ try:
             wetL = site_x[sim_h>1e-6][-1]
             tmp_zh = site_zh - h0[hindx]
             wetL_potential = site_x[tmp_zh<0][-1]
-            print(wetL_potential, wetL, Hwav0, np.max(sim_Hwav))
+            #print(np.array([wetL_potential, wetL, Hwav0, np.max(sim_Hwav)]))
+            print(np.array([h0_abs, U0[hindx], sim_h[1], sim_U[1]]))
         # simulate eco-geomorphology
         mac_inputs = {'x': site_x, 'Css': sim_Css, 'tau': sim_tau, 
                       'd50': hydro_params['d50'], 'Rous': rhoSed}
