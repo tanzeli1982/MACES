@@ -1,0 +1,414 @@
+<?xml version="1.0"?>
+<file id="optpar_minac.xml" version="2.0">
+   <header>
+   Parameters of mineral accretion models of F06MOD, 
+   T03MOD, KM12MOD, M12MOD, F07MOD, VDK05MOD and 
+   DA07MOD.
+   </header>
+   <group id="F06MOD">
+      <entry id="d50" value="25e-6" units="m">
+         <type>real</type>
+         <desc>sediment median diameter</desc>
+      </entry>
+      <entry id="rhoSed" value="2650.0" units="kg/m3">
+         <type>real</type>
+         <desc>sediment density</desc>
+      </entry>
+      <entry id="porSed" value="0.4" units="none">
+         <type>real</type>
+         <desc>sediment porosity</desc>
+      </entry>
+   </group>
+   <group id="T03MOD">
+      <entry id="d50" value="25e-6" units="m">
+         <type>real</type>
+         <desc>sediment median diameter</desc>
+      </entry>
+      <entry id="rhoSed" value="2650.0" units="kg/m3">
+         <type>real</type>
+         <desc>sediment density</desc>
+      </entry>
+      <entry id="porSed" value="0.4" units="none">
+         <type>real</type>
+         <desc>sediment porosity</desc>
+      </entry>
+      <entry id="k" value="0.188" units="kg/m2/spring">
+         <type>real</type>
+         <desc>reference sediment deposition</desc>
+      </entry>
+      <entry id="l" value="-0.3165" units="m-1">
+         <type>real</type>
+         <desc>elevation factor</desc>
+      </entry>
+      <entry id="m" value="-0.0195" units="m-1">
+         <type>real</type>
+         <desc>distance factor</desc>
+      </entry>
+   </group>
+   <group id="KM12MOD">
+      <entry id="d50" value="25e-6" units="m">
+         <type>real</type>
+         <desc>sediment median diameter</desc>
+      </entry>
+      <entry id="rhoSed" value="2650.0" units="kg/m3">
+         <type>real</type>
+         <desc>sediment density</desc>
+      </entry>
+      <entry id="porSed" value="0.4" units="none">
+         <type>real</type>
+         <desc>sediment porosity</desc>
+      </entry>
+      <entry id="alphaA" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">8.0</value>
+            <value pft="3">8.0</value>
+            <value pft="4">8.0</value>
+            <value pft="5">8.0</value>
+            <value pft="6">8.0</value>
+            <value pft="7">8.0</value>
+            <value pft="8">8.0</value>
+            <value pft="9">8.0</value>
+         </values>
+         <desc>multiplier coef for projected plant area per unit volume</desc>
+      </entry>
+      <entry id="betaA" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.5</value>
+            <value pft="3">0.5</value>
+            <value pft="4">0.5</value>
+            <value pft="5">0.5</value>
+            <value pft="6">0.5</value>
+            <value pft="7">0.5</value>
+            <value pft="8">0.5</value>
+            <value pft="9">0.5</value>
+         </values>
+         <desc>exponent coef for projected plant area per unit volume</desc>
+      </entry>
+      <entry id="alphaD" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.005</value>
+            <value pft="3">0.005</value>
+            <value pft="4">0.005</value>
+            <value pft="5">0.005</value>
+            <value pft="6">0.005</value>
+            <value pft="7">0.005</value>
+            <value pft="8">0.005</value>
+            <value pft="9">0.005</value>
+         </values>
+         <desc>multiplier coef for the stem diameter</desc>
+      </entry>
+      <entry id="betaD" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.3</value>
+            <value pft="3">0.3</value>
+            <value pft="4">0.3</value>
+            <value pft="5">0.3</value>
+            <value pft="6">0.3</value>
+            <value pft="7">0.3</value>
+            <value pft="8">0.3</value>
+            <value pft="9">0.3</value>
+         </values>
+         <desc>exponent coef for the stem diameter</desc>
+      </entry>
+   </group>
+   <group id="M12MOD">
+      <entry id="d50" value="25e-6" units="m">
+         <type>real</type>
+         <desc>sediment median diameter</desc>
+      </entry>
+      <entry id="rhoSed" value="2650.0" units="kg/m3">
+         <type>real</type>
+         <desc>sediment density</desc>
+      </entry>
+      <entry id="porSed" value="0.4" units="none">
+         <type>real</type>
+         <desc>sediment porosity</desc>
+      </entry>
+      <entry id="E0" value="0.3" units="mm/yr">
+         <type>real</type>
+         <desc>reference erosion rate</desc>
+      </entry>
+      <entry id="tauE_cr" value="0.65" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for erosion</desc>
+      </entry>
+      <entry id="ks" units="m3/s/kg">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">5.95e-5</value>
+            <value pft="3">5.95e-5</value>
+            <value pft="4">5.95e-5</value>
+            <value pft="5">9.51e-6</value>
+            <value pft="6">9.51e-6</value>
+            <value pft="7">9.51e-6</value>
+            <value pft="8">9.51e-6</value>
+            <value pft="9">9.51e-6</value>
+         </values>
+         <desc>vegetation trapping efficiency</desc>
+      </entry>
+      <entry id="alphaSG" value="3.65" units="m2/yr">
+         <type>real</type>
+         <desc>intercept of the bedload and belowground biomass equation</desc>
+      </entry>
+      <entry id="betaSG" value="0.0019" units="m4/yr">
+         <type>real</type>
+         <desc>slope of the bedload and belowground biomass equation</desc>
+      </entry>
+   </group>
+   <group id="F07MOD">
+      <entry id="d50" value="25e-6" units="m">
+         <type>real</type>
+         <desc>sediment median diameter</desc>
+      </entry>
+      <entry id="rhoSed" value="2650.0" units="kg/m3">
+         <type>real</type>
+         <desc>sediment density</desc>
+      </entry>
+      <entry id="porSed" value="0.4" units="none">
+         <type>real</type>
+         <desc>sediment porosity</desc>
+      </entry>
+      <entry id="E0" value="4.12e-4" units="kg/m2/s/Pa">
+         <type>real</type>
+         <desc>reference erosion rate</desc>
+      </entry>
+      <entry id="tauE_cr" value="0.65" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for erosion</desc>
+      </entry>
+      <entry id="gamma" value="0.0054" units="Pa/m">
+         <type>real</type>
+         <desc>increase of $tauE_cr with depth</desc>
+      </entry>
+      <entry id="tauD_cr" value="0.65" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for deposition</desc>
+      </entry>
+      <entry id="KD" value="7.7e-4" units="m5/s/kg^4/3">
+         <type>real</type>
+         <desc>cohesive sediment settling rate</desc>
+      </entry>
+      <entry id="d50sand" value="200e-6" units="m">
+         <type>real</type>
+         <desc>non-cohesive sediment median diameter</desc>
+      </entry>
+   </group>
+   <group id="VDK05MOD">
+      <entry id="d50" value="25e-6" units="m">
+         <type>real</type>
+         <desc>sediment median diameter</desc>
+      </entry>
+      <entry id="rhoSed" value="2650.0" units="kg/m3">
+         <type>real</type>
+         <desc>sediment density</desc>
+      </entry>
+      <entry id="porSed" value="0.4" units="none">
+         <type>real</type>
+         <desc>sediment porosity</desc>
+      </entry>
+      <entry id="Emax" value="0.05" units="yr-1">
+         <type>real</type>
+         <desc>maximum sediment erosion by water flow</desc>
+      </entry>
+      <entry id="Dmax" value="0.01" units="m/yr">
+         <type>real</type>
+         <desc>maximum deposition rate</desc>
+      </entry>
+      <entry id="ds" value="2.0" units="yr-1">
+         <type>real</type>
+         <desc>a conversion coef for wave erosion</desc>
+      </entry>
+      <entry id="aNv" value="5e-2" units="kg/m2">
+         <type>real</type>
+         <desc>sediment tide erosion increase rate by plant</desc>
+      </entry>
+      <entry id="bNv" value="2e-2" units="kg/m2">
+         <type>real</type>
+         <desc>sediment wave erosion increase rate by plant</desc>
+      </entry>
+   </group>
+   <group id="DA07MOD">
+      <entry id="d50" value="25e-6" units="m">
+         <type>real</type>
+         <desc>sediment median diameter</desc>
+      </entry>
+      <entry id="rhoSed" value="2650.0" units="kg/m3">
+         <type>real</type>
+         <desc>sediment density</desc>
+      </entry>
+      <entry id="porSed" value="0.4" units="none">
+         <type>real</type>
+         <desc>sediment porosity</desc>
+      </entry>
+      <entry id="E0" value="0.3" units="mm/yr">
+         <type>real</type>
+         <desc>reference erosion rate</desc>
+      </entry>
+      <entry id="tauE_cr" value="0.4" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for erosion</desc>
+      </entry>
+      <entry id="tauD_cr" value="0.1" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for deposition</desc>
+      </entry>
+      <entry id="Kveg" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">5.0</value>
+            <value pft="3">5.0</value>
+            <value pft="4">5.0</value>
+            <value pft="5">5.0</value>
+            <value pft="6">5.0</value>
+            <value pft="7">5.0</value>
+            <value pft="8">5.0</value>
+            <value pft="9">5.0</value>
+         </values>
+         <desc>shear stress increase rate with aboveground biomass</desc>
+      </entry>
+      <entry id="Bmax" units="kg/m2">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">1.0</value>
+            <value pft="3">1.0</value>
+            <value pft="4">1.0</value>
+            <value pft="5">1.0</value>
+            <value pft="6">1.0</value>
+            <value pft="7">1.0</value>
+            <value pft="8">1.0</value>
+            <value pft="9">1.0</value>
+         </values>
+         <desc>maximum aboveground biomass</desc>
+      </entry>
+      <entry id="alphaN" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">2030.0</value>
+            <value pft="3">2030.0</value>
+            <value pft="4">2030.0</value>
+            <value pft="5">2030.0</value>
+            <value pft="6">2030.0</value>
+            <value pft="7">2030.0</value>
+            <value pft="8">2030.0</value>
+            <value pft="9">2030.0</value>
+         </values>
+         <desc>multiplier coef for stem density per unit area</desc>
+      </entry>
+      <entry id="betaN" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.3032</value>
+            <value pft="3">0.3032</value>
+            <value pft="4">0.3032</value>
+            <value pft="5">0.3032</value>
+            <value pft="6">0.3032</value>
+            <value pft="7">0.3032</value>
+            <value pft="8">0.3032</value>
+            <value pft="9">0.3032</value>
+         </values>
+         <desc>exponent coef for stem density per unit area</desc>
+      </entry>
+      <entry id="alphaH" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.223</value>
+            <value pft="3">0.223</value>
+            <value pft="4">0.223</value>
+            <value pft="5">0.223</value>
+            <value pft="6">0.223</value>
+            <value pft="7">0.223</value>
+            <value pft="8">0.223</value>
+            <value pft="9">0.223</value>
+         </values>
+         <desc>multiplier coef for stem height</desc>
+      </entry>
+      <entry id="betaH" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.1876</value>
+            <value pft="3">0.1876</value>
+            <value pft="4">0.1876</value>
+            <value pft="5">0.1876</value>
+            <value pft="6">0.1876</value>
+            <value pft="7">0.1876</value>
+            <value pft="8">0.1876</value>
+            <value pft="9">0.1876</value>
+         </values>
+         <desc>exponent coef for stem height</desc>
+      </entry>
+      <entry id="alphaD" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.005</value>
+            <value pft="3">0.005</value>
+            <value pft="4">0.005</value>
+            <value pft="5">0.005</value>
+            <value pft="6">0.005</value>
+            <value pft="7">0.005</value>
+            <value pft="8">0.005</value>
+            <value pft="9">0.005</value>
+         </values>
+         <desc>multiplier coef for stem diameter</desc>
+      </entry>
+      <entry id="betaD" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.3</value>
+            <value pft="3">0.3</value>
+            <value pft="4">0.3</value>
+            <value pft="5">0.3</value>
+            <value pft="6">0.3</value>
+            <value pft="7">0.3</value>
+            <value pft="8">0.3</value>
+            <value pft="9">0.3</value>
+         </values>
+         <desc>exponent coef for stem diameter</desc>
+      </entry>
+      <entry id="alphaE" value="0.224" units="none">
+         <type>real</type>
+         <desc>multiplier coef for sediment trapping efficiency</desc>
+      </entry>
+      <entry id="betaE" value="0.718" units="none">
+         <type>real</type>
+         <desc>exponent coef for sediment trapping efficiency</desc>
+      </entry>
+      <entry id="gammaE" value="2.08" units="none">
+         <type>real</type>
+         <desc>exponent coef for sediment trapping efficiency</desc>
+      </entry>
+      <entry id="d50sand" value="200e-6" units="m">
+         <type>real</type>
+         <desc>non-cohesive sediment median diameter</desc>
+      </entry>
+   </group>
+</file>

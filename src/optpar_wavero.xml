@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<file id="optpar_wavero.xml" version="2.0">
+   <header>
+   Parameters of storm surge erosion models. 
+   </header>
+   <group id="NULLMOD">
+   </group>
+   <group id="L16MOD">
+   </group>
+</file>

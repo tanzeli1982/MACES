@@ -33,7 +33,7 @@ class NULLMOD(WAVEROMODSuper):
         Returns: storm surge erosion rate (m s-1)
         """
         x = inputs['x']
-        return np.zeros_like(x, dtype=np.float64)
+        return x
 
 ###############################################################################    
 class L16MOD(WAVEROMODSuper):
@@ -56,3 +56,5 @@ class L16MOD(WAVEROMODSuper):
             inputs : driving data for storm surge erosion calculation
         Returns: storm surge erosion rate (m s-1)
         """
+        x = inputs['x']
+        return x

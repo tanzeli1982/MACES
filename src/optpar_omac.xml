@@ -1,0 +1,514 @@
+<?xml version="1.0"?>
+<file id="optpar_omac.xml" version="2.0">
+   <header>
+   Parameters of organic matter accretion models of  
+   NULLMOD, VDK05MOD, M12MOD, DA07MOD, KM12MOD and 
+   K16MOD.
+   </header>
+   <group id="NULLMOD">
+      <entry id="rhoOM" value="1200.0" units="kg/m3">
+         <type>real</type>
+         <desc>organic matter density</desc>
+      </entry>
+      <entry id="phi" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">2.2</value>
+            <value pft="3">2.2</value>
+            <value pft="4">2.2</value>
+            <value pft="5">2.2</value>
+            <value pft="6">2.2</value>
+            <value pft="7">2.2</value>
+            <value pft="8">2.2</value>
+            <value pft="9">2.2</value>
+         </values>
+         <desc>the root:shoot quotient</desc>
+      </entry>
+      <entry id="aa" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">15.5</value>
+            <value pft="3">15.5</value>
+            <value pft="4">15.5</value>
+            <value pft="5">15.698</value>
+            <value pft="6">0.0</value>
+            <value pft="7">0.0</value>
+            <value pft="8">0.0</value>
+            <value pft="9">0.0</value>
+         </values>
+         <desc>coef for the quadratic curve of aboveground biomass</desc>
+      </entry>
+      <entry id="bb" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">-18.55</value>
+            <value pft="3">-18.55</value>
+            <value pft="4">-18.55</value>
+            <value pft="5">-12.075</value>
+            <value pft="6">0.0</value>
+            <value pft="7">0.0</value>
+            <value pft="8">0.0</value>
+            <value pft="9">0.0</value>
+         </values>
+         <desc>coef for the quadratic curve of aboveground biomass</desc>
+      </entry>
+      <entry id="cc" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">-1.364</value>
+            <value pft="3">-1.364</value>
+            <value pft="4">-1.364</value>
+            <value pft="5">-2.657</value>
+            <value pft="6">0.0</value>
+            <value pft="7">0.0</value>
+            <value pft="8">0.0</value>
+            <value pft="9">0.0</value>
+         </values>
+         <desc>coef for the quadratic curve of aboveground biomass</desc>
+      </entry>
+   </group>
+   <group id="VDK05MOD">
+      <entry id="rhoOM" value="1200.0" units="kg/m3">
+         <type>real</type>
+         <desc>organic matter density</desc>
+      </entry>
+      <entry id="phi" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">2.2</value>
+            <value pft="3">2.2</value>
+            <value pft="4">2.2</value>
+            <value pft="5">2.2</value>
+            <value pft="6">2.2</value>
+            <value pft="7">2.2</value>
+            <value pft="8">2.2</value>
+            <value pft="9">2.2</value>
+         </values>
+         <desc>the root:shoot quotient</desc>
+      </entry>
+      <entry id="rB0" units="yr-1">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">4.0</value>
+            <value pft="3">4.0</value>
+            <value pft="4">4.0</value>
+            <value pft="5">4.0</value>
+            <value pft="6">4.0</value>
+            <value pft="7">4.0</value>
+            <value pft="8">4.0</value>
+            <value pft="9">4.0</value>
+         </values>
+         <desc>intrinsic growth rate</desc>
+      </entry>
+      <entry id="dP" units="yr-1">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.6</value>
+            <value pft="3">0.6</value>
+            <value pft="4">0.6</value>
+            <value pft="5">0.6</value>
+            <value pft="6">0.6</value>
+            <value pft="7">0.6</value>
+            <value pft="8">0.6</value>
+            <value pft="9">0.6</value>
+         </values>
+         <desc>plant mortality due to senescence</desc>
+      </entry>
+      <entry id="dB" units="yr-1">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">30.0</value>
+            <value pft="3">30.0</value>
+            <value pft="4">30.0</value>
+            <value pft="5">30.0</value>
+            <value pft="6">30.0</value>
+            <value pft="7">30.0</value>
+            <value pft="8">30.0</value>
+            <value pft="9">30.0</value>
+         </values>
+         <desc>plant mortality due to wave damage</desc>
+      </entry>
+      <entry id="Bmax" units="kg/m2">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">1.0</value>
+            <value pft="3">1.0</value>
+            <value pft="4">1.0</value>
+            <value pft="5">1.0</value>
+            <value pft="6">1.0</value>
+            <value pft="7">1.0</value>
+            <value pft="8">1.0</value>
+            <value pft="9">1.0</value>
+         </values>
+         <desc>maximum standing biomass</desc>
+      </entry>
+      <entry id="czh" units="meter">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">1.0</value>
+            <value pft="3">1.0</value>
+            <value pft="4">1.0</value>
+            <value pft="5">1.0</value>
+            <value pft="6">1.0</value>
+            <value pft="7">1.0</value>
+            <value pft="8">1.0</value>
+            <value pft="9">1.0</value>
+         </values>
+         <desc>a half-saturation elevation constant</desc>
+      </entry>
+   </group>
+   <group id="M12MOD">
+      <entry id="rhoOM" value="1200.0" units="kg/m3">
+         <type>real</type>
+         <desc>organic matter density</desc>
+      </entry>
+      <entry id="phi" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">2.2</value>
+            <value pft="3">2.2</value>
+            <value pft="4">2.2</value>
+            <value pft="5">2.2</value>
+            <value pft="6">2.2</value>
+            <value pft="7">2.2</value>
+            <value pft="8">2.2</value>
+            <value pft="9">2.2</value>
+         </values>
+         <desc>the root:shoot quotient</desc>
+      </entry>
+      <entry id="aa" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">15.5</value>
+            <value pft="3">15.5</value>
+            <value pft="4">15.5</value>
+            <value pft="5">15.698</value>
+            <value pft="6">0.0</value>
+            <value pft="7">0.0</value>
+            <value pft="8">0.0</value>
+            <value pft="9">0.0</value>
+         </values>
+         <desc>coef for the quadratic curve of aboveground biomass</desc>
+      </entry>
+      <entry id="bb" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">-18.55</value>
+            <value pft="3">-18.55</value>
+            <value pft="4">-18.55</value>
+            <value pft="5">-12.075</value>
+            <value pft="6">0.0</value>
+            <value pft="7">0.0</value>
+            <value pft="8">0.0</value>
+            <value pft="9">0.0</value>
+         </values>
+         <desc>coef for the quadratic curve of aboveground biomass</desc>
+      </entry>
+      <entry id="cc" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">-1.364</value>
+            <value pft="3">-1.364</value>
+            <value pft="4">-1.364</value>
+            <value pft="5">-2.657</value>
+            <value pft="6">0.0</value>
+            <value pft="7">0.0</value>
+            <value pft="8">0.0</value>
+            <value pft="9">0.0</value>
+         </values>
+         <desc>coef for the quadratic curve of aboveground biomass</desc>
+      </entry>
+      <entry id="Kr" units="none">
+         <type>real</type>      
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.02</value>
+            <value pft="3">0.02</value>
+            <value pft="4">0.02</value>
+            <value pft="5">0.02</value>
+            <value pft="6">0.02</value>
+            <value pft="7">0.02</value>
+            <value pft="8">0.02</value>
+            <value pft="9">0.02</value>
+         </values>
+         <desc>the refractory fraction of root and rhizome biomass</desc>
+      </entry>
+      <entry id="Tr" units="yr">
+         <type>real</type>      
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">1.5</value>
+            <value pft="3">1.5</value>
+            <value pft="4">1.5</value>
+            <value pft="5">1.5</value>
+            <value pft="6">1.5</value>
+            <value pft="7">1.5</value>
+            <value pft="8">1.5</value>
+            <value pft="9">1.5</value>
+         </values>
+         <desc>the root and rhizome turnover time</desc>
+      </entry>
+   </group>
+   <group id="DA07MOD">
+      <entry id="rhoOM" value="1200.0" units="kg/m3">
+         <type>real</type>
+         <desc>organic matter density</desc>
+      </entry>
+      <entry id="phi" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">2.2</value>
+            <value pft="3">2.2</value>
+            <value pft="4">2.2</value>
+            <value pft="5">2.2</value>
+            <value pft="6">2.2</value>
+            <value pft="7">2.2</value>
+            <value pft="8">2.2</value>
+            <value pft="9">2.2</value>
+         </values>
+         <desc>the root:shoot quotient</desc>
+      </entry>
+      <entry id="Qom0" value="0.01" units="m/yr">
+         <type>real</type>
+         <desc>a typical OM deposition rate</desc>
+      </entry>
+      <entry id="Bmax" units="kg/m2">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">1.0</value>
+            <value pft="3">1.0</value>
+            <value pft="4">1.0</value>
+            <value pft="5">1.0</value>
+            <value pft="6">1.0</value>
+            <value pft="7">1.0</value>
+            <value pft="8">1.0</value>
+            <value pft="9">1.0</value>
+         </values>
+         <desc>maximum standing biomass</desc>
+      </entry>
+      <entry id="omega" value="0.1" units="none">
+         <type>real</type>
+         <desc>the ratio of winter biomass to peak biomass</desc>
+      </entry>
+      <entry id="mps" value="7" units="month">
+         <type>integer</type>
+         <valid_values>1,2,3,4,5,6,7,8,9,10,11,12</valid_values>
+         <desc>month of aboveground biomass at its peak</desc>
+      </entry>
+   </group>
+   <group id="KM12MOD">
+      <entry id="rhoOM" value="1200.0" units="kg/m3">
+         <type>real</type>
+         <desc>organic matter density</desc>
+      </entry>
+      <entry id="Bmax" units="kg/m2">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">1.0</value>
+            <value pft="3">1.0</value>
+            <value pft="4">1.0</value>
+            <value pft="5">1.0</value>
+            <value pft="6">1.0</value>
+            <value pft="7">1.0</value>
+            <value pft="8">1.0</value>
+            <value pft="9">1.0</value>
+         </values>
+         <desc>maximum standing biomass</desc>
+      </entry>
+      <entry id="Tref" units="K">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">293.15</value>
+            <value pft="3">293.15</value>
+            <value pft="4">293.15</value>
+            <value pft="5">293.15</value>
+            <value pft="6">293.15</value>
+            <value pft="7">293.15</value>
+            <value pft="8">293.15</value>
+            <value pft="9">293.15</value>
+         </values>
+         <desc>reference temperature for veg growth</desc>
+      </entry>
+      <entry id="sigmaB" units="K-1">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.06</value>
+            <value pft="3">0.06</value>
+            <value pft="4">0.06</value>
+            <value pft="5">0.06</value>
+            <value pft="6">0.06</value>
+            <value pft="7">0.06</value>
+            <value pft="8">0.06</value>
+            <value pft="9">0.06</value>
+         </values>
+         <desc>biomass increase due to temperature</desc>
+      </entry>
+      <entry id="rBmin" value="0.1" units="none">
+         <type>real</type>
+         <desc>the ratio of winter biomass to peak biomass</desc>
+      </entry>
+      <entry id="jdps" value="182" units="day">
+         <type>integer</type>
+			<valid_values>1...365</valid_values>
+         <desc>the day of year when aboveground biomass is at its peak</desc>
+      </entry>
+      <entry id="thetaBG" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">-6.8</value>
+            <value pft="3">-6.8</value>
+            <value pft="4">-6.8</value>
+            <value pft="5">-6.8</value>
+            <value pft="6">-6.8</value>
+            <value pft="7">-6.8</value>
+            <value pft="8">-6.8</value>
+            <value pft="9">-6.8</value>
+         </values>
+         <desc>slope of the root:shoot quotient equation</desc>
+      </entry>
+      <entry id="Dmbm" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">4.8</value>
+            <value pft="3">4.8</value>
+            <value pft="4">4.8</value>
+            <value pft="5">4.8</value>
+            <value pft="6">4.8</value>
+            <value pft="7">4.8</value>
+            <value pft="8">4.8</value>
+            <value pft="9">4.8</value>
+         </values>
+         <desc>intercept of the root:shoot quotient equation</desc>
+      </entry>
+      <entry id="rGmin" value="0.00138" units="day-1">
+         <type>real</type>
+         <desc>the ratio of winter growth rate to peak biomass</desc>
+      </entry>
+      <entry id="rGps" value="0.0138" units="day-1">
+         <type>real</type>
+         <desc>the ratio of peak growth rate to peak biomass</desc>
+      </entry>
+      <entry id="sigmaOM" value="0.25" units="K-1">
+         <type>real</type>
+         <desc>OM decay increase due to temperature</desc>
+      </entry>
+      <entry id="TrefOM" value="293.15" units="K">
+         <type>real</type>
+         <desc>OM decay reference temperature</desc>
+      </entry>
+      <entry id="kl0" value="1.0" units="yr-1">
+         <type>real</type>
+         <desc>column-integrated decay rate of labile OM pool</desc>
+      </entry>
+      <entry id="kr0" value="0.0015" units="yr-1">
+         <type>real</type>
+         <desc>column-integrated decay rate of refractory OM pool</desc>
+      </entry>
+   </group>
+   <group id="K16MOD">
+      <entry id="rhoOM" value="1200.0" units="kg/m3">
+         <type>real</type>
+         <desc>organic matter density</desc>
+      </entry>
+      <entry id="phi" units="none">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">2.2</value>
+            <value pft="3">2.2</value>
+            <value pft="4">2.2</value>
+            <value pft="5">2.2</value>
+            <value pft="6">2.2</value>
+            <value pft="7">2.2</value>
+            <value pft="8">2.2</value>
+            <value pft="9">2.2</value>
+         </values>
+         <desc>the root:shoot quotient</desc>
+      </entry>
+      <entry id="gammaB" value="2.0e-3" units="yr-1">
+         <type>real</type>
+         <desc>column-integrated decay rate of refractory OM pool</desc>
+      </entry>
+      <entry id="Bmax" units="kg/m2">
+         <type>real</type>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">1.0</value>
+            <value pft="3">1.0</value>
+            <value pft="4">1.0</value>
+            <value pft="5">1.0</value>
+            <value pft="6">1.0</value>
+            <value pft="7">1.0</value>
+            <value pft="8">1.0</value>
+            <value pft="9">1.0</value>
+         </values>
+         <desc>maximum standing biomass</desc>
+      </entry>
+      <entry id="Gmgv" value="152.17" units="cm/s">
+         <type>real</type>
+         <desc>stem diameter growth rate</desc>
+      </entry>
+      <entry id="b2mgv" value="42.0" units="none">
+         <type>real</type>
+         <desc>coef for mangrove stem diameter vs tree height equation</desc>
+      </entry>
+      <entry id="b3mgv" value="0.46" units="cm-1">
+         <type>real</type>
+         <desc>coef for mangrove stem diameter vs tree height equation</desc>
+      </entry>
+      <entry id="Mdmax" value="40.0" units="cm">
+         <type>real</type>
+         <desc>mangrove maximum stem diameter</desc>
+      </entry>
+      <entry id="Mhmax" value="1000.0" units="cm">
+         <type>real</type>
+         <desc>mangrove maximum tree height</desc>
+      </entry>
+   </group>
+</file>

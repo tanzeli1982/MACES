@@ -338,7 +338,12 @@ contains
                end if
                tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
             else
-               tau(ii) = 0.0
+               if (Uwav(ii)>TOL_REL) then
+                  fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
+                  tau(ii) = 0.5*fwave*Roul*Uwav(ii)**2
+               else
+                  tau(ii) = 0.0
+               end if
             end if
          else
             tau(ii) = 0.0d0
@@ -596,7 +601,7 @@ contains
       real(kind=8), intent(in) :: invars(:,:)
       integer, intent(in) :: mode
       real(kind=8), intent(in) :: tol(:)
-      integer, intent(in) :: dyncheck(:)
+      logical, intent(in) :: dyncheck(:)
       real(kind=8), intent(out) :: outvars(:,:)
       real(kind=8), intent(inout) :: curstep
       real(kind=8), intent(out) :: nextstep
@@ -658,7 +663,7 @@ contains
             if (dy(ii)>tol(ii) .and. rdy(ii)>rel_tol(ii)) then
                isLargeErr = .True.
             end if
-            if (dyn(ii)<-100*tol(ii) .and. dyncheck(ii)==1) then
+            if (dyn(ii)<-100*tol(ii) .and. dyncheck(ii)) then
                isConstrainBroken = .True.
             end if
          end do

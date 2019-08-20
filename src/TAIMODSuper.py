@@ -18,13 +18,16 @@ Platform plant function type
 5 => mangroves
 6 => needleleaf evergreen tree
 7 => needleleaf deciduous tree
-7 => broadleaf evergreen tree
-8 => broadleaf deciduous tree
+8 => broadleaf evergreen tree
+9 => broadleaf deciduous tree
 """
 
 import numpy as np
 import maces_utilities as utils
 from abc import ABCMeta, abstractmethod
+
+npft = 10
+npool = 2
 
 ###############################################################################
 class MACMODSuper(object):
@@ -80,8 +83,9 @@ class MACMODSuper(object):
             inputs : driving data for bed loading calculation
         Returns: bed loading rate (kg m-2 s-1)
         """
-        x = inputs['x']
-        return np.zeros_like(x, dtype=np.float64, order='F')
+        Lbed = inputs['Lbed']
+        Lbed[:] = 0.0
+        return Lbed
     
     def settling_velocity(self, d50, Rous, tau):
         """"Calculate effective sediment settling velocity (Mudd et al., 2010).
@@ -151,7 +155,10 @@ class OMACMODSuper(object):
         """
         phi = self.m_params['phi']  # the root:shoot quotient
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
-        return phi*Bag
+        Bbg = inputs['Bbg']         # belowground biomass (kg/m2)
+        pft = inputs['pft']         # platform pft
+        Bbg[:] = phi[pft] * Bag
+        return Bbg
     
     def soilcarbon_decay(self, inputs):
         """"Calculate soil OC mineralization rate.
@@ -159,10 +166,9 @@ class OMACMODSuper(object):
             inputs : driving data for SOC decay rate calculation
         Returns: SOC decay rate (kg m-2 s-1) of two pools
         """
-        SOM = inputs['SOM']     # soil organic matter pools (kg/m2)
-        Nx = np.shape(SOM)[0]
-        npool = np.shape(SOM)[1]
-        return np.zeros((Nx,npool), dtype=np.float64, order='F')
+        DecayOM = inputs['DecayOM']
+        DecayOM[:] = 0.0
+        return DecayOM
 
 ###############################################################################    
 class WAVEROMODSuper(object):
