@@ -31,8 +31,7 @@ class MACMODSuper(object):
     """Abstract base class for TAI mineral accretion models.
 
     Attributes:
-        m_params : model parameters
-
+        m_params : model calibration parameters
     """
     
     m_params = {}
@@ -53,7 +52,6 @@ class MACMODSuper(object):
             inputs['U']   : water flow velocity (m s-1)
             inputs['h']   : water depth (m)
             inputs['TR']  : tidal range (m)
-            inputs['d50'] : sediment median diameter (m)
         Returns: mineral suspension rate (kg m-2 s-1)
         """
         pass
@@ -72,7 +70,6 @@ class MACMODSuper(object):
             inputs['U']   : water flow velocity (m s-1)
             inputs['h']   : water depth (m)
             inputs['TR']  : tidal range (m)
-            inputs['d50'] : sediment median diameter (m)
         Returns: mineral deposition rate (kg m-2 s-1)
         """
         pass
@@ -86,7 +83,7 @@ class MACMODSuper(object):
         x = inputs['x']
         return np.zeros_like(x, dtype=np.float64, order='F')
     
-    def settling_velocity(self, tau, d50, Rous):
+    def settling_velocity(self, d50, Rous, tau):
         """"Calculate effective sediment settling velocity (Mudd et al., 2010).
         Arguments:
             tau : bottom shear stress (Pa)
@@ -129,8 +126,8 @@ class OMACMODSuper(object):
             inputs['zh']    : platform elevation relative to MSL (m)
             inputs['pft']   : platform vegetation cover pft
             inputs['h']     : water depth (m)
-            inputs['TR']    : tidal range (m)
             inputs['Tair']  : annual mean air temperature (K)
+            inputs['TR']    : tidal range (m)
             inputs['month'] : month
             inputs['day']   : day
         Returns: organic matter deposition rate (kg m-2 s-1)

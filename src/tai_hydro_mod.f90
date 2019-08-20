@@ -317,12 +317,7 @@ contains
             exit
          end if
       end do
-      do ii = 1, n, 1
-         if (m_uhydro(ii,3)<0) then
-            m_uhydro(ii:n,3) = 0.0
-            exit
-         end if
-      end do
+      where (m_uhydro(:,3)<0) m_uhydro(:,3) = 0.0
       where (m_uhydro(:,4)<0) m_uhydro(:,4) = 0.0
       where (m_uhydro(:,5)<0) m_uhydro(:,5) = 0.0
       do ii = 1, n, 1
@@ -619,6 +614,7 @@ contains
                tmp_P(ii-1,:)) / dx + tmp_SRC(ii,:)
          end if
       end do
+      where (uhydro(:,3)<=0 .and. duhydro(:,3)<0) duhydro(:,3) = 0
    end subroutine
 
 end module tai_hydro_mod 
