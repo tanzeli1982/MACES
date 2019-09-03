@@ -10,7 +10,8 @@ Base class for coastal wetland models (geomorphology + biogeochemistry)
 
 """
 Platform plant function type
-0 => uninhabitable barriers (such as roads, dyks, harbors and etc)
+#changliao_comment, is there any particular reason for this classification?
+0 => uninhabitable barriers (such as roads, dikes, harbors and etc)
 1 => tidal flats or open water
 2 => salt marshes
 3 => brackish marshes
