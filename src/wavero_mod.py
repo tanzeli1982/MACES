@@ -56,3 +56,24 @@ class L16MOD(WAVEROMODSuper):
             inputs : driving data for storm surge erosion calculation
         Returns: storm surge erosion rate (m s-1)
         """
+        x = inputs['x']
+        return np.zeros_like(x, dtype=np.float64)
+    
+    def calculate_wave_erosion(self, inputs); 
+
+        dWave_power = self.calculate_wave_power()
+        #dRate_erosion units m / s
+        #dKe is the erodibility coefficient
+        dRate_erosion = dKe * dWave_power / dDistance
+
+
+        print('Finished')
+
+    #calculate wave power
+    def calculate_wave_power(self):
+
+        dCelerity_wave = self.m_params['dCelerity_wave']
+
+        dWave_power = 0.125 * dDensity_water * g * dHeight_wave * dHeight_wave * dCelerity_wave
+
+        return dWave_power
