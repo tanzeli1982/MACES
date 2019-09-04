@@ -60,20 +60,37 @@ class L16MOD(WAVEROMODSuper):
         return np.zeros_like(x, dtype=np.float64)
     
     def calculate_wave_erosion(self, inputs); 
+        missing_value = self.m_params['missing_value']
+        dDistance = inputs['dDistance'] 
+        dHeight_wave = inputs['dHeight_wave'] 
+        dWave_power = self.calculate_wave_power(dHeight_wave)
 
-        dWave_power = self.calculate_wave_power()
         #dRate_erosion units m / s
         #dKe is the erodibility coefficient
-        dRate_erosion = dKe * dWave_power / dDistance
+        if(dDistance > 0.0):
+            dRate_erosion = dKe * dWave_power / dDistance
+            print('Finished')
+        else:
+            dRate_erosion = missing_value
+        return dRate_erosion
 
 
-        print('Finished')
+        
 
     #calculate wave power
-    def calculate_wave_power(self):
+    def calculate_wave_power(self, dHeight_wave):
 
         dCelerity_wave = self.m_params['dCelerity_wave']
+        dDensity_water = self.m_params['dDensity_water']
+        missing_value = self.m_params['missing_value']
+        #dDensity_water should be a global constant? or it can be a parameter
+        #the density can vary with ocean sanity
 
-        dWave_power = 0.125 * dDensity_water * g * dHeight_wave * dHeight_wave * dCelerity_wave
+        #add an additional data check here, wave height cannot exceed some threshold
+        if(dHeight_wave >= 0.0 .and. dHeight_wave < 100.0):
+
+            dWave_power = 0.125 * dDensity_water * g * dHeight_wave * dHeight_wave * dCelerity_wave
+        else:
+            dWave_power = missing_value
 
         return dWave_power
