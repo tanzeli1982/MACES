@@ -61,7 +61,11 @@ class L16MOD(WAVEROMODSuper):
     
     def calculate_wave_erosion(self, inputs); 
         missing_value = self.m_params['missing_value']
+        #read distance, this variable should be defined carefully.
+        #it is the distance from the breaking point to all other grid
         dDistance = inputs['dDistance'] 
+
+
         dHeight_wave = inputs['dHeight_wave'] 
         dWave_power = self.calculate_wave_power(dHeight_wave)
 
