@@ -24,7 +24,9 @@ visc = 1e-6     # kinematic viscosity of seawater (m2/s)
 TOL = 1e-6      # tolerance for near-zero state variable
 
 def get_date_from_julian(julian):
-    """Get Julian day number from date
+    """Get date from Julian day number
+    Arguments:
+        julian : Julian day number
     Returns : year, month, day
     """
     nf = julian + 1401 + int((int((4*julian+274277)/146097)*3)/4) - 38
@@ -38,6 +40,8 @@ def get_date_from_julian(julian):
     
 def get_julian_from_date(year, month, day):
     """Get Julian day number from date
+    Arguments:
+        year, month, day
     Returns : Julian day number
     """
     a = int((14-month)/12)
@@ -50,6 +54,27 @@ def get_julian_from_date(year, month, day):
     else:
         julian = day + int((153*m+2)/5) + 365*y + int(y/4) - 32083
     return julian
+
+def get_spinup_stop_date(date0, tstep, nstep):
+    """Get the stop date object of spinup
+    Arguments:
+        date0 : start date object
+        tstep : time step string
+        nstep : number of time steps of spin-up
+    Returns : date object
+    """
+    if tstep=='ndays':
+        jdn = get_julian_from_date(date0.year, date0.month, date0.day)
+        year, month, day = get_date_from_julian(jdn+nstep)
+    elif tstep=='nmonths':
+        day = date0.day
+        month = np.mod(date0.month+nstep-1,12) + 1
+        year = date0.year + int((date0.month+nstep-1)/12)
+    elif tstep=='nyears':
+        day = date0.day
+        month = date0.month
+        year = date0.year + nstep
+    return date(year, month, day)
         
 def construct_tai_platform(diva_segments, xRes, nmax):
     """Construct the MACES TAI platform.
@@ -192,7 +217,10 @@ def parseXML_namelist(xmlfile):
             elif dtype=='real':
                 value = float(entry.get('value'))
             elif dtype=='logical':
-                value = bool(entry.get('value'))
+                if entry.get('value')=='TRUE':
+                    value = True
+                else:
+                    value = False
             else:
                 value = entry.get('value')
             namelist[key] = value
@@ -205,7 +233,10 @@ def parseXML_namelist(xmlfile):
                 elif dtype=='real':
                     values.append(float(value.text))
                 elif dtype=='logical':
-                    values.append(bool(value.text))
+                    if value.text=='TRUE':
+                        values.append(True)
+                    else:
+                        values.append(False)
                 else:
                     values.append(value.text)
             namelist[key] = np.array(values, dtype=np.float64, order='F')
@@ -343,13 +374,13 @@ def read_force_data(filename, varname, date0, date1, ntstep,
         year0 = date0.year - refdate.year
         if tstep=='hour':
             nstart = int( 24*day0/ntstep )
-            ntime = int( 24*nday/ntstep )
+            ntime = max( int( 24*nday/ntstep ), 1 )
         elif tstep=='minute':
             nstart = int( 24*60*day0/ntstep )
-            ntime = int( 24*60*nday/ntstep )
+            ntime = max( int( 24*60*nday/ntstep ), 1 )
         elif tstep=='year':
             nstart = int( year0/ntstep )
-            ntime = int( nyear/ntstep )
+            ntime = max( int( nyear/ntstep ), 1 )
         data = np.array(nc.variables[varname][:][id0:id1,nstart:nstart+ntime])
     finally:
         nc.close()
@@ -482,37 +513,36 @@ def write_hydro_outputs(filename, all_ids, sids, tstep, uhydro_out,
             x_var = nc.createVariable('x', 'f4', ('site','x',))
             x_var.long_name = r'platform transect coordinate'
             x_var.units = 'm'
-            x_var._FillValue = np.float32(1e20)
             x_var[:] = 1e20*np.ones((nid,nx),dtype=np.float32)
-            h_var = nc.createVariable('h', 'f4', ('site','time','x',))
+            h_var = nc.createVariable('h', 'f4', ('site','time','x',), 
+                                      fill_value=1e20)
             h_var.long_name = r'water depth'
             h_var.units = 'm'
-            h_var._FillValue = np.float32(1e20)
             h_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            U_var = nc.createVariable('U', 'f4', ('site','time','x',))
+            U_var = nc.createVariable('U', 'f4', ('site','time','x',), 
+                                      fill_value=1e20)
             U_var.long_name = r'tide signed flow velocity'
             U_var.units = 'm/s'
-            U_var._FillValue = np.float32(1e20)
             U_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Hwav_var = nc.createVariable('Hwav', 'f4', ('site','time','x',))
+            Hwav_var = nc.createVariable('Hwav', 'f4', ('site','time','x',), 
+                                         fill_value=1e20)
             Hwav_var.long_name = r'significant wave height'
             Hwav_var.units = 'm'
-            Hwav_var._FillValue = np.float32(1e20)
             Hwav_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            tau_var = nc.createVariable('tau', 'f4', ('site','time','x',))
+            tau_var = nc.createVariable('tau', 'f4', ('site','time','x',), 
+                                        fill_value=1e20)
             tau_var.long_name = r'bottom shear stress'
             tau_var.units = 'Pa'
-            tau_var._FillValue = np.float32(1e20)
             tau_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Css_var = nc.createVariable('TSM', 'f4', ('site','time','x',))
+            Css_var = nc.createVariable('TSM', 'f4', ('site','time','x',), 
+                                        fill_value=1e20)
             Css_var.long_name = r'suspended sediment concentration'
-            Css_var.units = 'mg/l'
-            Css_var._FillValue = np.float32(1e20)
+            Css_var.units = 'kg/m3'
             Css_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Cj_var = nc.createVariable('sal', 'f4', ('site','time','x',))
+            Cj_var = nc.createVariable('sal', 'f4', ('site','time','x',), 
+                                       fill_value=1e20)
             Cj_var.long_name = r'water salinity'
             Cj_var.units = 'PSU'
-            Cj_var._FillValue = np.float32(1e20)
             Cj_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
         finally:
             nc.close()
@@ -570,52 +600,51 @@ def write_ecogeom_outputs(filename, all_ids, sids, tstep, ecogeom_out,
             x_var = nc.createVariable('x', 'f4', ('site','x',))
             x_var.long_name = r'platform transect coordinate'
             x_var.units = 'm'
-            x_var._FillValue = np.float32(1e20)
             x_var[:] = 1e20*np.ones((nid,nx),dtype=np.float32)
-            pft_var = nc.createVariable('pft', 'i1', ('site','time','x',))
+            pft_var = nc.createVariable('pft', 'i1', ('site','time','x',), 
+                                        fill_value=-1)
             pft_var.long_name = r'platform plant function type'
             pft_var.units = '0 to 8'
-            pft_var._FillValue = np.int8(-1)
             pft_var[:] = -1*np.ones((nid,nt,nx),dtype=np.int8)
-            zh_var = nc.createVariable('zh', 'f4', ('site','time','x',))
+            zh_var = nc.createVariable('zh', 'f4', ('site','time','x',), 
+                                       fill_value=1e20)
             zh_var.long_name = r'platform surface elevation'
             zh_var.units = 'msl'
-            zh_var._FillValue = np.float32(1e20)
             zh_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Esed_var = nc.createVariable('Esed', 'f4', ('site','time','x',))
+            Esed_var = nc.createVariable('Esed', 'f4', ('site','time','x',), 
+                                         fill_value=1e20)
             Esed_var.long_name = r'sediment erosion rate'
             Esed_var.units = 'kg/m2/s'
-            Esed_var._FillValue = np.float32(1e20)
             Esed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Dsed_var = nc.createVariable('Dsed', 'f4', ('site','time','x',))
+            Dsed_var = nc.createVariable('Dsed', 'f4', ('site','time','x',), 
+                                         fill_value=1e20)
             Dsed_var.long_name = r'suspended sediment deposition rate'
             Dsed_var.units = 'kg/m2/s'
-            Dsed_var._FillValue = np.float32(1e20)
             Dsed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Lbed_var = nc.createVariable('Lbed', 'f4', ('site','time','x',))
+            Lbed_var = nc.createVariable('Lbed', 'f4', ('site','time','x',), 
+                                         fill_value=1e20)
             Lbed_var.long_name = r'sand bed load rate'
             Lbed_var.units = 'kg/m2/s'
-            Lbed_var._FillValue = np.float32(1e20)
             Lbed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            DepOM_var = nc.createVariable('DepOM', 'f4', ('site','time','x',))
+            DepOM_var = nc.createVariable('DepOM', 'f4', ('site','time','x',), 
+                                          fill_value=1e20)
             DepOM_var.long_name = r'Organic matter deposition rate'
             DepOM_var.units = 'kg/m2/s'
-            DepOM_var._FillValue = np.float32(1e20)
             DepOM_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Bag_var = nc.createVariable('Bag', 'f4', ('site','time','x',))
+            Bag_var = nc.createVariable('Bag', 'f4', ('site','time','x',), 
+                                        fill_value=1e20)
             Bag_var.long_name = r'platform aboveground biomass'
             Bag_var.units = 'kg/m2'
-            Bag_var._FillValue = np.float32(1e20)
             Bag_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Bbg_var = nc.createVariable('Bbg', 'f4', ('site','time','x',))
+            Bbg_var = nc.createVariable('Bbg', 'f4', ('site','time','x',), 
+                                        fill_value=1e20)
             Bbg_var.long_name = r'platform belowground biomass'
             Bbg_var.units = 'kg/m2'
-            Bbg_var._FillValue = np.float32(1e20)
             Bbg_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            OM_var = nc.createVariable('OM', 'f4', ('site','time','x','pool',))
+            OM_var = nc.createVariable('OM', 'f4', ('site','time','x','pool',), 
+                                       fill_value=1e20)
             OM_var.long_name = r'platform column-integrated soil organic matter'
             OM_var.units = 'kg/m2'
-            OM_var._FillValue = np.float32(1e20)
             OM_var[:] = 1e20*np.ones((nid,nt,nx,npool),dtype=np.float32)
         finally:
             nc.close()

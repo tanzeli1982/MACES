@@ -15,13 +15,12 @@ from datetime import date
 MAX_OF_STEP = 1800  # maximum simulation time step (s)
 rk4_mode = 101      # Runge-kutta iteration mode
 
-def run_tai_maces(input_data, models, spinup, verbose):
+def run_tai_maces(input_data, models, spinup):
     """Write model outputs into a nc file.
     Arguments:
         input_data : various input data
         models : model objects
         spinup : True = spinup, otherwise regular
-        verbose : verbose model running status
     Returns : 
         tai_state : model state variables
         uhydro_out : hydrodynamic archives
@@ -29,12 +28,17 @@ def run_tai_maces(input_data, models, spinup, verbose):
     """
     # namelist settings
     namelist = input_data['namelist']
+    verbose = namelist['Verbose']
     uhydro_tol = namelist['HYDRO_TOL']
     dyncheck = namelist['DYN_CHECK']
     date0_str = namelist['RUN_STARTDATE'].split('-')
     date1_str = namelist['RUN_STOPDATE'].split('-')
     date0 = date(int(date0_str[0]), int(date0_str[1]), int(date0_str[2]))
-    date1 = date(int(date1_str[0]), int(date1_str[1]), int(date1_str[2]))
+    if not spinup:
+        date1 = date(int(date1_str[0]), int(date1_str[1]), int(date1_str[2]))
+    else:
+        date1 = utils.get_spinup_stop_date(date0, namelist['SPINUP_OPTION'], 
+                                           namelist['SPINUP_N'])
     
     # input settings
     x = input_data['coord']['x']
@@ -217,7 +221,7 @@ def run_tai_maces(input_data, models, spinup, verbose):
                 uhydro_out['U'][0,indx] = taihydro.sim_u
                 uhydro_out['Hwav'][0,indx] = taihydro.sim_hwav
                 uhydro_out['tau'][0,indx] = taihydro.sim_tau
-                uhydro_out['Css'][0,indx] = 1e3 * taihydro.sim_css
+                uhydro_out['Css'][0,indx] = taihydro.sim_css
                 uhydro_out['Cj'][0,indx] = taihydro.sim_cj
         
         # archive long-term mean eco-geomorphology variables
