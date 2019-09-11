@@ -79,8 +79,6 @@ if __name__=='__main__':
     lndmgr_params = comm.bcast(lndmgr_params, root=0)
     hydro_params = comm.bcast(hydro_params, root=0)
     
-    verbose = namelist['Verbose']
-    
     # read site database excel file
     if master_process:
         df = pd.read_excel(namelist['SITE_FILE'], sheet_name="diva", header=0, 
@@ -167,16 +165,16 @@ if __name__=='__main__':
         
     # load ecogeomorphology modules
     mac_module = importlib.import_module('minac_mod')
-    mac_class = getattr(mac_module, mac_name)
+    mac_class = getattr(mac_module, namelist['MINAC_TYPE'])
     
     omac_module = importlib.import_module('omac_mod')
-    omac_class = getattr(omac_module, omac_name)
+    omac_class = getattr(omac_module, namelist['OMAC_TYPE'])
     
     wavero_module = importlib.import_module('wavero_mod')
-    wavero_class = getattr(wavero_module, wavero_name)
+    wavero_class = getattr(wavero_module, namelist['WAVERO_TYPE'])
     
     lndmgr_module = importlib.import_module('lndmgr_mod')
-    lndmgr_class = getattr(lndmgr_module, lndmgr_name)
+    lndmgr_class = getattr(lndmgr_module, namelist['LNDMGR_TYPE'])
         
     # run simulations (in each iteration, a processor tests the sensitivity of 
     # one site for all parameters)
@@ -260,14 +258,13 @@ if __name__=='__main__':
             
             input_data = {'coord': coords, 'state': tai_state, 
                           'forcings': forcings, 'namelist': namelist}
-            tai_state, __, __ = cpl.run_tai_maces(input_data, models, \
-                True, verbose)
+            tai_state, __, __ = cpl.run_tai_maces(input_data, models, True)
             
             # then do the formal run
             input_data = {'coord': coords, 'state': tai_state, 
                           'forcings': forcings, 'namelist': namelist}
             __, uhydro_out, ecogeom_out = cpl.run_tai_maces(input_data, \
-                models, False, verbose)
+                models, False)
             
         except AssertionError as errstr:
             # print error message and exit the program
@@ -282,33 +279,26 @@ if __name__=='__main__':
         uhydro_out_gather = {}
         ecogeom_out_gather = {}
         if master_process:
-            sids = -1 * np.ones(numprocs, dtype=np.int32)
+            sids = np.zeros(numprocs, dtype=np.int32)
             for okey in uhydro_out:
                 oshape = list(np.shape(uhydro_out[okey]))
                 oshape[0] = numprocs
                 oshape = tuple(oshape)
                 dtype = uhydro_out[okey].dtype
-                uhydro_out_gather[okey] = 1e20*np.ones(oshape,dtype=dtype)
+                uhydro_out_gather[okey] = np.zeros(oshape,dtype=dtype)
             for okey in ecogeom_out:
                 oshape = list(np.shape(ecogeom_out[okey]))
                 oshape[0] = numprocs
                 oshape = tuple(oshape)
                 dtype = ecogeom_out[okey].dtype
-                ecogeom_out_gather[okey] = 1e20*np.ones(oshape,dtype=dtype)
+                ecogeom_out_gather[okey] = np.zeros(oshape,dtype=dtype)
         else:
             sids = None
             for okey in uhydro_out:
                 uhydro_out_gather[okey] = None
             for okey in ecogeom_out:
                 ecogeom_out_gather[okey] = None
-        counts = ()
-        dspls = ()
-        for jj in range(numprocs):
-            counts = counts + (1,)
-            dspls = dspls + (jj,)
-        sendbuf = [iid, 1]
-        recvbuf = [sids, counts, dspls, MPI.INT]
-        comm.Gatherv(sendbuf, recvbuf, root=0)
+        comm.Gather(np.array([iid],dtype=np.int32), sids, root=0)
         for okey in uhydro_out:
             counts = ()
             dspls = ()
