@@ -107,3 +107,6 @@ venv.bak/
 *.swp
 *.mod
 *.o
+*.png
+*.json
+~$*.xlsx

@@ -8,132 +8,25 @@ Main program to run the MACES model
 @author: Zeli Tan
 """
 
+import sys
+import importlib
+import TAIMODSuper
 import pandas as pd
 import numpy as np
-import minac_mod as minac
-import omac_mod as omac
-import wavero_mod as wve
-import lndmgr_mod as ldm
 import maces_utilities as utils
+import maces_coupler as cpl
+from datetime import date
 from mpi4py import MPI
 from optparse import OptionParser
-from scipy.io import netcdf
-from TAIHydroMOD import taihydro
-from TAIHydroMOD import rungekutta4 as rk4
-
-# model simulation constants
-MAX_OF_STEP = 1800  # maximum simulation time step (s)
-NXLAYER = 1000      # transect cell grid number
-rk4_mode = 101      # adaptive mode
-uhydro_tol = np.array([1e-6,1e-6,1e-6,1e-6,1e-6,1e-6], 
-                      dtype=np.float64, order='F')  # toleratance
-
-def run_tai_maces(params, input_data, verbose):
-    # create state variables
-    site_id = input_data['site_id']
-    nday = np.size(input_data['wind'])
-    nhour = 24 * nday
-    ncell = NXLAYER
-    # maybe also need to save the attenuation of wave and tide energy (both are the sink terms in PDE)
-    uhydro_out = {}
-    uhydro_out['h'] = np.zeros((nhour,ncell), dtype=np.float32, order='F')
-    uhydro_out['U'] = np.zeros((nhour,ncell), dtype=np.float32, order='F')
-    uhydro_out['Hw'] = np.zeros((nhour,ncell), dtype=np.float32, order='F')
-    uhydro_out['tau'] = np.zeros((nhour,ncell), dtype=np.float32, order='F')
-    uhydro_out['css'] = np.zeros((nhour,ncell), dtype=np.float32, order='F')
-    uhydro_out['sal'] = np.zeros((nhour,ncell), dtype=np.float32, order='F')
-    ecogeo_out = {}
-    ecogeo_out['m_acc'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
-    ecogeo_out['om_acc'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
-    ecogeo_out['shore_ero'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
-    ecogeo_out['lnd_elev'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
-    ecogeo_out['abg_bio'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
-    ecogeo_out['bg_bio'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
-    ecogeo_out['coast_veg'] = np.zeros((nday,ncell), dtype=np.float32, order='F')
-    # create a model object and initialize RungeKutta allocatables
-    nhydro = len(uhydro_out)
-    out_uhydro = np.zeros((nhydro,ncell), dtype=np.float64, order='F')
-    sed_ero = np.zeros(ncell, dtype=np.float64, order='F')
-    sed_dep = np.zeros(ncell, dtype=np.float64, order='F')
-    om_dep = np.zeros(ncell, dtype=np.float64, order='F')
-    site_zh = utils.construct_platform_elev(input_data['diva_topo'])
-    taihydro.Initialize(site_x, site_zh)
-    taihydro.SetModelParameters(d50, )
-    # initialize model run
-    t = 0
-    tf = 8.64e4 * nday
-    hindx = 0
-    dindx = 0
-    ncount = 0
-    curstep = np.array([50], dtype=np.float64, order='F')
-    nextstep = np.array([MAX_OF_STEP], dtype=np.float64, order='F')
-    try:
-        while t < tf:
-            if t>=3.6e3*hindx and hindx<nhour:
-                if verbose:
-                    print('Id', int(site_id), ': time step', int(hindx))
-                isHourNode = True
-                hindx = hindx + 1
-                if np.mod(hindx,24)==0:
-                    dindx = dindx + 1
-            if isHourNode:
-                uhydro_out['h'][hindx] = model.hydro_states[0,:]
-                uhydro_out['U'][hindx] = model.U_arr
-                uhydro_out['Hw'][hindx] = model.hydro_states[2,:]
-                uhydro_out['tau'][hindx] = model.tau_arr
-                uhydro_out['css'][hindx] = model.hydro_states[3,:]
-                uhydro_out['sal'][hindx] = model.hydro_states[4,:]
-                # calculate daily mean eco-geomorphology variables
-            
-            # simulate hydrodynamics
-            taihydro.ModelSetup(zh, sed_ero, sed_dep)
-            error = np.array([0], dtype=np.int32, order='F')
-            rk4.RK4Fehlberg(taihydro.TAIHydroEquations, taihydro.m_uhydro, 
-                            out_uhydro, rk4_mode, uhydro_tol, curstep, nextstep, error)
-            assert error[0]==0, "Runge-Kutta iteration is more than MAXITER"
-            taihydro.Callback(out_uhydro)
-            # simulate eco-geomorphology
-            sed_ero = 0.0
-            sed_dep = 0.0
-            om_dep = 0.0
-            # update platform elevation
-            site_zh = site_zh + (sed_dep+om_dep-sed_ero-rslr)*curstep
-            # check small time step
-            isHourNode = False
-            if curstep<0.1:
-                ncount = ncount + 1
-                err_msg = 'Site' + '{:d}'.format(site_id) + ': run diverge at step' + \
-                    '{:d}'.format(hindx)
-                assert ncount<=100, err_msg
-                nextstep = 50.0
-            else:
-                ncount = 0
-            t = t + curstep
-            curstep = nextstep
-            nextstep = MAX_OF_STEP
-            
-    except AssertionError as error:
-        # print error message
-        print(error)
-    finally:
-        # deallocate
-        taihydromod.destruct()
-    # save the simulation (only short-term hydrodynamics are saved)
-    
-    
+from TAIHydroMOD import tai_hydro_mod as taihydro
         
 if __name__=='__main__':
     
     # use the OptionParser to parse the command line options
     parser = OptionParser()
-    parser.add_option("-b", "--begin", type="int", dest="begin", default=0)
-    parser.add_option("-e", "--end", type="int", dest="end", default=12148)
-    parser.add_option("-v", "--verbose", type="logical", dest="verbose", default=False)
+    parser.add_option("-f", "--file", type="string", dest="filename", 
+                      default='namelist.maces.xml')
     (options, args) = parser.parse_args()
-    
-    site_1 = options.begin
-    site_n = options.end
-    verbose = options.verbose
     
     # MPI commands
     comm = MPI.COMM_WORLD
@@ -145,28 +38,309 @@ if __name__=='__main__':
     else:
         master_process = False
         
-    # read parameters and site information
+    # set how the run status is shown
+    #np.set_printoptions(precision=3, suppress=True)
+    np.set_printoptions(precision=3, suppress=False)
+        
+    # read MACES namelist xml file and parameter xml files
     if master_process:
-        filename = 'diva_site_database.xlsx'
-        df = pd.read_excel(filename, sheetname="diva", header=0, 
-                           parse_cols="A,C,AC,AD")
-        site_ids = np.array(df['ID'], dtype=np.int32)
-        model_params = None
+        # MACES namelist xml file
+        namelist = utils.parseXML_namelist(options.filename)
+        # MINAC model xml file
+        xmlfile = namelist['MINAC_FILE']
+        mac_name = namelist['MINAC_TYPE']
+        mac_params = utils.parseXML_params(xmlfile, mac_name)
+        # OMAC model xml file
+        xmlfile = namelist['OMAC_FILE']
+        omac_name = namelist['OMAC_TYPE']
+        omac_params = utils.parseXML_params(xmlfile, omac_name)
+        # WAVERO model xml file
+        xmlfile = namelist['WAVERO_FILE']
+        wavero_name = namelist['WAVERO_TYPE']
+        wavero_params = utils.parseXML_params(xmlfile, wavero_name)
+        # LNDMGR model xml file
+        xmlfile = namelist['LNDMGR_FILE']
+        lndmgr_name = namelist['LNDMGR_TYPE']
+        lndmgr_params = utils.parseXML_params(xmlfile, lndmgr_name)
+        # hydrodynamic model xml file
+        xmlfile = namelist['HYDRO_FILE']
+        hydro_params = utils.parseXML_hydro_params(xmlfile)
     else:
-        site_ids = None
-        model_params = None
-    site_ids = comm.bcast(site_ids, root=0)
-    model_params = comm.bcast(model_params, root=0)
+        namelist = None
+        mac_params = None
+        omac_params = None
+        wavero_params = None
+        lndmgr_params = None
+        hydro_params = None
+    namelist = comm.bcast(namelist, root=0)
+    mac_params = comm.bcast(mac_params, root=0)
+    omac_params = comm.bcast(omac_params, root=0)
+    wavero_params = comm.bcast(wavero_params, root=0)
+    lndmgr_params = comm.bcast(lndmgr_params, root=0)
+    hydro_params = comm.bcast(hydro_params, root=0)
+    
+    verbose = namelist['Verbose']
+    
+    # read site database excel file
+    if master_process:
+        df = pd.read_excel(namelist['SITE_FILE'], sheet_name="diva", header=0, 
+                           usecols="A:AU")
+    else:
+        df = None
+    df = comm.bcast(df, root=0)
+    site_ids = np.array(df['DIVA_ID'], dtype=np.int32)
+    site_length = np.array(df['coastline'], dtype=np.float64)   # km
+    site_trng = np.array(df['mtidalrng'], dtype=np.float64)     # m
+    site_mhws = np.array(df['mhws'], dtype=np.float64)          # m
+    site_mhwn = np.array(df['mhwn'], dtype=np.float64)          # m
+    site_uplift = np.array(df['uplift'], dtype=np.float64)      # mm/yr
+    site_TSM = 1e-3 * np.array(df['TSM'], dtype=np.float64)     # kg/m3
+    site_sal = np.array(df['salinity'], dtype=np.float64)       # PSU
     nsite = np.size(site_ids)
-    site_n = min(site_n, nsite)
+    site_n = min(namelist['LAST_ID'], nsite)
+    site_1 = namelist['FIRST_ID'] - 1
     nrun = site_n - site_1
+    site_ids = site_ids[site_1:site_n]
+    site_length = site_length[site_1:site_n]
+    site_trng = site_trng[site_1:site_n]
+    site_mhws = site_mhws[site_1:site_n]
+    site_mhwn = site_mhwn[site_1:site_n]
+    site_uplift = site_uplift[site_1:site_n]
+    site_TSM = site_TSM[site_1:site_n]
+    site_sal = site_sal[site_1:site_n]
+    npft = TAIMODSuper.npft
+    npool = TAIMODSuper.npool
+    
+    top_segments = []
+    for jj in range(utils.NTOPSEG):
+        code = 'area' + '{:02d}'.format(jj+1)
+        segment = np.array(df[code],dtype=np.float64)[site_1:site_n] / site_length
+        top_segments.append(segment)
+    pft_segments = []
+    pft_orders = []
+    for jj in np.arange(npft):
+        code = 'pft' + '{:d}'.format(jj)
+        segment = np.array(df[code],dtype=np.float64)[site_1:site_n]
+        pft_segments.append(segment)
+        code = 'pft' + '{:d}'.format(jj) + '_order'
+        order = np.array(df[code],dtype=np.int32)[site_1:site_n]
+        pft_orders.append(order)
+        
+    # read driving data
+    # units: SLR (mm/yr), Tair (K), U10 (m/s), h0 (m), U0 (m/s), 
+    #        Hwav0 (m), Twav (s)
+    sid_range = [site_1, site_n]
+    date0_str = namelist['RUN_STARTDATE'].split('-')
+    date1_str = namelist['RUN_STOPDATE'].split('-')
+    run_date0 = date(int(date0_str[0]), int(date0_str[1]), int(date0_str[2]))
+    run_date1 = date(int(date1_str[0]), int(date1_str[1]), int(date1_str[2]))
+    if master_process:
+        SLR = utils.read_force_data(namelist['FILE_SLR'], 'SLR', \
+            run_date0, run_date1, namelist['SLR_TSTEP'], 'year', sid_range)
+        Tair = utils.read_force_data(namelist['FILE_Tair'], 'Tair', \
+            run_date0, run_date1, namelist['Tair_TSTEP'], 'hour', sid_range)
+        U10 = utils.read_force_data(namelist['FILE_U10'], 'U10', \
+            run_date0, run_date1, namelist['U10_TSTEP'], 'hour', sid_range)
+        h0 = utils.read_force_data(namelist['FILE_h'], 'h', \
+            run_date0, run_date1, namelist['h_TSTEP'], 'minute', sid_range)
+        U0 = utils.read_force_data(namelist['FILE_U'], 'U', \
+            run_date0, run_date1, namelist['U_TSTEP'], 'minute', sid_range)
+        Hwav0 = utils.read_force_data(namelist['FILE_Wave'], 'Hwav', \
+            run_date0, run_date1, namelist['Wave_TSTEP'], 'minute', sid_range)
+        Twav = utils.read_force_data(namelist['FILE_Wave'], 'Twav', \
+            run_date0, run_date1, namelist['Wave_TSTEP'], 'minute', sid_range)
+    else:
+        SLR = None
+        Tair = None
+        U10 = None
+        h0 = None
+        U0 = None
+        Hwav0 = None
+        Twav = None
+    SLR = comm.bcast(SLR, root=0)
+    Tair = comm.bcast(Tair, root=0)
+    U10 = comm.bcast(U10, root=0)
+    h0 = comm.bcast(h0, root=0)
+    U0 = comm.bcast(U0, root=0)
+    Hwav0 = comm.bcast(Hwav0, root=0)
+    Twav = comm.bcast(Twav, root=0)
+        
+    # load ecogeomorphology modules
+    mac_module = importlib.import_module('minac_mod')
+    mac_class = getattr(mac_module, mac_name)
+    
+    omac_module = importlib.import_module('omac_mod')
+    omac_class = getattr(omac_module, omac_name)
+    
+    wavero_module = importlib.import_module('wavero_mod')
+    wavero_class = getattr(wavero_module, wavero_name)
+    
+    lndmgr_module = importlib.import_module('lndmgr_mod')
+    lndmgr_class = getattr(lndmgr_module, lndmgr_name)
         
     # run simulations (in each iteration, a processor tests the sensitivity of 
     # one site for all parameters)
     niter = int( np.ceil( float(nrun) / float(numprocs) ) )
     for ii in range(niter):
-        iid = np.mod( ii*numprocs + rank, nrun ) + site_1
-        print( "Simulate site ", site_ids[iid] )
-        forcing_data = {'site_id': site_ids[iid]}
-        run_tai_maces(model_params, forcing_data, verbose)
-    
+        iid = np.mod( ii*numprocs + rank, nrun )
+        site_id = site_ids[iid]
+        print( "Simulate site ", site_id )
+        
+        try:
+            # construct site platform
+            xres = namelist['CELL_RES']
+            xnum = namelist['CELL_NUM']
+            diva_segments = np.zeros(utils.NTOPSEG, dtype=np.float64)
+            for jj in range(utils.NTOPSEG):
+                diva_segments[jj] = top_segments[jj][iid]
+            site_x, site_zh = utils.construct_tai_platform(diva_segments, 
+                                                           xres, xnum)
+            nx = len(site_x)
+            site_dx = np.zeros(nx, dtype=np.float64, order='F')
+            for jj in range(nx):
+                if jj==0:
+                    site_dx[jj] = 0.5*(site_x[jj+1]-site_x[jj])
+                elif jj==nx-1:
+                    site_dx[jj] = 0.5*(site_x[jj]-site_x[jj-1])
+                else:
+                    site_dx[jj] = 0.5*(site_x[jj+1]-site_x[jj-1])
+            xref = utils.get_refshore_coordinate(site_x, site_zh)
+            coords = {'x': site_x, 'dx': site_dx, 'xref': xref}
+            
+            # construct pft distribution
+            segments = []
+            pfts = []
+            orders = []
+            for jj in range(npft):
+                assert (pft_segments[jj][iid]>0)==(pft_orders[jj][iid]>=0), \
+                    "inconsistent pft segment found"
+                if pft_orders[jj][iid]>=0:
+                    segments.append(pft_segments[jj][iid])
+                    orders.append(pft_orders[jj][iid])
+                    pfts.append(jj)
+            indices = sorted(range(len(orders)), key=lambda k: orders[k])
+            segments = np.array(segments)[indices]
+            pfts = np.array(pfts)[indices]
+            site_pft = utils.construct_platform_pft(segments, pfts, site_x)
+            
+            # instantiate hydrodynamics model
+            nvar = len(namelist['HYDRO_TOL'])
+            taihydro.inithydromod(site_x, site_zh, nvar, npft)
+            taihydro.setmodelparams(hydro_params['d50'], hydro_params['Cz0'], 
+                                    hydro_params['Kdf'], hydro_params['cbc'], 
+                                    hydro_params['fr'], hydro_params['alphaA'], 
+                                    hydro_params['betaA'], hydro_params['alphaD'], 
+                                    hydro_params['betaD'], hydro_params['cD0'], 
+                                    hydro_params['ScD'])
+        
+            # instantiate ecogeomorphology models
+            mac_mod = mac_class(mac_params)
+            omac_mod = omac_class(omac_params)
+            wavero_mod = wavero_class(wavero_params)
+            lndmgr_mod = lndmgr_class(lndmgr_params)
+            
+            models = {'taihydro': taihydro, 'mac_mod': mac_mod, 
+                      'omac_mod': omac_mod, 'wavero_mod': wavero_mod, 
+                      'lndmgr_mod': lndmgr_mod}
+        
+            # first run the spin-up
+            site_Bag = np.zeros(nx, dtype=np.float64, order='F')
+            site_Bbg = np.zeros(nx, dtype=np.float64, order='F')
+            site_OM = np.zeros((nx,npool), dtype=np.float64, order='F')
+            tai_state = {'pft': site_pft, 'zh': site_zh, 'Bag': site_Bag, 
+                         'Bbg': site_Bbg, 'OM': site_OM}
+            
+            rslr = SLR[iid] - site_uplift[iid]
+            Cs0 = np.array([site_TSM[iid], site_sal[iid]], dtype=np.float64, 
+                           order='F')
+            forcings = {'U10': U10[iid], 'Tair': Tair[iid], 'h0': h0[iid], 
+                        'U0': U0[iid], 'Hwav0': Hwav0[iid], 'Twav': Twav[iid], 
+                        'Cs0': Cs0, 'rslr': rslr, 'trng': site_trng[iid], 
+                        'mhws': site_mhws[iid], 'mhwn': site_mhwn[iid]}
+            
+            input_data = {'coord': coords, 'state': tai_state, 
+                          'forcings': forcings, 'namelist': namelist}
+            tai_state, __, __ = cpl.run_tai_maces(input_data, models, \
+                True, verbose)
+            
+            # then do the formal run
+            input_data = {'coord': coords, 'state': tai_state, 
+                          'forcings': forcings, 'namelist': namelist}
+            __, uhydro_out, ecogeom_out = cpl.run_tai_maces(input_data, \
+                models, False, verbose)
+            
+        except AssertionError as errstr:
+            # print error message and exit the program
+            print("Model spinup stops due to that", errstr)
+            taihydro.finalizehydromod()
+            sys.exit()
+            
+        # deallocate
+        taihydro.finalizehydromod()
+        
+        # gather data to master
+        uhydro_out_gather = {}
+        ecogeom_out_gather = {}
+        if master_process:
+            sids = -1 * np.ones(numprocs, dtype=np.int32)
+            for okey in uhydro_out:
+                oshape = list(np.shape(uhydro_out[okey]))
+                oshape[0] = numprocs
+                oshape = tuple(oshape)
+                dtype = uhydro_out[okey].dtype
+                uhydro_out_gather[okey] = 1e20*np.ones(oshape,dtype=dtype)
+            for okey in ecogeom_out:
+                oshape = list(np.shape(ecogeom_out[okey]))
+                oshape[0] = numprocs
+                oshape = tuple(oshape)
+                dtype = ecogeom_out[okey].dtype
+                ecogeom_out_gather[okey] = 1e20*np.ones(oshape,dtype=dtype)
+        else:
+            sids = None
+            for okey in uhydro_out:
+                uhydro_out_gather[okey] = None
+            for okey in ecogeom_out:
+                ecogeom_out_gather[okey] = None
+        counts = ()
+        dspls = ()
+        for jj in range(numprocs):
+            counts = counts + (1,)
+            dspls = dspls + (jj,)
+        sendbuf = [iid, 1]
+        recvbuf = [sids, counts, dspls, MPI.INT]
+        comm.Gatherv(sendbuf, recvbuf, root=0)
+        for okey in uhydro_out:
+            counts = ()
+            dspls = ()
+            nsize = np.size(uhydro_out[okey])
+            for jj in range(numprocs):
+                counts = counts + (nsize,)
+                dspls = dspls + (jj*nsize,)
+            mpi_dtype = utils.get_mpi_dtype(uhydro_out[okey].dtype)
+            sendbuf = [uhydro_out[okey], nsize]
+            recvbuf = [uhydro_out_gather[okey], counts, dspls, mpi_dtype]
+            comm.Gatherv(sendbuf, recvbuf, root=0)
+        for okey in ecogeom_out:
+            counts = ()
+            dspls = ()
+            nsize = np.size(ecogeom_out[okey])
+            for jj in range(numprocs):
+                counts = counts + (nsize,)
+                dspls = dspls + (jj*nsize,)
+            mpi_dtype = utils.get_mpi_dtype(ecogeom_out[okey].dtype)
+            sendbuf = [ecogeom_out[okey], nsize]
+            recvbuf = [ecogeom_out_gather[okey], counts, dspls, mpi_dtype]
+            comm.Gatherv(sendbuf, recvbuf, root=0)
+            
+        # archive outputs
+        if master_process:
+            if ii==0:
+                to_create = True
+            else:
+                to_create = False
+            utils.write_hydro_outputs(namelist['FILE_HYDRO'], site_ids, 
+                                      sids, namelist['HYDRO_TSTEP'], 
+                                      uhydro_out_gather, to_create)
+            utils.write_ecogeom_outputs(namelist['FILE_ECOGEOM'], site_ids, 
+                                        sids, namelist['ECOGEOM_TSTEP'], 
+                                        ecogeom_out_gather, to_create)

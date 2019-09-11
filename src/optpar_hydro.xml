@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<file id="optpar_hydro.xml" version="2.0">
+   <header>
+   Parameters of the hydrodynamics model. 
+   </header>
+   <entry id="d50" value="25e-6" units="m">
+      <type>real</type>
+      <desc>sediment median diameter</desc>
+   </entry>
+   <entry id="Cz0" value="65.0" units="m^0.5/s">
+      <type>real</type>
+      <desc>the Chézy's friction coefficient</desc>
+   </entry>
+   <entry id="Kdf" value="100.0" units="m2/s">
+      <type>real</type>
+      <desc>the dispersion coefficient of constituents</desc>
+   </entry>
+   <entry id="cbc" value="0.015" units="none">
+      <type>real</type>
+      <desc>bottom friction coefficient for wave</desc>
+   </entry>
+   <entry id="fr" value="0.78" units="none">
+      <type>real</type>
+      <desc>the ratio of the maximum wave height to water depth</desc>
+   </entry>
+  	<entry id="alphaA" units="none">
+   	<type>real</type>
+    	<values>
+      	<value pft="0">0.0</value>
+       	<value pft="1">0.0</value>
+        	<value pft="2">8.0</value>
+       	<value pft="3">8.0</value>
+        	<value pft="4">8.0</value>
+        	<value pft="5">8.0</value>
+        	<value pft="6">8.0</value>
+        	<value pft="7">8.0</value>
+        	<value pft="8">8.0</value>
+    	</values>
+    	<desc>multiplier coef for projected plant area per unit volume</desc>
+ 	</entry>
+  	<entry id="betaA" units="none">
+   	<type>real</type>
+     	<values>
+      	<value pft="0">0.0</value>
+       	<value pft="1">0.0</value>
+        	<value pft="2">0.5</value>
+        	<value pft="3">0.5</value>
+       	<value pft="4">0.5</value>
+        	<value pft="5">0.5</value>
+       	<value pft="6">0.5</value>
+        	<value pft="7">0.5</value>
+        	<value pft="8">0.5</value>
+    	</values>
+    	<desc>exponent coef for projected plant area per unit volume</desc>
+ 	</entry>
+   <entry id="alphaD" units="none">
+      <type>real</type>
+      <values>
+         <value pft="0">0.0</value>
+         <value pft="1">0.0</value>
+         <value pft="2">0.005</value>
+         <value pft="3">0.005</value>
+         <value pft="4">0.005</value>
+         <value pft="5">0.005</value>
+         <value pft="6">0.005</value>
+         <value pft="7">0.005</value>
+         <value pft="8">0.005</value>
+      </values>
+      <desc>multiplier coef for the stem diameter</desc>
+   </entry>
+   <entry id="betaD" units="none">
+      <type>real</type>
+      <values>
+         <value pft="0">0.0</value>
+         <value pft="1">0.0</value>
+         <value pft="2">0.3</value>
+         <value pft="3">0.3</value>
+         <value pft="4">0.3</value>
+         <value pft="5">0.3</value>
+         <value pft="6">0.3</value>
+         <value pft="7">0.3</value>
+         <value pft="8">0.3</value>
+      </values>
+      <desc>exponent coef for the stem diameter</desc>
+   </entry>
+   <entry id="cD0" units="none">
+      <type>real</type>
+      <values>
+         <value pft="0">0.0</value>
+         <value pft="1">0.0</value>
+         <value pft="2">1.1</value>
+         <value pft="3">1.1</value>
+         <value pft="4">1.1</value>
+         <value pft="5">1.1</value>
+         <value pft="6">1.1</value>
+         <value pft="7">1.1</value>
+         <value pft="8">1.1</value>
+      </values>
+      <desc>intercept of the plant drag coefficient and standing biomass equation</desc>
+   </entry>
+   <entry id="ScD" units="none">
+      <type>real</type>
+      <values>
+         <value pft="0">0.0</value>
+         <value pft="1">0.0</value>
+         <value pft="2">-0.3</value>
+         <value pft="3">-0.3</value>
+         <value pft="4">-0.3</value>
+         <value pft="5">-0.3</value>
+         <value pft="6">-0.3</value>
+         <value pft="7">-0.3</value>
+         <value pft="8">-0.3</value>
+      </values>
+      <desc>slope of the plant drag coefficient and standing biomass equation</desc>
+   </entry>
+</file>

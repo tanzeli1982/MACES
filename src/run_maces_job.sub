@@ -2,7 +2,7 @@
 
 #SBATCH  --job-name=maces
 #SBATCH  --nodes=1
-#SBATCH  --ntasks-per-node=1
+#SBATCH  --ntasks-per-node=24
 #SBATCH  --exclusive
 #SBATCH  --time=03:00:00
 #SBATCH  --partition=short
@@ -21,6 +21,6 @@ export PATH=$HOME/.conda/envs/work_env/bin:$PATH
 
 source activate work_env
 
-python test.py 
+mpiexec -np 24 python MACES_main.py -f namelist.maces.xml 
 
 source deactivate

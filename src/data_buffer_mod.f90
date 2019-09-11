@@ -8,6 +8,8 @@ module data_buffer_mod
    implicit none
    public
 
+   integer, parameter :: Wss = 1, Wsal = 2
+
    !! allocatable arrays for Hydrodynamic model
    ! hydrodynamic state variables [h, U*h, N, Css, Cj]
    real(kind=8), allocatable, dimension(:,:) :: m_uhydro
@@ -35,8 +37,7 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: m_Cg
    real(kind=8), allocatable, dimension(:)   :: m_Nmax
    ! sediment and constituents
-   real(kind=8), allocatable, dimension(:)   :: m_Css
-   real(kind=8), allocatable, dimension(:)   :: m_Cj
+   real(kind=8), allocatable, dimension(:,:) :: m_Cs
    ! temporary variables
    real(kind=8), allocatable, dimension(:,:) :: tmp_uhydro
    real(kind=8), allocatable, dimension(:,:) :: tmp_uhydroL
@@ -52,13 +53,9 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: tmp_U
    real(kind=8), allocatable, dimension(:)   :: tmp_B
    real(kind=8), allocatable, dimension(:)   :: tmp_Qb
-   real(kind=8), allocatable, dimension(:)   :: tmp_Css
-   real(kind=8), allocatable, dimension(:)   :: tmp_Cj
    ! forcing variables
-   real(kind=8), allocatable, dimension(:)   :: force_Esed
-   real(kind=8), allocatable, dimension(:)   :: force_Dsed
-   real(kind=8), allocatable, dimension(:)   :: force_Bag
-   integer, allocatable, dimension(:)        :: force_pft
+   real(kind=8), allocatable, dimension(:,:) :: Cs_source
+   real(kind=8), allocatable, dimension(:,:) :: Cs_sink
    real(kind=8) :: force_Twav
    real(kind=8) :: force_U10
    ! parameter variables
