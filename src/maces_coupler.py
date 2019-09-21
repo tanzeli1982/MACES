@@ -8,6 +8,7 @@ Simulation coupler
 @author: Zeli Tan
 """
 
+import sys
 import numpy as np
 import maces_utilities as utils
 from datetime import date
@@ -127,8 +128,10 @@ def run_tai_maces(input_data, models, spinup):
             hindx = hindx + 1
             if verbose and spinup:
                 print('spinup time step', int(hindx))
+                sys.stdout.flush()
             elif verbose:
                 print('regular time step', int(hindx))
+                sys.stdout.flush()
             if np.mod(hindx,24)==0:
                 dindx = dindx + 1
                 year, month, day = utils.get_date_from_julian(jdn+dindx)

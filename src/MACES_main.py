@@ -183,6 +183,7 @@ if __name__=='__main__':
         iid = np.mod( ii*numprocs + rank, nrun )
         site_id = site_ids[iid]
         print( "Simulate site ", site_id )
+        sys.stdout.flush()
         
         try:
             # construct site platform
