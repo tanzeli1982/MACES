@@ -11,7 +11,14 @@ Draw the dynamics of water flow velocity on the TAI platform
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+# read the platform elevation
+filename = '/Users/tanz151/Python_maces/src/out_ecogeom_2001-01-01_2001-01-06.nc'
+try:
+    nc = Dataset(filename,'r')
+    zh = np.array(nc.variables['zh'][:][0][0])
+finally:
+    nc.close()
 
 # read the simulated water flow velocity
 filename = '/Users/tanz151/Python_maces/src/out_hydro_2001-01-01_2001-01-06.nc'
@@ -21,23 +28,35 @@ try:
     Uw = np.array(nc.variables['U'][:][0])
 finally:
     nc.close()
-ntime = np.shape(Uw)[0]
+xv = xv[100:308]
+Uw = Uw[:,100:308]
+zh = zh[100:308]
+indx = np.argmin(np.abs(zh))
 
+ntime = np.shape(Uw)[0]
 tt = -np.arange(ntime)
     
 # plot
 plt.clf()
-fig, ax = plt.subplots(figsize=(8,10))
+fig, ax = plt.subplots(figsize=(7.5,10))
 
 plt.style.use('default')
 
-cf = ax.contourf(xv, tt, Uw, 10, cmap='RdYlBu_r')
+cf = ax.contourf(xv, tt, Uw, np.linspace(-3,3,11), cmap='seismic')
+ax.plot([xv[indx],xv[indx]], [tt[-1],tt[0]], color='black', ls='--', lw=1, 
+        alpha=0.8)
 ax.set_xlim([xv[0], xv[-1]])
 ax.set_ylim([tt[-1], tt[0]])
-cbar = fig.colorbar(cf, ax=ax, orientation='horizontal', pad=0.05)
+ax.yaxis.set_ticks(np.arange(-100,20,20))
+ax.yaxis.set_ticklabels(['100','80','60','40','20','0'])
+ax.set_xlabel('Coordinate ($\mathregular{m}$)', fontsize=12, 
+              fontname='Times New Roman', color='black')
+ax.set_ylabel('Time (hours)', fontsize=12, 
+              fontname='Times New Roman', color='black')
+cbar = fig.colorbar(cf, ax=ax, orientation='horizontal', pad=0.08)
 ylabel = 'Water flow ($\mathregular{m}$ $\mathregular{{s}^{-1}}$)'
 cbar.set_label(ylabel, fontsize=12, fontname='Times New Roman', 
-               labelpad=-50)
+               labelpad=0)
 #cbar.ax.xaxis.set_minor_locator(AutoMinorLocator(2))
 labels = cbar.ax.get_xticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
