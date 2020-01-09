@@ -11,6 +11,7 @@ Draw the dynamics of surface water elevation on the TAI platform
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
+from scipy import interpolate
 from matplotlib.ticker import AutoMinorLocator
 
 # read the platform elevation
@@ -34,24 +35,30 @@ xv = xv[100:308]
 Dp = Dp[:,100:308]
 zh = zh[100:308]
 
-zv = np.linspace(-3,2,1001)
-nz = len(zv)
-nx = len(xv)
-
 indx = np.argmin(np.abs(zh))
 xv = xv - xv[indx]
-
 ntime = np.shape(Dp)[0]
+
+zwater = np.linspace(-3,2,1001)
+xwater = np.linspace(xv[0],xv[-1],1001)
+nz = len(zwater)
+nx = len(xwater)
+
+f = interpolate.interp1d(xv, zh)
+zh_water = f(xwater)
+
+f = interpolate.interp1d(xv, Dp[0])
+Dp_water = f(xwater)
 
 mask = -1 * np.ones((nz,nx))
 for ii in range(nx):
-    indice = np.logical_and(zv>zh[ii], zv<=zh[ii]+Dp[0,ii])
+    indice = np.logical_and(zwater>zh_water[ii], zwater<=zh_water[ii]+Dp_water[ii])
     mask[indice,ii] = 1
 Zpos = np.ma.masked_less(mask, 0)
 
-dx = 0.5 * (xv[1] - xv[0])
-dz = 0.5 * (zv[1] - zv[0])
-extent = [xv[0]-dx, xv[-1]+dx, zv[0]-dz, zv[-1]+dz]
+dx = 0.5 * (xwater[1] - xwater[0])
+dz = 0.5 * (zwater[1] - zwater[0])
+extent = [xwater[0]-dx, xwater[-1]+dx, zwater[0]-dz, zwater[-1]+dz]
 
 # plot
 plt.clf()
@@ -59,9 +66,9 @@ fig, ax = plt.subplots(figsize=(7.5,5))
 
 plt.style.use('default')
 
-ax.plot(xv, zh, color='black', ls='-', lw=2, alpha=1.0)
+ax.plot(xv, zh, color='black', ls='-', lw=3, alpha=1.0)
 ax.imshow(Zpos, cmap='Blues', vmin=-1, vmax=1, interpolation='none', 
-          origin='lower', extent=extent, aspect='auto')
+          origin='lower', extent=extent, aspect='auto', alpha=0.8)
 ax.set_xlim([xv[0], xv[-1]])
 ax.set_ylim([-3, 2])
 ax.xaxis.set_ticks(np.arange(-7500,12500,2500))
