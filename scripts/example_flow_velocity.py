@@ -45,7 +45,7 @@ fig, ax = plt.subplots(figsize=(7.5,9.5))
 
 plt.style.use('default')
 
-cf = ax.contourf(xv, tt, Uw, np.linspace(-3,3,11), cmap='seismic')
+cf = ax.contourf(xv, tt, Uw, np.linspace(-1,1,11), cmap='seismic')
 ax.plot([0,0], [tt[-1],tt[0]], color='black', ls='--', lw=1, 
         alpha=0.8)
 ax.set_xlim([xv[0], xv[-1]])
@@ -61,7 +61,8 @@ ax.set_ylabel('Time (hours)', fontsize=12,
               fontname='Times New Roman', color='black')
 ax.tick_params(which='major', direction='in', length=6)
 ax.tick_params(which='minor', direction='in', length=2)
-cbar = fig.colorbar(cf, ax=ax, orientation='horizontal', pad=0.07)
+cbar = fig.colorbar(cf, ax=ax, orientation='horizontal', pad=0.07, 
+                    ticks=np.linspace(-1,1,11))
 ylabel = 'Water flow velocity ($\mathregular{m}$ $\mathregular{{s}^{-1}}$)'
 cbar.set_label(ylabel, fontsize=12, fontname='Times New Roman', 
                labelpad=0)

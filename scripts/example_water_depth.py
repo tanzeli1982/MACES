@@ -47,45 +47,50 @@ nx = len(xwater)
 f = interpolate.interp1d(xv, zh)
 zh_water = f(xwater)
 
-f = interpolate.interp1d(xv, Dp[0])
-Dp_water = f(xwater)
-
-mask = -1 * np.ones((nz,nx))
-for ii in range(nx):
-    indice = np.logical_and(zwater>zh_water[ii], zwater<=zh_water[ii]+Dp_water[ii])
-    mask[indice,ii] = 1
-Zpos = np.ma.masked_less(mask, 0)
-
-dx = 0.5 * (xwater[1] - xwater[0])
-dz = 0.5 * (zwater[1] - zwater[0])
-extent = [xwater[0]-dx, xwater[-1]+dx, zwater[0]-dz, zwater[-1]+dz]
-
 # plot
 plt.clf()
-fig, ax = plt.subplots(figsize=(7.5,5))
+fig, axes = plt.subplots(4, 3, figsize=(8,10))
 
 plt.style.use('default')
 
-ax.plot(xv, zh, color='black', ls='-', lw=3, alpha=1.0)
-ax.imshow(Zpos, cmap='Blues', vmin=-1, vmax=1, interpolation='none', 
-          origin='lower', extent=extent, aspect='auto', alpha=0.8)
-ax.set_xlim([xv[0], xv[-1]])
-ax.set_ylim([-3, 2])
-ax.xaxis.set_ticks(np.arange(-7500,12500,2500))
-ax.yaxis.set_ticks(np.arange(-3,3,1))
-ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-ax.yaxis.set_minor_locator(AutoMinorLocator(5))
-ax.set_xlabel('Coordinate ($\mathregular{m}$)', fontsize=12, 
-              fontname='Times New Roman', color='black')
-ax.set_ylabel('Elevation (m.a.s.l.)', fontsize=12, 
-              fontname='Times New Roman', color='black')
-ax.tick_params(which='major', direction='in', length=6)
-ax.tick_params(which='minor', direction='in', length=2)
+for mm in range(4):
+    for nn in range(3):
+        ax = axes[mm][nn]
+        
+        f = interpolate.interp1d(xv, Dp[mm*3+nn])
+        Dp_water = f(xwater)
 
+        mask = -1 * np.ones((nz,nx))
+        for ii in range(nx):
+            indice = np.logical_and(zwater>zh_water[ii], zwater<=zh_water[ii]+Dp_water[ii])
+            mask[indice,ii] = 1
+        Zpos = np.ma.masked_less(mask, 0)
 
-labels = ax.get_xticklabels() + ax.get_yticklabels()
-[label.set_fontname('Times New Roman') for label in labels]
-[label.set_fontsize(12) for label in labels]
+        dx = 0.5 * (xwater[1] - xwater[0])
+        dz = 0.5 * (zwater[1] - zwater[0])
+        extent = [xwater[0]-dx, xwater[-1]+dx, zwater[0]-dz, zwater[-1]+dz]
+
+        ax.plot(xv, zh, color='black', ls='-', lw=2, alpha=1.0)
+        ax.imshow(Zpos, cmap='Blues', vmin=-1, vmax=1, interpolation='none', 
+                  origin='lower', extent=extent, aspect='auto', alpha=0.8)
+        ax.set_xlim([xv[0], xv[-1]])
+        ax.set_ylim([-3, 2])
+        ax.xaxis.set_ticks(np.arange(-5000,15000,5000))
+        ax.yaxis.set_ticks(np.arange(-3,3,1))
+        ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+        ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+        #ax.set_xlabel('Coordinate ($\mathregular{m}$)', fontsize=10, 
+        #              fontname='Times New Roman', color='black')
+        ax.set_ylabel('Elevation (m.a.s.l.)', fontsize=10, 
+                      fontname='Times New Roman', color='black')
+        ax.set_title('Time step '+ '{:02d}'.format(mm*3+nn+1), color='k', 
+                     fontsize=10, fontname='Times New Roman')
+        ax.tick_params(which='major', direction='in', length=6)
+        ax.tick_params(which='minor', direction='in', length=2)
+
+        labels = ax.get_xticklabels() + ax.get_yticklabels()
+        [label.set_fontname('Times New Roman') for label in labels]
+        [label.set_fontsize(10) for label in labels]
 
 plt.tight_layout()
 fig.savefig('depth.png', dpi=300)
