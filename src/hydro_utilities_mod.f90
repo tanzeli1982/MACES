@@ -306,7 +306,8 @@ contains
          asb = alphaA * Bag(ii)**betaA
          dsb = alphaD * Bag(ii)**betaD
          cD = cD0 + ScD * Bag(ii)
-         Cz(ii) = par_Cz0*sqrt(2.0/(cD*asb*h(ii)+2.0*(1.0-asb*dsb)*Cb))
+         !Cz(ii) = par_Cz0*sqrt(2.0/(cD*asb*h(ii)+2.0*(1.0-asb*dsb)*Cb))
+         Cz(ii) = (0.5*cD*asb*h(ii)+(1.0-asb*dsb)*Cb)/par_Cz0**2
       end do
    end subroutine
 

@@ -532,25 +532,25 @@ contains
       do ii = 1, n, 1
          scaler = max(0.0,uhydro(ii,4:m))/(m_uhydro(ii,4:m)+TOL_REL)
          if (ii==1) then
-            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
-               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2) - &
+            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
+               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G*m_Cz(ii+1)) - &
                G*(0.75*uhydro(ii,1)+0.25*uhydro(ii+1,1))*tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.75*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
                0.25*(m_Swg(ii+1)-m_Sbf(ii+1)-m_Swc(ii+1)-m_Sbrk(ii+1))) / sigma
             sources(ii,4:m) = (0.75*Cs_source(ii,:)+0.25*Cs_source(ii+1,:)) - &
                (0.75*Cs_sink(ii,:)+0.25*Cs_sink(ii+1,:))*scaler
          else if (ii==n) then
-            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
-               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2) - &
+            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
+               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G*m_Cz(ii-1)) - &
                G*(0.75*uhydro(ii,1)+0.25*uhydro(ii-1,1))*tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.75*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
                0.25*(m_Swg(ii-1)-m_Sbf(ii-1)-m_Swc(ii-1)-m_Sbrk(ii-1))) / sigma
             sources(ii,4:m) = (0.25*Cs_source(ii-1,:)+0.75*Cs_source(ii,:)) - &
                (0.25*Cs_sink(ii-1,:)+0.75*Cs_sink(ii,:))*scaler
          else
-            sources(ii,2) = -(0.5*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
-               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2+ &
-               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2) - &
+            sources(ii,2) = -(0.5*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
+               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G*m_Cz(ii-1)+ &
+               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G*m_Cz(ii+1)) - &
                G*(0.5*uhydro(ii,1)+0.25*uhydro(ii-1,1)+0.25*uhydro(ii+1,1))* &
                tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.5*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &

@@ -159,7 +159,7 @@ def run_tai_maces(input_data, models, spinup):
         sources[:,1] = 0.0
         sinks[:,0] = Dsed
         sinks[:,1] = 0.0
-        taihydro.modelsetup(sources, sinks, zh, pft, Bag,  Twav_inst, 
+        taihydro.modelsetup(sources, sinks, zh, pft, Bag, Twav_inst, 
                             U10_inst, h0_inst, U0_inst, Hwav0_inst, Cs0)
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
                                                      dyncheck, curstep)
