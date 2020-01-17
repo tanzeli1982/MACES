@@ -465,23 +465,33 @@ contains
       end do
    end subroutine
 
-   subroutine UpdateWaveBrkProb2(h, Hwav, rawQb, Qb)
+   subroutine UpdateWaveBrkProb2(h, Hwav, Qb)
       implicit none
       real(kind=8), intent(in) :: h(:)
       real(kind=8), intent(in) :: Hwav(:)
-      real(kind=8), intent(in) :: rawQb(:)
       real(kind=8), intent(out) :: Qb(:)
+      real(kind=8), parameter :: rawQb(101) = (/0.0,0.4637,0.5005,0.5260, &
+         0.5461,0.5631,0.5780,0.5914,0.6035,0.6147,0.6252,0.6350,0.6442, &
+         0.6530,0.6614,0.6694,0.6770,0.6844,0.6915,0.6984,0.7050,0.7115, &
+         0.7177,0.7238,0.7298,0.7355,0.7412,0.7467,0.7521,0.7573,0.7625, &
+         0.7676,0.7725,0.7774,0.7822,0.7869,0.7915,0.7960,0.8005,0.8049, &
+         0.8092,0.8135,0.8177,0.8218,0.8259,0.8299,0.8339,0.8378,0.8417, &
+         0.8455,0.8493,0.8531,0.8568,0.8604,0.8640,0.8676,0.8711,0.8746, &
+         0.8781,0.8815,0.8849,0.8883,0.8916,0.8949,0.8981,0.9014,0.9046, &
+         0.9078,0.9109,0.9140,0.9171,0.9202,0.9232,0.9262,0.9292,0.9322, &
+         0.9352,0.9381,0.9410,0.9439,0.9467,0.9496,0.9524,0.9552,0.9580, &
+         0.9607,0.9635,0.9662,0.9689,0.9716,0.9742,0.9769,0.9795,0.9821, &
+         0.9847,0.9873,0.9899,0.9924,0.9950,0.9975,1.0/)
       real(kind=8) :: fHrms
-      integer :: ii, nx, nQb, idx
+      integer :: ii, nx, idx
 
-      nQb = size(rawQb)
       nx = size(h)
       do ii = 1, nx, 1
          if (h(ii)>TOL_REL) then
             fHrms = Hwav(ii) / (par_fr*h(ii))
             if (fHrms<=rawQb(1)) then
                Qb(ii) = 0.0d0
-            else if (fHrms>=rawQb(nQb)) then
+            else if (fHrms>=rawQb(101)) then
                Qb(ii) = 1.0d0
             else
                call BinarySearch(rawQb, fHrms, idx)
@@ -490,6 +500,102 @@ contains
          else
             Qb(ii) = 1.0d0
          end if
+      end do
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate stead-state wave regime.
+   !
+   !------------------------------------------------------------------------------
+   subroutine SgnftWaveHeightEQ(Ewav, coefs, fval, fname)
+      implicit none
+      real(kind=8), intent(in) :: Ewav
+      real(kind=8), intent(in) :: coefs(2)
+      real(kind=8), intent(out) :: fval
+      character(len=32), intent(out) :: fname
+      real(kind=8), parameter :: rawQb(101) = (/0.0,0.4637,0.5005,0.5260, &
+         0.5461,0.5631,0.5780,0.5914,0.6035,0.6147,0.6252,0.6350,0.6442, &
+         0.6530,0.6614,0.6694,0.6770,0.6844,0.6915,0.6984,0.7050,0.7115, &
+         0.7177,0.7238,0.7298,0.7355,0.7412,0.7467,0.7521,0.7573,0.7625, &
+         0.7676,0.7725,0.7774,0.7822,0.7869,0.7915,0.7960,0.8005,0.8049, &
+         0.8092,0.8135,0.8177,0.8218,0.8259,0.8299,0.8339,0.8378,0.8417, &
+         0.8455,0.8493,0.8531,0.8568,0.8604,0.8640,0.8676,0.8711,0.8746, &
+         0.8781,0.8815,0.8849,0.8883,0.8916,0.8949,0.8981,0.9014,0.9046, &
+         0.9078,0.9109,0.9140,0.9171,0.9202,0.9232,0.9262,0.9292,0.9322, &
+         0.9352,0.9381,0.9410,0.9439,0.9467,0.9496,0.9524,0.9552,0.9580, &
+         0.9607,0.9635,0.9662,0.9689,0.9716,0.9742,0.9769,0.9795,0.9821, &
+         0.9847,0.9873,0.9899,0.9924,0.9950,0.9975,1.0/) 
+      real(kind=8), parameter :: Cd = 1.3d-3    ! drag coefficient for U10
+      real(kind=8), parameter :: gammaPM = 4.57d-3
+      real(kind=8), parameter :: m = 2.0d0
+      real(kind=8), parameter :: cwc = 3.33d-5
+      real(kind=8) :: Hrms, Hmax, fHrms, Qb
+      real(kind=8) :: Twav, U10, kwav, h
+      real(kind=8) :: sigma, alpha, beta, Cf
+      real(kind=8) :: Swg, Sbf, Swc, Sbrk
+      integer :: idx
+
+      fname = "SgnftWaveHeightEQ"
+      Twav = coefs(1)
+      U10 = coefs(2)
+      h = coefs(3)
+      kwav = coefs(4)
+      Hmax = par_fr * h
+      Hrms = sqrt(8.0*Ewav/G/Roul) 
+      fHrms = Hrms / Hmax
+      if (fHrms<=rawQb(1)) then
+         Qb = 0.0d0
+      else if (fHrms>=rawQb(101)) then
+         Qb = 1.0d0
+      else
+         call BinarySearch(rawQb, fHrms, idx)
+         Qb = 0.01*DBLE(idx) - 0.005
+      end if
+      sigma = 2.0*PI/Twav
+      if (h>TOL_REL .and. kwav>TOL_REL) then
+         ! wave generation
+         alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav)**2
+         beta = 5.0*Roua/Roul/Twav*(U10*kwav/sigma-0.9)
+         Swg = alpha + beta * Ewav
+         ! wave reduction by bottom friction
+         Cf = 2.0*par_cbc*PI*Hrms/Twav/sinh(kwav*h)
+         Sbf = (1-Qb)*2.0*Cf*kwav*Ewav/sinh(2.0*kwav*h)
+         ! wave reduction by white capping
+         Swc = (max(0.0,min(1.0,Ewav*(sigma**4)/G**2/gammaPM)))**m * &
+            cwc*sigma*Ewav
+         ! wave reduction by breaking
+         if (Hrms>TOL_REL) then
+            Sbrk = 2.0*alpha/Twav*Qb*((Hmax/Hrms)**2)*Ewav
+         else
+            Sbrk = 0.0
+         end if
+         ! wave energy balance equation
+         fval = Swg - Sbf - Swc - Sbrk
+      else
+         fval = 0.0
+      end if
+   end subroutine
+
+   subroutine UpdateSgnftWaveHeight(Twav, U10, h, kwav, Ewav)
+      implicit none
+      real(kind=8), intent(in) :: Twav
+      real(kind=8), intent(in) :: U10
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(in) :: kwav(:)
+      real(kind=8), intent(out) :: Ewav(:)      ! wave energy
+      real(kind=8) :: xbounds(2), coefs(4)
+      integer :: ii, nx
+
+      nx = size(h)
+      do ii = 1, nx, 1
+         if (h(ii)>TOL_REL) then
+            xbounds = (/1.225d-1, 4.9d5/)
+            coefs = (/Twav, U10, h(ii), kwav(ii)/)
+            call NonLRBrents(SgnftWaveHeightEQ, coefs, xbounds, 1d-4, Ewav(ii))
+         else
+            Ewav(ii) = 0d0
+         end if 
       end do
    end subroutine
 
@@ -559,7 +665,7 @@ contains
       real(kind=8) :: sigma
 
       sigma = 2.0*PI/Twav
-      Swc = cwc*sigma*((Ewav*(sigma**4)/G**2/gammaPM)**m)*Ewav
+      Swc = cwc*sigma*Ewav*(max(0.0,min(1.0,Ewav*(sigma**4)/G**2/gammaPM)))**m
    end subroutine
 
    subroutine UpdateWaveDepthBrking(Twav, U10, h, Hwav, kwav, Ewav, &

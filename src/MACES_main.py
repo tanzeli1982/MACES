@@ -258,12 +258,14 @@ if __name__=='__main__':
                         'mhws': site_mhws[iid], 'mhwn': site_mhwn[iid]}
             
             input_data = {'coord': coords, 'state': tai_state, 
-                          'forcings': forcings, 'namelist': namelist}
+                          'forcings': forcings, 'namelist': namelist, 
+                          'id': site_id}
             tai_state, __, __ = cpl.run_tai_maces(input_data, models, True)
             
             # then do the formal run
             input_data = {'coord': coords, 'state': tai_state, 
-                          'forcings': forcings, 'namelist': namelist}
+                          'forcings': forcings, 'namelist': namelist, 
+                          'id': site_id}
             __, uhydro_out, ecogeom_out = cpl.run_tai_maces(input_data, \
                 models, False)
             

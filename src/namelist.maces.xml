@@ -124,7 +124,6 @@
          <values>
             <value variable="h">1e-3</value>
             <value variable="hU">1e-4</value>
-            <value variable="N">1e-6</value>
             <value variable="Css">1e-5</value>
             <value variable="Cj">1e-3</value>
          </values>
@@ -136,7 +135,6 @@
          <values>
             <value variable="h">TRUE</value>
             <value variable="hU">FALSE</value>
-            <value variable="N">TRUE</value>
             <value variable="Css">TRUE</value>
             <value variable="Cj">TRUE</value>
          </values>
