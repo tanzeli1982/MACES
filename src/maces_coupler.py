@@ -41,7 +41,6 @@ def run_tai_maces(input_data, models, spinup):
         date1 = utils.get_spinup_stop_date(date0, namelist['SPINUP_OPTION'], 
                                            namelist['SPINUP_N'])
     
-    site_id = input_data['id']
     # input settings
     x = input_data['coord']['x']
     #site_dx = input_data['coord']['dx']
@@ -163,12 +162,12 @@ def run_tai_maces(input_data, models, spinup):
         U0_inst = 0.0
         #Hwav0_inst = 5.0e+03 * Hwav0_inst
         U10_inst = 6.0
-        taihydro.modelsetup(sources, sinks, zh, Twav_inst, 
-                            h0_inst, U0_inst, Cs0)
+        taihydro.modelsetup(sources, sinks, zh, pft, Bag, Twav_inst, 
+                            h0_inst, U0_inst, U10_inst, Cs0)
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
                                                      dyncheck, curstep)
         assert error==0, "runge-Kutta iteration is more than MAXITER"
-        taihydro.modelcallback(pft, Bag, U10_inst)
+        taihydro.modelcallback()
         assert np.all(np.isfinite(taihydro.sim_h)), "NaN h found"
         assert np.all(np.isfinite(taihydro.sim_u)), "NaN U found"
         assert np.all(np.isfinite(taihydro.sim_uwav)), "NaN Uwav found"
@@ -230,11 +229,6 @@ def run_tai_maces(input_data, models, spinup):
                 uhydro_out['tau'][0,indx] = taihydro.sim_tau
                 uhydro_out['Css'][0,indx] = taihydro.sim_css
                 uhydro_out['Cj'][0,indx] = taihydro.sim_cj
-                if indx>=0 and indx<12 and site_id==466:
-                    print(taihydro.sim_swg)
-                    print(taihydro.sim_sbf)
-                    print(taihydro.sim_swc)
-                    print(taihydro.sim_sbrk)
         
         # archive long-term mean eco-geomorphology variables
         if (not spinup) and (nt_ecogeom>0):

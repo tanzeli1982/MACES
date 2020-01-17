@@ -17,10 +17,6 @@ module tai_hydro_mod
    !f2py real(kind=8), allocatable, dimension(:) :: sim_tau
    !f2py real(kind=8), allocatable, dimension(:) :: sim_Css
    !f2py real(kind=8), allocatable, dimension(:) :: sim_Cj
-   !f2py real(kind=8), allocatable, dimension(:) :: sim_Swg
-   !f2py real(kind=8), allocatable, dimension(:) :: sim_Sbf
-   !f2py real(kind=8), allocatable, dimension(:) :: sim_Swc
-   !f2py real(kind=8), allocatable, dimension(:) :: sim_Sbrk
    real(kind=8), allocatable, dimension(:) :: sim_h
    real(kind=8), allocatable, dimension(:) :: sim_U
    real(kind=8), allocatable, dimension(:) :: sim_Hwav
@@ -28,10 +24,6 @@ module tai_hydro_mod
    real(kind=8), allocatable, dimension(:) :: sim_tau
    real(kind=8), allocatable, dimension(:) :: sim_Css
    real(kind=8), allocatable, dimension(:) :: sim_Cj
-   real(kind=8), allocatable, dimension(:) :: sim_Swg
-   real(kind=8), allocatable, dimension(:) :: sim_Sbf
-   real(kind=8), allocatable, dimension(:) :: sim_Swc
-   real(kind=8), allocatable, dimension(:) :: sim_Sbrk
 
 contains
    subroutine InitHydroMod(xin, zhin, nvar, npft, nx)
@@ -88,10 +80,6 @@ contains
       allocate(sim_tau(nx))            ; sim_tau = 0.0d0
       allocate(sim_Css(nx))            ; sim_Css = 0.0d0
       allocate(sim_Cj(nx))             ; sim_Cj = 0.0d0
-      allocate(sim_Swg(nx))                ; sim_Swg = 0.0d0
-      allocate(sim_Sbf(nx))                ; sim_Sbf = 0.0d0
-      allocate(sim_Swc(nx))                ; sim_Swc = 0.0d0
-      allocate(sim_Sbrk(nx))               ; sim_Sbrk = 0.0d0
       ! sources and sinks
       allocate(Cs_source(nx,nvar-2))   ; Cs_source = 0.0d0
       allocate(Cs_sink(nx,nvar-2))     ; Cs_sink = 0.0d0
@@ -168,10 +156,6 @@ contains
       deallocate(sim_tau)
       deallocate(sim_Css)
       deallocate(sim_Cj)
-      deallocate(sim_Swg)
-      deallocate(sim_Sbf)
-      deallocate(sim_Swc)
-      deallocate(sim_Sbrk)
       deallocate(Cs_source)
       deallocate(Cs_sink)
       ! deallocate user-defined arrays
@@ -230,17 +214,20 @@ contains
    !          conditions.
    !
    !------------------------------------------------------------------------------
-   subroutine ModelSetup(sources, sinks, zh, Twav, h0, U0, Cs0, n, m)
+   subroutine ModelSetup(sources, sinks, zh, pft, Bag, Twav, &
+                         h0, U0, U10, Cs0, n, m)
       implicit none
       !f2py real(kind=8), intent(in) :: sources, sinks
-      !f2py real(kind=8), intent(in) :: zh
-      !f2py real(kind=8), intent(in) :: Twav, h0, U0
+      !f2py real(kind=8), intent(in) :: zh, Bag
+      !f2py integer, intent(in) :: pft
+      !f2py real(kind=8), intent(in) :: Twav, h0, U0, U10
       !f2py real(kind=8), intent(in) :: Cs0
       !f2py integer, intent(hide), depend(sources) :: n = shape(sources,0)
       !f2py integer, intent(hide), depend(sources) :: m = shape(sources,1)
       real(kind=8), dimension(n,m) :: sources, sinks
-      real(kind=8), dimension(n) :: zh
-      real(kind=8) :: Twav, h0, U0
+      real(kind=8), dimension(n) :: zh, Bag
+      integer, dimension(n) :: pft
+      real(kind=8) :: Twav, h0, U0, U10
       real(kind=8) :: Cs0(m)
       integer :: n, m
       ! local variables
@@ -251,6 +238,7 @@ contains
       ! a typical wave period is 2s but increase greatly with the increase
       ! of wave speed (https://en.wikipedia.org/wiki/Wind_wave)
       frc_Twav = Twav
+      frc_U10 = U10
 
       m_Zh = zh
       do ii = 1, n, 1
@@ -262,6 +250,7 @@ contains
             m_dZh(ii) = 0.5 * (m_Zh(ii+1) - m_Zh(ii-1))
          end if
       end do
+      call UpdateGroundRoughness(pft, Bag, m_uhydro(:,1), m_Cz)
 
       ! boundary conditions
       m_uhydro(1,1) = h0
@@ -278,16 +267,8 @@ contains
    !          transport are taken to zero (linearly interpolated to zero)??
    !
    !------------------------------------------------------------------------------
-   subroutine ModelCallback(pft, Bag, U10, nx)
+   subroutine ModelCallback()
       implicit none
-      !f2py real(kind=8), intent(in) :: Bag
-      !f2py integer, intent(in) :: pft
-      !f2py real(kind=8), intent(in) :: U10
-      !f2py integer, intent(hide), depend(Bag) :: nx = len(Bag)
-      real(kind=8), dimension(nx) :: Bag
-      integer, dimension(nx) :: pft
-      real(kind=8) :: U10
-      integer :: nx
       ! local variables
       real(kind=8) :: sigma, h, kwav
       integer :: ii, n, m
@@ -306,10 +287,10 @@ contains
       end do
       
       ! update wave dynamics
-      call UpdateGroundRoughness(pft, Bag, m_uhydro(:,1), m_Cz)
       !call UpdateWaveNumber(frc_Twav, m_uhydro(:,1), m_kwav)
       call UpdateWaveNumber2(frc_Twav, m_uhydro(:,1), m_kwav)
-      call UpdateSgnftWaveHeight(frc_Twav, U10, m_uhydro(:,1), m_kwav, m_Ewav)
+      call UpdateSgnftWaveHeight(frc_Twav, frc_U10, m_uhydro(:,1), &
+                                 m_kwav, m_Ewav)
 
       do ii = 1, n, 1
          h = m_uhydro(ii,1)
@@ -330,13 +311,13 @@ contains
 
       !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_Qb)
       call UpdateWaveBrkProb2(m_uhydro(:,1), m_Hwav, m_Qb)
-      call UpdateWaveGeneration(frc_Twav, U10, m_uhydro(:,1), m_kwav, &
-                                m_Ewav, m_Swg)
+      call UpdateWaveGeneration(frc_Twav, frc_U10, m_uhydro(:,1), &
+                                m_kwav, m_Ewav, m_Swg)
       call UpdateWaveBtmFriction(frc_Twav, m_uhydro(:,1), m_Hwav, m_kwav, &
                                  m_Ewav, m_Qb, m_Sbf)
       call UpdateWaveWhiteCapping(frc_Twav, m_Ewav, m_Swc)
-      call UpdateWaveDepthBrking(frc_Twav, U10, m_uhydro(:,1), m_Hwav, &
-                                 m_kwav, m_Ewav, m_Qb, m_Sbrk)
+      call UpdateWaveDepthBrking(frc_Twav, frc_U10, m_uhydro(:,1), &
+                                 m_Hwav, m_kwav, m_Ewav, m_Qb, m_Sbrk)
       call UpdateShearStress(frc_Twav, m_uhydro(:,1), m_U, m_Hwav, &
                              m_Uwav, m_tau)
       sim_h = m_uhydro(:,1)
@@ -346,10 +327,6 @@ contains
       sim_tau = m_tau
       sim_Css = m_Cs(:,Wss)
       sim_Cj = m_Cs(:,Wsal)
-      sim_Swg = m_Swg
-      sim_Sbf = m_Sbf
-      sim_Swc = m_Swc
-      sim_Sbrk = m_Sbrk
    end subroutine
 
    !------------------------------------------------------------------------------

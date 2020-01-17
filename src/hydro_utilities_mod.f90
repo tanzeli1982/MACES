@@ -511,7 +511,7 @@ contains
    subroutine SgnftWaveHeightEQ(Ewav, coefs, fval, fname)
       implicit none
       real(kind=8), intent(in) :: Ewav
-      real(kind=8), intent(in) :: coefs(2)
+      real(kind=8), intent(in) :: coefs(4)
       real(kind=8), intent(out) :: fval
       character(len=32), intent(out) :: fname
       real(kind=8), parameter :: rawQb(101) = (/0.0,0.4637,0.5005,0.5260, &
@@ -556,20 +556,18 @@ contains
       if (h>TOL_REL .and. kwav>TOL_REL) then
          ! wave generation
          alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav)**2
-         beta = 5.0*Roua/Roul/Twav*(U10*kwav/sigma-0.9)
+         beta = 5.0*Roua/Roul/Twav*max(0.0,U10*kwav/sigma-0.9)
          Swg = alpha + beta * Ewav
          ! wave reduction by bottom friction
-         Cf = 2.0*par_cbc*PI*Hrms/Twav/sinh(kwav*h)
+         Cf = par_cbc*Hrms*sigma/sinh(kwav*h)
          Sbf = (1-Qb)*2.0*Cf*kwav*Ewav/sinh(2.0*kwav*h)
          ! wave reduction by white capping
+         !gamma = 0.2 * gammaPM!Ewav*(sigma**4)/G**2
+         !Swc = cwc*sigma*Ewav*(gamma/gammaPM)**m
          Swc = (max(0.0,min(1.0,Ewav*(sigma**4)/G**2/gammaPM)))**m * &
             cwc*sigma*Ewav
          ! wave reduction by breaking
-         if (Hrms>TOL_REL) then
-            Sbrk = 2.0*alpha/Twav*Qb*((Hmax/Hrms)**2)*Ewav
-         else
-            Sbrk = 0.0
-         end if
+         Sbrk = 2.0*alpha/Twav*Qb*((Hmax/(1d-12+Hrms))**2)*Ewav
          ! wave energy balance equation
          fval = Swg - Sbf - Swc - Sbrk
       else
@@ -593,6 +591,7 @@ contains
             xbounds = (/1.225d-1, 4.9d5/)
             coefs = (/Twav, U10, h(ii), kwav(ii)/)
             call NonLRBrents(SgnftWaveHeightEQ, coefs, xbounds, 1d-4, Ewav(ii))
+            !print *, Ewav(ii), sqrt(8.0*Ewav(ii)/G/Roul), kwav(ii)
          else
             Ewav(ii) = 0d0
          end if 
