@@ -47,7 +47,7 @@ contains
       allocate(m_dZh(nx))              ; m_dZh = 0.0d0
       allocate(m_U(nx))                ; m_U = 0.0d0
       allocate(m_Hwav(nx))             ; m_Hwav = 0.0d0
-      allocate(m_kwav(nx))             ; m_kwav = 0.0d0
+      allocate(m_kwav(nx))             ; m_kwav = INFNT
       allocate(m_Ewav(nx))             ; m_Ewav = 0.0d0
       allocate(m_Uwav(nx))             ; m_Uwav = 0.0d0
       allocate(m_Qb(nx))               ; m_Qb = 0.0d0
@@ -182,14 +182,14 @@ contains
    ! Purpose: Set model parameters.
    !
    !------------------------------------------------------------------------------
-   subroutine SetModelParams(d50, Cz0, Kdf, cbc, fr, alphaA, betaA, &
+   subroutine SetModelParams(d50, Cz0, Kdf, cbc, cwc, fr, alphaA, betaA, &
                              alphaD, betaD, cD0, ScD, n)
       implicit none
-      !f2py real(kind=8), intent(in) :: d50, Cz0, Kdf, cbc, fr
+      !f2py real(kind=8), intent(in) :: d50, Cz0, Kdf, cbc, cwc, fr
       !f2py real(kind=8), intent(in) :: alphaA, betaA, alphaD, betaD
       !f2py real(kind=8), intent(in) :: cD0, ScD
       !f2py integer, intent(hide), depend(alphaA) :: n = len(alphaA)
-      real(kind=8) :: d50, Cz0, Kdf, cbc, fr
+      real(kind=8) :: d50, Cz0, Kdf, cbc, cwc, fr
       real(kind=8), dimension(n) :: alphaA, betaA
       real(kind=8), dimension(n) :: alphaD, betaD
       real(kind=8), dimension(n) :: cD0, ScD
@@ -199,6 +199,7 @@ contains
       par_Cz0 = Cz0
       par_Kdf = Kdf
       par_cbc = cbc
+      par_cwc = cwc
       par_fr = fr
       par_alphaA = alphaA
       par_betaA = betaA
@@ -267,8 +268,10 @@ contains
    !          transport are taken to zero (linearly interpolated to zero)??
    !
    !------------------------------------------------------------------------------
-   subroutine ModelCallback()
+   subroutine ModelCallback(isTimeNode)
       implicit none
+      !f2py logical, intent(in) :: isTimeNode
+      logical :: isTimeNode
       ! local variables
       real(kind=8) :: sigma, h, kwav
       integer :: ii, n, m
@@ -287,10 +290,11 @@ contains
       end do
       
       ! update wave dynamics
-      !call UpdateWaveNumber(frc_Twav, m_uhydro(:,1), m_kwav)
-      call UpdateWaveNumber2(frc_Twav, m_uhydro(:,1), m_kwav)
-      call UpdateSgnftWaveHeight(frc_Twav, frc_U10, m_uhydro(:,1), &
-                                 m_kwav, m_Ewav)
+      if (isTimeNode) then
+         call UpdateWaveNumber(frc_Twav, m_uhydro(:,1), m_kwav)
+         call UpdateSgnftWaveHeight(frc_Twav, frc_U10, m_uhydro(:,1), &
+                                    m_kwav, m_Ewav)
+      end if
 
       do ii = 1, n, 1
          h = m_uhydro(ii,1)
@@ -309,15 +313,17 @@ contains
          end if 
       end do
 
-      !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_Qb)
-      call UpdateWaveBrkProb2(m_uhydro(:,1), m_Hwav, m_Qb)
-      call UpdateWaveGeneration(frc_Twav, frc_U10, m_uhydro(:,1), &
-                                m_kwav, m_Ewav, m_Swg)
-      call UpdateWaveBtmFriction(frc_Twav, m_uhydro(:,1), m_Hwav, m_kwav, &
-                                 m_Ewav, m_Qb, m_Sbf)
-      call UpdateWaveWhiteCapping(frc_Twav, m_Ewav, m_Swc)
-      call UpdateWaveDepthBrking(frc_Twav, frc_U10, m_uhydro(:,1), &
-                                 m_Hwav, m_kwav, m_Ewav, m_Qb, m_Sbrk)
+      if (isTimeNode) then
+         !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_Qb)
+         call UpdateWaveBrkProb2(m_uhydro(:,1), m_Hwav, m_Qb)
+         call UpdateWaveGeneration(frc_Twav, frc_U10, m_uhydro(:,1), &
+                                   m_kwav, m_Ewav, m_Swg)
+         call UpdateWaveBtmFriction(frc_Twav, m_uhydro(:,1), m_Hwav, &
+                                    m_kwav, m_Ewav, m_Qb, m_Sbf)
+         call UpdateWaveWhiteCapping(frc_Twav, m_Ewav, m_Swc)
+         call UpdateWaveDepthBrking(frc_Twav, frc_U10, m_uhydro(:,1), &
+                                    m_Hwav, m_kwav, m_Ewav, m_Qb, m_Sbrk)
+      end if
       call UpdateShearStress(frc_Twav, m_uhydro(:,1), m_U, m_Hwav, &
                              m_Uwav, m_tau)
       sim_h = m_uhydro(:,1)

@@ -45,7 +45,7 @@ fig, ax = plt.subplots(figsize=(7.5,9.5))
 
 plt.style.use('default')
 
-cf = ax.contourf(xv, tt, Hwav, 10, cmap='hot_r')
+cf = ax.contourf(xv, tt, Hwav, np.linspace(0,0.25,11), cmap='viridis_r')
 ax.plot([0,0], [tt[-1],tt[0]], color='black', ls='--', lw=1, 
         alpha=0.8)
 ax.set_xlim([xv[0], xv[-1]])

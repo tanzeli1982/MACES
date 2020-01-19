@@ -66,6 +66,7 @@ module data_buffer_mod
    real(kind=8) :: par_Cz0
    real(kind=8) :: par_Kdf
    real(kind=8) :: par_cbc
+   real(kind=8) :: par_cwc
    real(kind=8) :: par_fr
    ! rungekutta temporary arrays
    real(kind=8), allocatable, dimension(:,:) :: rk4_K1(:,:)

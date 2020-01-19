@@ -227,10 +227,10 @@ if __name__=='__main__':
             taihydro.inithydromod(site_x, site_zh, nvar, npft)
             taihydro.setmodelparams(hydro_params['d50'], hydro_params['Cz0'], 
                                     hydro_params['Kdf'], hydro_params['cbc'], 
-                                    hydro_params['fr'], hydro_params['alphaA'], 
-                                    hydro_params['betaA'], hydro_params['alphaD'], 
-                                    hydro_params['betaD'], hydro_params['cD0'], 
-                                    hydro_params['ScD'])
+                                    hydro_params['cwc'], hydro_params['fr'], 
+                                    hydro_params['alphaA'], hydro_params['betaA'], 
+                                    hydro_params['alphaD'], hydro_params['betaD'], 
+                                    hydro_params['cD0'], hydro_params['ScD'])
         
             # instantiate ecogeomorphology models
             mac_mod = mac_class(mac_params)
