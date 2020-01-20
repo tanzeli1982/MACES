@@ -203,8 +203,7 @@ if __name__=='__main__':
                     site_dx[jj] = 0.5*(site_x[jj]-site_x[jj-1])
                 else:
                     site_dx[jj] = 0.5*(site_x[jj+1]-site_x[jj-1])
-            xref = utils.get_refshore_coordinate(site_x, site_zh)
-            coords = {'x': site_x, 'dx': site_dx, 'xref': xref}
+            coords = {'x': site_x, 'dx': site_dx}
             
             # construct pft distribution
             segments = []

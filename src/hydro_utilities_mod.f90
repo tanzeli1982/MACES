@@ -330,27 +330,46 @@ contains
       do ii = 1, nx, 1
          if (h(ii)>TOL_REL) then
             ! bottom shear stress by currents
-            fcurr = 0.24/(log(4.8*h(ii)/par_d50))**2
+            fcurr = 0.24/(log(4.8*max(1.,h(ii)/par_d50)))**2
             tau_curr = 0.125*Roul*fcurr*U(ii)**2
-            if (tau_curr>TOL_REL) then
-               ! bottom shear stress by wave
-               if (Uwav(ii)>TOL_REL) then
-                  fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
-                  tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
-               else
-                  tau_wave = 0.0
-               end if
-               tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
+            ! bottom shear stress by wave
+            fwave = 1.39*(6.0*Twav/PI/par_d50)**(-0.52)
+            tau_wave = 0.5*fwave*Roul*Uwav(ii)**1.48
+            ! combined shear stress
+            tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
+            tau(ii) = max(tau(ii), tau_curr+tau_wave)
+         else
+            tau(ii) = 0.0d0
+         end if
+      end do
+   end subroutine
+
+   subroutine CalcWaveReductionByVeg(x, dx, Bag, xref, fwave)
+      implicit none
+      real(kind=8), intent(in) :: x(:)
+      real(kind=8), intent(in) :: dx(:)
+      real(kind=8), intent(in) :: Bag(:)
+      real(kind=8), intent(in) :: xref
+      real(kind=8), intent(out) :: fwave(:)
+      real(kind=8) :: Latt, xLatt
+      integer :: ii, nx
+
+      nx = size(x)
+      do ii = 1, nx, 1
+         if (x(ii)>xref) then
+            if (fwave(ii-1)<TOL_REL) then
+               fwave(ii) = 0.0
             else
-               if (Uwav(ii)>TOL_REL) then
-                  fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
-                  tau(ii) = 0.5*fwave*Roul*Uwav(ii)**2
+               if (Bag(ii)>TOL_REL) then
+                  xLatt = 1.0/(0.03*Bag(ii)/2.0)
+                  fwave(ii) = fwave(ii-1) - 0.5*xLatt/dx(ii)
+                  fwave(ii) = max(0.0, fwave(ii))
                else
-                  tau(ii) = 0.0
+                  fwave(ii) = fwave(ii-1)
                end if
             end if
          else
-            tau(ii) = 0.0d0
+            fwave(ii) = 1.0
          end if
       end do
    end subroutine

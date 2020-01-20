@@ -53,6 +53,7 @@ module data_buffer_mod
    ! forcing variables
    real(kind=8), allocatable, dimension(:,:) :: Cs_source
    real(kind=8), allocatable, dimension(:,:) :: Cs_sink
+   real(kind=8), allocatable, dimension(:)   :: fctr_wave
    real(kind=8) :: frc_Twav
    real(kind=8) :: frc_U10
    ! parameter variables

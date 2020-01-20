@@ -44,7 +44,6 @@ def run_tai_maces(input_data, models, spinup):
     # input settings
     x = input_data['coord']['x']
     #site_dx = input_data['coord']['dx']
-    xref = input_data['coord']['xref']
     pft = input_data['state']['pft']
     zh = input_data['state']['zh']
     Bag = input_data['state']['Bag']
@@ -53,7 +52,7 @@ def run_tai_maces(input_data, models, spinup):
     trng = input_data['forcings']['trng']
     mhws = input_data['forcings']['mhws']
     U10 = input_data['forcings']['U10']
-    Hwav0 = input_data['forcings']['Hwav0']
+    #Hwav0 = input_data['forcings']['Hwav0']
     Twav = input_data['forcings']['Twav']
     Tair = input_data['forcings']['Tair']
     h0 = input_data['forcings']['h0']
@@ -63,6 +62,7 @@ def run_tai_maces(input_data, models, spinup):
     nx = len(x)
     ncs = len(Cs0)
     npool = np.shape(OM)[1]
+    xref = utils.get_refshore_coordinate(x, zh)
     
     # hydrodynamic and eco-geomorphology model objects
     taihydro = models['taihydro']
@@ -86,6 +86,7 @@ def run_tai_maces(input_data, models, spinup):
         uhydro_out['h'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['U'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['Hwav'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
+        uhydro_out['Uwav'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['tau'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['Css'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['Cj'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
@@ -151,7 +152,7 @@ def run_tai_maces(input_data, models, spinup):
         indx = utils.get_forcing_index(t, 'minute', namelist['U_TSTEP'])
         U0_inst = U0[indx]
         indx = utils.get_forcing_index(t, 'minute', namelist['Wave_TSTEP'])
-        Hwav0_inst = Hwav0[indx]
+        #Hwav0_inst = Hwav0[indx]
         Twav_inst = Twav[indx]
         indx = int( (year-date0.year)/namelist['SLR_TSTEP'] )
         rslr_inst = rslr[indx]
@@ -162,7 +163,7 @@ def run_tai_maces(input_data, models, spinup):
         sinks[:,0] = Dsed
         sinks[:,1] = 0.0
         U0_inst = 0.0
-        taihydro.modelsetup(sources, sinks, zh, pft, Bag, Twav_inst, 
+        taihydro.modelsetup(sources, sinks, zh, pft, Bag, xref, Twav_inst, 
                             h0_inst, U0_inst, U10_inst, Cs0)
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
                                                      dyncheck, curstep)
@@ -218,6 +219,7 @@ def run_tai_maces(input_data, models, spinup):
         if not spinup:
             zh = utils.update_platform_elev(zh, Esed, Dsed, Lbed, DepOM, \
                       rhoSed, rhoOM, porSed, rslr_inst, curstep)
+            xref = utils.get_refshore_coordinate(x, zh)
              
         # archive short-term hydrodynamic state variables
         if (not spinup) and (nt_hydro>0):
@@ -227,6 +229,7 @@ def run_tai_maces(input_data, models, spinup):
                 uhydro_out['h'][0,indx] = taihydro.sim_h
                 uhydro_out['U'][0,indx] = taihydro.sim_u
                 uhydro_out['Hwav'][0,indx] = taihydro.sim_hwav
+                uhydro_out['Uwav'][0,indx] = taihydro.sim_uwav
                 uhydro_out['tau'][0,indx] = taihydro.sim_tau
                 uhydro_out['Css'][0,indx] = taihydro.sim_css
                 uhydro_out['Cj'][0,indx] = taihydro.sim_cj

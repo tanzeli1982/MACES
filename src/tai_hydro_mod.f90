@@ -83,6 +83,7 @@ contains
       ! sources and sinks
       allocate(Cs_source(nx,nvar-2))   ; Cs_source = 0.0d0
       allocate(Cs_sink(nx,nvar-2))     ; Cs_sink = 0.0d0
+      allocate(fctr_wave(nx))          ; fctr_wave = 1.0d0
       ! user-defined allocatable arrays
       allocate(rk4_K1(nx,nvar))        ; rk4_K1 = 0.0d0
       allocate(rk4_K2(nx,nvar))        ; rk4_K2 = 0.0d0
@@ -158,6 +159,7 @@ contains
       deallocate(sim_Cj)
       deallocate(Cs_source)
       deallocate(Cs_sink)
+      deallocate(fctr_wave)
       ! deallocate user-defined arrays
       deallocate(rk4_K1)
       deallocate(rk4_K2)
@@ -215,19 +217,21 @@ contains
    !          conditions.
    !
    !------------------------------------------------------------------------------
-   subroutine ModelSetup(sources, sinks, zh, pft, Bag, Twav, &
+   subroutine ModelSetup(sources, sinks, zh, pft, Bag, xref, Twav, &
                          h0, U0, U10, Cs0, n, m)
       implicit none
       !f2py real(kind=8), intent(in) :: sources, sinks
       !f2py real(kind=8), intent(in) :: zh, Bag
       !f2py integer, intent(in) :: pft
+      !f2py real(kind=8), intent(in) :: xref
       !f2py real(kind=8), intent(in) :: Twav, h0, U0, U10
-      !f2py real(kind=8), intent(in) :: Cs0
+      !f2py real(kind=8), intent(in) :: U10, Cs0
       !f2py integer, intent(hide), depend(sources) :: n = shape(sources,0)
       !f2py integer, intent(hide), depend(sources) :: m = shape(sources,1)
       real(kind=8), dimension(n,m) :: sources, sinks
       real(kind=8), dimension(n) :: zh, Bag
       integer, dimension(n) :: pft
+      real(kind=8) :: xref
       real(kind=8) :: Twav, h0, U0, U10
       real(kind=8) :: Cs0(m)
       integer :: n, m
@@ -251,6 +255,7 @@ contains
             m_dZh(ii) = 0.5 * (m_Zh(ii+1) - m_Zh(ii-1))
          end if
       end do
+      call CalcWaveReductionByVeg(m_X, m_dX, Bag, xref, fctr_wave)
       call UpdateGroundRoughness(pft, Bag, m_uhydro(:,1), m_Cz)
 
       ! boundary conditions
@@ -308,8 +313,9 @@ contains
          else
             m_U(ii) = m_uhydro(ii,2) / max(0.1,h)
             m_Cs(ii,:) = m_uhydro(ii,4:m) / max(0.1,h)
+            !m_Hwav(ii) = fctr_wave(ii) * sqrt(8.0*m_Ewav(ii)/G/Roul)
             m_Hwav(ii) = sqrt(8.0*m_Ewav(ii)/G/Roul)
-            m_Uwav(ii) = min(PI*m_Hwav(ii)/frc_Twav/sinh(kwav*h), 20.0)
+            m_Uwav(ii) = PI*m_Hwav(ii)/frc_Twav/sinh(kwav*max(0.1,h))
          end if 
       end do
 
