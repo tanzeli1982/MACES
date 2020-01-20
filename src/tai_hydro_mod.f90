@@ -329,14 +329,16 @@ contains
          call UpdateWaveWhiteCapping(frc_Twav, m_Ewav, m_Swc)
          call UpdateWaveDepthBrking(frc_Twav, frc_U10, m_uhydro(:,1), &
                                     m_Hwav, m_kwav, m_Ewav, m_Qb, m_Sbrk)
+         call UpdateShearStress(frc_Twav, m_uhydro(:,1), m_U, m_Hwav, &
+                                m_Uwav, m_tau)
+
+         sim_Hwav = m_Hwav
+         sim_Uwav = m_Uwav
+         sim_tau = m_tau
       end if
-      call UpdateShearStress(frc_Twav, m_uhydro(:,1), m_U, m_Hwav, &
-                             m_Uwav, m_tau)
+
       sim_h = m_uhydro(:,1)
       sim_U = m_U
-      sim_Hwav = m_Hwav
-      sim_Uwav = m_Uwav
-      sim_tau = m_tau
       sim_Css = m_Cs(:,Wss)
       sim_Cj = m_Cs(:,Wsal)
    end subroutine
