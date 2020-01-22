@@ -396,31 +396,28 @@ contains
    subroutine UpdateWaveNumber(Twav, h, kwav)
       implicit none
       real(kind=8), intent(in) :: Twav
-      real(kind=8), intent(in) :: h(:)
-      real(kind=8), intent(out) :: kwav(:)
+      real(kind=8), intent(in) :: h
+      real(kind=8), intent(out) :: kwav
       real(kind=8) :: coefs(2), xbounds(2)
       real(kind=8) :: sigma, xtol, ytol
       character(len=128) :: msg
-      integer :: ii, nx, err
+      integer :: err
 
-      nx = size(h)
       sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
       xtol = 1d-4
       ytol = 1d-10
-      do ii = 1, nx, 1
-         if (h(ii)>TOL_REL) then
-            xbounds = (/2.51d-2, 6.2832d0/)
-            coefs = (/Twav, max(0.1,h(ii))/)
-            call NonLRBrents(WaveNumberEQ, coefs, xbounds, xtol, &
-                             ytol, kwav(ii), err)
-            if (err==1) then
-               write(msg, "(F8.4, F8.4)") Twav, h(ii)
-               print *, "Wave number isn't available: " // trim(msg)
-            end if
-         else
-            kwav(ii) = INFNT
-         end if
-      end do
+      if (h>TOL_REL) then
+         xbounds = (/2.51d-2, 6.2832d0/)
+         coefs = (/Twav, h/)
+         call NonLRBrents(WaveNumberEQ, coefs, xbounds, xtol, &
+                           ytol, kwav, err)
+         !if (err==1) then
+         !   write(msg, "(F8.4, F8.4)") Twav, h
+         !   print *, "Wave number isn't available: " // trim(msg)
+         !end if
+      else
+         kwav = INFNT
+      end if
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -609,6 +606,34 @@ contains
          end if 
       end do
    end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate wave dynamics using an empirical method (Tambroni & 
+   !          Seminara, 2012, JGR).
+   !
+   !------------------------------------------------------------------------------
+   subroutine UpdateSgnftWaveHeight2(U10, xfetch, h, Hwav, Twav)
+      implicit none
+      real(kind=8), intent(in) :: U10
+      real(kind=8), intent(in) :: xfetch
+      real(kind=8), intent(in) :: h
+      real(kind=8), intent(out) :: Hwav   ! units: meter
+      real(kind=8), intent(out) :: Twav   ! units: second
+      real(kind=8) :: A1, A2, B1, B2
+
+      if (h>TOL_REL) then
+         A1 = 0.493*(h*G/U10**2)**0.75
+         B1 = 3.13d-3*(xfetch*G/U10**2)**0.57
+         A2 = 0.331*(h*G/U10**2)**1.01
+         B2 = 5.21d-4*(xfetch*G/U10**2)**0.73
+         Hwav = 0.17*U10**2/G*(tanh(A1)*tanh(B1/tanh(A1)))**0.87
+         Twav = 7.518*U10/G*(tanh(A2)*tanh(B2/tanh(A2)))**0.37
+      else
+         Hwav = 0.0
+         Twav = 2.0
+      end if
+   end subroutine   
 
    !------------------------------------------------------------------------------
    !
