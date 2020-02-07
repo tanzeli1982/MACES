@@ -337,7 +337,7 @@ contains
             tau_wave = 0.5*fwave*Roul*Uwav(ii)**1.48
             ! combined shear stress
             tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
-            tau(ii) = max(tau(ii), tau_curr+tau_wave)
+            tau(ii) = tau(ii) + tau_wave
          else
             tau(ii) = 0.0d0
          end if
