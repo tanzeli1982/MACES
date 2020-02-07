@@ -411,10 +411,10 @@ contains
          coefs = (/Twav, h/)
          call NonLRBrents(WaveNumberEQ, coefs, xbounds, xtol, &
                            ytol, kwav, err)
-         !if (err==1) then
-         !   write(msg, "(F8.4, F8.4)") Twav, h
-         !   print *, "Wave number isn't available: " // trim(msg)
-         !end if
+         if (err==1) then
+            write(msg, "(F8.4, F8.4)") Twav, h
+            print *, "Wave number isn't available: " // trim(msg)
+         end if
       else
          kwav = INFNT
       end if
