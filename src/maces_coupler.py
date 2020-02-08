@@ -43,6 +43,7 @@ def run_tai_maces(input_data, models, spinup):
     
     # input settings
     x = input_data['coord']['x']
+    xfetch = input_data['coord']['xfetch']
     #site_dx = input_data['coord']['dx']
     pft = input_data['state']['pft']
     zh = input_data['state']['zh']

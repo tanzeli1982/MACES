@@ -273,13 +273,15 @@ contains
    !          transport are taken to zero (linearly interpolated to zero)??
    !
    !------------------------------------------------------------------------------
-   subroutine ModelCallback(isTimeNode)
+   subroutine ModelCallback(isTimeNode, xfetch)
       implicit none
       !f2py logical, intent(in) :: isTimeNode
+      !f2py real(kind=8), intent(in) :: xfetch
       logical :: isTimeNode
+      real(kind=8) :: xfetch  ! units: km
       ! local variables
       real(kind=8) :: sigma, h, kwav
-      real(kind=8) :: xfetch, Twav
+      real(kind=8) :: Twav
       integer :: ii, n, m
       
       n = size(m_uhydro,1)
@@ -314,9 +316,8 @@ contains
          else
             m_U(ii) = m_uhydro(ii,2) / max(0.1,h)
             m_Cs(ii,:) = m_uhydro(ii,4:m) / max(0.1,h)
-            xfetch = 113.059584d3
-            call UpdateSgnftWaveHeight2(frc_U10, xfetch, max(0.1,h), &
-                     m_Hwav(ii), Twav)
+            call UpdateSgnftWaveHeight2(frc_U10, 1d3*xfetch, &
+               max(0.1,h), m_Hwav(ii), Twav)
             call UpdateWaveNumber(Twav, max(0.1,h), kwav)
             !m_Hwav(ii) = fctr_wave(ii) * sqrt(8.0*m_Ewav(ii)/G/Roul)
             !m_Hwav(ii) = sqrt(8.0*m_Ewav(ii)/G/Roul)
