@@ -273,12 +273,12 @@ contains
    !          transport are taken to zero (linearly interpolated to zero)??
    !
    !------------------------------------------------------------------------------
-   subroutine ModelCallback(isTimeNode, xfetch)
+   subroutine ModelCallback(xfetch, wave_mod)
       implicit none
-      !f2py logical, intent(in) :: isTimeNode
       !f2py real(kind=8), intent(in) :: xfetch
-      logical :: isTimeNode
+      !f2py integer, intent(in) :: wave_mod
       real(kind=8) :: xfetch  ! units: km
+      integer :: wave_mod     ! wave mode
       ! local variables
       real(kind=8) :: sigma, h, kwav
       real(kind=8) :: Twav
@@ -296,37 +296,51 @@ contains
       do ii = 3, m, 1
          where (m_uhydro(:,ii)<0) m_uhydro(:,ii) = 0.0
       end do
-      
-      ! update wave dynamics
-      !if (isTimeNode) then
-      !   call UpdateWaveNumber(frc_Twav, m_uhydro(:,1), m_kwav)
-      !   call UpdateSgnftWaveHeight(frc_Twav, frc_U10, m_uhydro(:,1), &
-      !                              m_kwav, m_Ewav)
-      !end if
 
       do ii = 1, n, 1
          h = m_uhydro(ii,1)
-         !kwav = m_kwav(ii)
          if (h<=TOL_REL) then
             m_uhydro(ii,2:m) = 0.0
             m_U(ii) = 0.0
             m_Cs(ii,:) = 0.0
-            m_Hwav(ii) = 0.0
-            m_Uwav(ii) = 0.0
          else
             m_U(ii) = m_uhydro(ii,2) / max(0.1,h)
             m_Cs(ii,:) = m_uhydro(ii,4:m) / max(0.1,h)
-            call UpdateSgnftWaveHeight2(frc_U10, 1d3*xfetch, &
-               max(0.1,h), m_Hwav(ii), Twav)
-            call UpdateWaveNumber(Twav, max(0.1,h), kwav)
-            !m_Hwav(ii) = fctr_wave(ii) * sqrt(8.0*m_Ewav(ii)/G/Roul)
-            !m_Hwav(ii) = sqrt(8.0*m_Ewav(ii)/G/Roul)
-            !m_Uwav(ii) = PI*m_Hwav(ii)/frc_Twav/sinh(kwav*max(0.1,h))
-            m_Uwav(ii) = PI*m_Hwav(ii)/Twav/sinh(kwav*max(0.1,h))
          end if 
       end do
 
-      !if (isTimeNode) then
+      ! update wave dynamics
+      if (wave_mod==EQM_WAVE) then
+         do ii = 1, n, 1
+            h = m_uhydro(ii,1)
+            if (h<=TOL_REL) then
+               m_Hwav(ii) = 0.0
+               m_Uwav(ii) = 0.0
+            else
+               call UpdateSgnftWaveHeight2(frc_U10, 1d3*xfetch, &
+                  h, m_Hwav(ii), Twav)
+               Twav = max(0.2, Twav)
+               call UpdateWaveNumber(Twav, h, kwav)
+               m_kwav(ii) = kwav
+               m_Uwav(ii) = PI*m_Hwav(ii)/Twav/sinh(kwav*max(0.1,h))
+            end if
+         end do
+      else
+         call UpdateWaveNumber(frc_Twav, m_uhydro(:,1), m_kwav)
+         call UpdateSgnftWaveHeight(frc_Twav, frc_U10, m_uhydro(:,1), &
+                                    m_kwav, m_Ewav)
+         do ii = 1, n, 1
+            h = m_uhydro(ii,1)
+            kwav = m_kwav(ii)
+            if (h<=TOL_REL) then
+               m_Hwav(ii) = 0.0
+               m_Uwav(ii) = 0.0
+            else
+               !m_Hwav(ii) = fctr_wave(ii) * sqrt(8.0*m_Ewav(ii)/G/Roul)
+               m_Hwav(ii) = sqrt(8.0*m_Ewav(ii)/G/Roul)
+               m_Uwav(ii) = PI*m_Hwav(ii)/frc_Twav/sinh(kwav*max(0.1,h))
+            end if
+         end do
          !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_Qb)
          !call UpdateWaveBrkProb2(m_uhydro(:,1), m_Hwav, m_Qb)
          !call UpdateWaveGeneration(frc_Twav, frc_U10, m_uhydro(:,1), &
@@ -336,18 +350,16 @@ contains
          !call UpdateWaveWhiteCapping(frc_Twav, m_Ewav, m_Swc)
          !call UpdateWaveDepthBrking(frc_Twav, frc_U10, m_uhydro(:,1), &
          !                           m_Hwav, m_kwav, m_Ewav, m_Qb, m_Sbrk)
-         call UpdateShearStress(frc_Twav, m_uhydro(:,1), m_U, m_Hwav, &
-                                m_Uwav, m_tau)
-
-         sim_Hwav = m_Hwav
-         sim_Uwav = m_Uwav
-         sim_tau = m_tau
-      !end if
+      end if
+      call UpdateShearStress(frc_Twav, m_uhydro(:,1), m_U, m_Uwav, m_tau)
 
       sim_h = m_uhydro(:,1)
       sim_U = m_U
       sim_Css = m_Cs(:,Wss)
       sim_Cj = m_Cs(:,Wsal)
+      sim_Hwav = m_Hwav
+      sim_Uwav = m_Uwav
+      sim_tau = m_tau
    end subroutine
 
    !------------------------------------------------------------------------------

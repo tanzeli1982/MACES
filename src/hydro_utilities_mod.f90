@@ -28,6 +28,11 @@ module hydro_utilities_mod
    real(kind=8), parameter :: Karman = 0.41
    real(kind=8), parameter :: G = 9.8
 
+   interface UpdateWaveNumber
+      module procedure UpdateWaveNumber4Sgl
+      module procedure UpdateWaveNumber4Arr
+   end interface
+
 contains
    subroutine Norm(matrix, dir, values)
       implicit none
@@ -177,6 +182,49 @@ contains
 
    !------------------------------------------------------------------------------
    !
+   ! Purpose: Solve non-linear equation using the Newton Downhill method.
+   !
+   !------------------------------------------------------------------------------
+   subroutine NonLRNewtonDownhill(NonLREQ, NonLREQDr, coefs, xtol, root, err)
+      implicit none
+      external :: NonLREQ, NonLREQDr
+      real(kind=8), intent(in) :: coefs(:)
+      real(kind=8), intent(in) :: xtol
+      real(kind=8), intent(inout) :: root
+      integer, intent(out) :: err
+      real(kind=8) :: xk, yk, dyk
+      real(kind=8) :: xk2, yk2, dx
+      real(kind=8) :: lamda
+      integer :: iter
+      
+      err = 0
+      iter = 0
+      xk = root
+      dx = 2.0 * xtol
+      do while (dx>xtol)
+         if (iter>MAXITER) then
+            err = 1
+            return
+         end if
+         lamda = 1.0
+         call NonLREQ(xk, coefs, yk)
+         call NonLREQDr(xk, coefs, dyk)
+         xk2 = xk - lamda*yk/dyk
+         call NonLREQ(xk2, coefs, yk2)
+         do while (abs(yk2)>=abs(yk))
+            lamda = 0.5 * lamda
+            xk2 = xk - lamda*yk/dyk
+            call NonLREQ(xk2, coefs, yk2)
+         end do
+         dx = abs(xk2-xk)
+         xk = xk2
+         iter = iter + 1
+      end do
+      root = xk2
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
    ! Purpose: Slope limiter for the 1D Finite Volume Semi-discrete Kurganov and
    !          Tadmor (KT) central scheme.
    !
@@ -314,12 +362,11 @@ contains
       end do
    end subroutine
 
-   subroutine UpdateShearStress(Twav, h, U, Hwav, Uwav, tau)
+   subroutine UpdateShearStress(Twav, h, U, Uwav, tau)
       implicit none
       real(kind=8), intent(in) :: Twav
       real(kind=8), intent(in) :: h(:)
       real(kind=8), intent(in) :: U(:)
-      real(kind=8), intent(in) :: Hwav(:)
       real(kind=8), intent(in) :: Uwav(:)
       real(kind=8), intent(out) :: tau(:)
       real(kind=8) :: fcurr, fwave
@@ -336,8 +383,12 @@ contains
             fwave = 1.39*(6.0*Twav/PI/par_d50)**(-0.52)
             tau_wave = 0.5*fwave*Roul*Uwav(ii)**1.48
             ! combined shear stress
-            tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
-            tau(ii) = tau(ii) + tau_wave
+            if (tau_curr<TOL_REL .and. tau_wave<TOL_REL) then
+               tau(ii) = 0.0d0
+            else
+               tau(ii) = tau_wave + tau_curr * (1.0 + 1.2* &
+                  (tau_wave/(tau_curr+tau_wave))**3.2)
+            end if
          else
             tau(ii) = 0.0d0
          end if
@@ -377,7 +428,6 @@ contains
    !------------------------------------------------------------------------------
    !
    ! Purpose: Calculate wave number.
-   !          UpdateWaveNumber2() is much more efficient but less accurate.
    !
    !------------------------------------------------------------------------------
    subroutine WaveNumberEQ(kwav, coefs, fval)
@@ -393,24 +443,37 @@ contains
       fval = sqrt(G*kwav*tanh(kwav*h)) - sigma
    end subroutine
 
-   subroutine UpdateWaveNumber(Twav, h, kwav)
+   subroutine WaveNumberEQDr(kwav, coefs, fval)
+      implicit none
+      real(kind=8), intent(in) :: kwav
+      real(kind=8), intent(in) :: coefs(2)
+      real(kind=8), intent(out) :: fval
+      real(kind=8) :: T, h
+
+      T = coefs(1)
+      h = coefs(2)
+      fval = 0.5*(G*tanh(kwav*h)+G*kwav*h/(cosh(kwav*h))**2)/ &
+         sqrt(G*kwav*tanh(kwav*h))
+   end subroutine
+
+   subroutine UpdateWaveNumber4Sgl(Twav, h, kwav)
       implicit none
       real(kind=8), intent(in) :: Twav
       real(kind=8), intent(in) :: h
       real(kind=8), intent(out) :: kwav
       real(kind=8) :: coefs(2), xbounds(2)
-      real(kind=8) :: sigma, xtol, ytol
+      real(kind=8) :: sigma, xtol
       character(len=128) :: msg
       integer :: err
 
       sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
-      xtol = 1d-4
-      ytol = 1d-10
+      xtol = 1d-6
       if (h>TOL_REL) then
          xbounds = (/2.51d-2, 6.2832d0/)
-         coefs = (/Twav, h/)
-         call NonLRBrents(WaveNumberEQ, coefs, xbounds, xtol, &
-                           ytol, kwav, err)
+         coefs = (/Twav, max(0.1,h)/)
+         kwav = 1.0d0
+         call NonLRNewtonDownhill(WaveNumberEQ, WaveNumberEQDr, coefs, &
+            xtol, kwav, err)
          if (err==1) then
             write(msg, "(F8.4, F8.4)") Twav, h
             print *, "Wave number isn't available: " // trim(msg)
@@ -418,6 +481,36 @@ contains
       else
          kwav = INFNT
       end if
+   end subroutine
+
+   subroutine UpdateWaveNumber4Arr(Twav, h, kwav)
+      implicit none
+      real(kind=8), intent(in) :: Twav
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(out) :: kwav(:)
+      real(kind=8) :: coefs(2), xbounds(2)
+      real(kind=8) :: sigma, xtol, ytol
+      character(len=128) :: msg
+      integer :: err, ii, nx
+
+      sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
+      xtol = 1d-6
+      xbounds = (/2.51d-2, 6.2832d0/)
+      nx = size(h)
+      do ii = 1, nx, 1
+         if (h(ii)>TOL_REL) then
+            coefs = (/Twav, max(0.1,h(ii))/)
+            kwav(ii) = 1.0d0
+            call NonLRNewtonDownhill(WaveNumberEQ, WaveNumberEQDr, &
+               coefs, xtol, kwav(ii), err)
+            if (err==1) then
+               write(msg, "(F8.4, F8.4)") Twav, h(ii)
+               print *, "Wave number isn't available: " // trim(msg)
+            end if
+         else
+            kwav(ii) = INFNT
+         end if
+      end do
    end subroutine
 
    !------------------------------------------------------------------------------

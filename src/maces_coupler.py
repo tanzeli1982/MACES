@@ -74,6 +74,7 @@ def run_tai_maces(input_data, models, spinup):
     rhoSed = mac_mod.m_params['rhoSed']
     porSed = mac_mod.m_params['porSed']
     rhoOM = omac_mod.m_params['rhoOM']
+    wave_mod = namelist['WAVE_TYPE']
     
     # output variables
     jdn = utils.get_julian_from_date(date0.year, date0.month, date0.day)
@@ -125,11 +126,9 @@ def run_tai_maces(input_data, models, spinup):
     nextstep = MAX_OF_STEP
     hydro_indx = -1
     ecogeom_indx = -1
-    isTimeNode = False
     while t <= tf:
         if t>=3.6e3*(hindx+1) and hindx+1<=nhour:
             hindx = hindx + 1
-            isTimeNode = True
             if verbose and spinup:
                 print('spinup time step', int(hindx))
                 sys.stdout.flush()
@@ -169,7 +168,7 @@ def run_tai_maces(input_data, models, spinup):
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
                                                      dyncheck, curstep)
         assert error==0, "runge-Kutta iteration is more than MAXITER"
-        taihydro.modelcallback(isTimeNode)
+        taihydro.modelcallback(xfetch, wave_mod)
         assert np.all(np.isfinite(taihydro.sim_h)), "NaN h found"
         assert np.all(np.isfinite(taihydro.sim_u)), "NaN U found"
         assert np.all(np.isfinite(taihydro.sim_uwav)), "NaN Uwav found"
@@ -179,7 +178,6 @@ def run_tai_maces(input_data, models, spinup):
         assert np.all(np.isfinite(taihydro.sim_cj)), "NaN Cj found"
         dtau = taihydro.sim_tau - tau_old
         tau_old[:] = taihydro.sim_tau
-        isTimeNode = False
         
         # simulate mineral accretion
         mac_inputs = {'x': x, 'xref': xref, 'pft': pft, 'zh': zh, 

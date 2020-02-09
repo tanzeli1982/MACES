@@ -45,7 +45,7 @@ fig, ax = plt.subplots(figsize=(7.5,9.5))
 
 plt.style.use('default')
 
-cf = ax.contourf(xv, tt, tau, np.linspace(0,1.5,11), cmap='hot_r')
+cf = ax.contourf(xv, tt, tau, 10, cmap='hot_r')
 ax.plot([0,0], [tt[-1],tt[0]], color='black', ls='--', lw=1, 
         alpha=0.8)
 ax.set_xlim([xv[0], xv[-1]])
@@ -61,8 +61,7 @@ ax.set_ylabel('Time (hours)', fontsize=12,
               fontname='Times New Roman', color='black')
 ax.tick_params(which='major', direction='in', length=6)
 ax.tick_params(which='minor', direction='in', length=2)
-cbar = fig.colorbar(cf, ax=ax, orientation='horizontal', pad=0.07, 
-                    ticks=np.linspace(0,1.5,11))
+cbar = fig.colorbar(cf, ax=ax, orientation='horizontal', pad=0.07)
 ylabel = 'Bottom shear stress ($\mathregular{Pa}$)'
 cbar.set_label(ylabel, fontsize=12, fontname='Times New Roman', 
                labelpad=0)

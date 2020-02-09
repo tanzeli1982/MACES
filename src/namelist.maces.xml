@@ -5,6 +5,17 @@
    during a run.
    </header>
    <group id="models">
+      <entry id="WAVE_TYPE" value="1">
+         <type>integer</type>
+         <valid_values>
+         1,2
+         </valid_values>
+         <desc>
+         Determine which algorithm is used to calculate wave propagation.
+         1: Equilibrium.
+         2: Transient.
+         </desc>
+      </entry>
       <entry id="MINAC_TYPE" value="F06MOD">
          <type>char</type>
          <valid_values>

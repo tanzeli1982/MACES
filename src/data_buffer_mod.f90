@@ -9,6 +9,7 @@ module data_buffer_mod
    public
 
    integer, parameter :: Wss = 1, Wsal = 2
+   integer, parameter :: EQM_WAVE = 1, TSNT_WAVE = 2
 
    !! allocatable arrays for Hydrodynamic model
    ! hydrodynamic state variables [h, U*h, Css, Cj]
