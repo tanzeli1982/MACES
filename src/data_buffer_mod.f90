@@ -9,9 +9,10 @@ module data_buffer_mod
    public
 
    integer, parameter :: Wss = 1, Wsal = 2
+   integer, parameter :: EQM_WAVE = 1, TSNT_WAVE = 2
 
    !! allocatable arrays for Hydrodynamic model
-   ! hydrodynamic state variables [h, U*h, N, Css, Cj]
+   ! hydrodynamic state variables [h, U*h, Css, Cj]
    real(kind=8), allocatable, dimension(:,:) :: m_uhydro
    ! platform coordinate and elevation (m) 
    real(kind=8), allocatable, dimension(:)   :: m_X
@@ -34,8 +35,6 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: m_Sbf
    real(kind=8), allocatable, dimension(:)   :: m_Swc
    real(kind=8), allocatable, dimension(:)   :: m_Sbrk
-   real(kind=8), allocatable, dimension(:)   :: m_Cg
-   real(kind=8), allocatable, dimension(:)   :: m_Nmax
    ! sediment and constituents
    real(kind=8), allocatable, dimension(:,:) :: m_Cs
    ! temporary variables
@@ -52,12 +51,12 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: tmp_aR
    real(kind=8), allocatable, dimension(:)   :: tmp_U
    real(kind=8), allocatable, dimension(:)   :: tmp_B
-   real(kind=8), allocatable, dimension(:)   :: tmp_Qb
    ! forcing variables
    real(kind=8), allocatable, dimension(:,:) :: Cs_source
    real(kind=8), allocatable, dimension(:,:) :: Cs_sink
-   real(kind=8) :: force_Twav
-   real(kind=8) :: force_U10
+   real(kind=8), allocatable, dimension(:)   :: fctr_wave
+   real(kind=8) :: frc_Twav
+   real(kind=8) :: frc_U10
    ! parameter variables
    real(kind=8), allocatable, dimension(:)   :: par_alphaA
    real(kind=8), allocatable, dimension(:)   :: par_betaA
@@ -69,6 +68,7 @@ module data_buffer_mod
    real(kind=8) :: par_Cz0
    real(kind=8) :: par_Kdf
    real(kind=8) :: par_cbc
+   real(kind=8) :: par_cwc
    real(kind=8) :: par_fr
    ! rungekutta temporary arrays
    real(kind=8), allocatable, dimension(:,:) :: rk4_K1(:,:)

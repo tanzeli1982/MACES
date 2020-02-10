@@ -5,6 +5,17 @@
    during a run.
    </header>
    <group id="models">
+      <entry id="WAVE_TYPE" value="2">
+         <type>integer</type>
+         <valid_values>
+         1,2
+         </valid_values>
+         <desc>
+         Determine which algorithm is used to calculate wave propagation.
+         1: Equilibrium.
+         2: Transient.
+         </desc>
+      </entry>
       <entry id="MINAC_TYPE" value="F06MOD">
          <type>char</type>
          <valid_values>
@@ -60,7 +71,7 @@
          <type>char</type>
          <desc>Run start date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
-      <entry id="RUN_STOPDATE" value="2100-01-01">
+      <entry id="RUN_STOPDATE" value="2001-01-06">
          <type>char</type>
          <desc>Run stop date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
@@ -75,7 +86,7 @@
       </entry>
    </group>
    <group id="run_control">
-      <entry id="RUNROOT" value="/qfs/projects/taim/TAIMOD/run/$CASE/src">
+      <entry id="RUNROOT" value="/Users/tanz151/Python_maces/src">
          <type>char</type>
          <desc>Simulation root directory</desc>
       </entry>
@@ -107,7 +118,7 @@
          <type>integer</type>
          <desc>First site index of the run</desc>
       </entry>
-      <entry id="LAST_ID" value="1">
+      <entry id="LAST_ID" value="3">
          <type>integer</type>
          <desc>Last site index of the run</desc>
       </entry>
@@ -124,7 +135,6 @@
          <values>
             <value variable="h">1e-3</value>
             <value variable="hU">1e-4</value>
-            <value variable="N">1e-6</value>
             <value variable="Css">1e-5</value>
             <value variable="Cj">1e-3</value>
          </values>
@@ -136,20 +146,19 @@
          <values>
             <value variable="h">TRUE</value>
             <value variable="hU">FALSE</value>
-            <value variable="N">TRUE</value>
             <value variable="Css">TRUE</value>
             <value variable="Cj">TRUE</value>
          </values>
          <desc>Check negative hydrodynamic state variable</desc>
       </entry>
-      <entry id="Verbose" value="FALSE">
+      <entry id="Verbose" value="TRUE">
          <type>logical</type>
          <valid_values>TRUE,FALSE</valid_values>
          <desc>Set whether verbose model running status</desc>
       </entry>
    </group>
    <group id="run_inputs">
-      <entry id="DIN_ROOT" value="/qfs/projects/taim/TAIMOD/Data">
+      <entry id="DIN_ROOT" value="/Users/tanz151/Downloads">
          <type>char</type>
          <desc>Input data root directory</desc>
       </entry>
@@ -211,7 +220,7 @@
          <type>char</type>
          <desc>Path of hydrodynamic output file</desc>
       </entry>
-      <entry id="HYDRO_TSTEP" value="null">
+      <entry id="HYDRO_TSTEP" value="hour">
          <type>char</type>
          <valid_values>null,hour,minute</valid_values>
          <desc>
@@ -223,7 +232,7 @@
          <type>char</type>
          <desc>Path of ecogeomorphology output file</desc>
       </entry>
-      <entry id="ECOGEOM_TSTEP" value="month">
+      <entry id="ECOGEOM_TSTEP" value="day">
          <type>char</type>
          <valid_values>day,month,year,decade,century</valid_values>
          <desc>Time step of ecogeomorphology outputs</desc>

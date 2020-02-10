@@ -15,13 +15,17 @@
       <type>real</type>
       <desc>the dispersion coefficient of constituents</desc>
    </entry>
-   <entry id="cbc" value="0.015" units="none">
+   <entry id="cbc" value="1.5e-6" units="none">
       <type>real</type>
-      <desc>bottom friction coefficient for wave</desc>
+      <desc>wave bottom friction coefficient</desc>
    </entry>
    <entry id="fr" value="0.78" units="none">
       <type>real</type>
       <desc>the ratio of the maximum wave height to water depth</desc>
+   </entry>
+   <entry id="cwc" value="3.33e-9" units="none">
+      <type>real</type>
+      <desc>wave white capping coefficient</desc>
    </entry>
   	<entry id="alphaA" units="none">
    	<type>real</type>

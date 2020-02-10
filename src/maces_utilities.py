@@ -142,9 +142,8 @@ def get_refshore_coordinate(x, zh):
         zh : platform surface elevation (msl)
     Returns : the coordinate of shore at msl (km)
     """
-    indx = np.nonzero(zh==0)[0]
-    assert len(indx)==1, "Shore node does not exist in DIVA segments"
-    return 1e-3 * x[indx[0]]
+    indx = np.argmin(np.abs(zh))
+    return 1e-3 * x[indx]
 
 def get_platform_slope(x, zh):
     """Get the platform slope.
@@ -529,6 +528,11 @@ def write_hydro_outputs(filename, all_ids, sids, tstep, uhydro_out,
             Hwav_var.long_name = r'significant wave height'
             Hwav_var.units = 'm'
             Hwav_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
+            Uwav_var = nc.createVariable('Uwav', 'f4', ('site','time','x',), 
+                                         fill_value=1e20)
+            Uwav_var.long_name = r'wave velocity'
+            Uwav_var.units = 'm/s'
+            Uwav_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)            
             tau_var = nc.createVariable('tau', 'f4', ('site','time','x',), 
                                         fill_value=1e20)
             tau_var.long_name = r'bottom shear stress'
@@ -558,6 +562,8 @@ def write_hydro_outputs(filename, all_ids, sids, tstep, uhydro_out,
             U_var[iid] = uhydro_out['U'][ii]
             Hwav_var = nc.variables['Hwav']
             Hwav_var[iid] = uhydro_out['Hwav'][ii]
+            Uwav_var = nc.variables['Uwav']
+            Uwav_var[iid] = uhydro_out['Uwav'][ii]
             tau_var = nc.variables['tau']
             tau_var[iid] = uhydro_out['tau'][ii]
             Css_var = nc.variables['TSM']

@@ -47,19 +47,17 @@ contains
       allocate(m_dZh(nx))              ; m_dZh = 0.0d0
       allocate(m_U(nx))                ; m_U = 0.0d0
       allocate(m_Hwav(nx))             ; m_Hwav = 0.0d0
-      allocate(m_kwav(nx))             ; m_kwav = 0.0d0
+      allocate(m_kwav(nx))             ; m_kwav = INFNT
       allocate(m_Ewav(nx))             ; m_Ewav = 0.0d0
       allocate(m_Uwav(nx))             ; m_Uwav = 0.0d0
-      allocate(m_tau(nx))              ; m_tau = 0.0d0
       allocate(m_Qb(nx))               ; m_Qb = 0.0d0
+      allocate(m_tau(nx))              ; m_tau = 0.0d0
       allocate(m_Swg(nx))              ; m_Swg = 0.0d0
       allocate(m_Sbf(nx))              ; m_Sbf = 0.0d0
       allocate(m_Swc(nx))              ; m_Swc = 0.0d0
       allocate(m_Sbrk(nx))             ; m_Sbrk = 0.0d0
       allocate(m_Cz(nx))               ; m_Cz = 0.0d0
-      allocate(m_Cg(nx))               ; m_Cg = 0.0d0
-      allocate(m_Nmax(nx))             ; m_Nmax = 0.0d0
-      allocate(m_Cs(nx,nvar-3))        ; m_Cs = 0.0d0
+      allocate(m_Cs(nx,nvar-2))        ; m_Cs = 0.0d0
       ! hydrodynamics temporary allocatable arrays
       allocate(tmp_uhydro(nx,nvar))    ; tmp_uhydro = 0.0d0
       allocate(tmp_uhydroL(nx,nvar))   ; tmp_uhydroL = 0.0d0
@@ -74,7 +72,6 @@ contains
       allocate(tmp_aR(nx))             ; tmp_aR = 0.0d0
       allocate(tmp_U(nx))              ; tmp_U = 0.0d0
       allocate(tmp_B(nx))              ; tmp_B = 0.0d0
-      allocate(tmp_Qb(101))            ; tmp_Qb = 0.0d0
       ! output variables
       allocate(sim_h(nx))              ; sim_h = 0.0d0
       allocate(sim_U(nx))              ; sim_U = 0.0d0
@@ -84,8 +81,9 @@ contains
       allocate(sim_Css(nx))            ; sim_Css = 0.0d0
       allocate(sim_Cj(nx))             ; sim_Cj = 0.0d0
       ! sources and sinks
-      allocate(Cs_source(nx,nvar-3))   ; Cs_source = 0.0d0
-      allocate(Cs_sink(nx,nvar-3))     ; Cs_sink = 0.0d0
+      allocate(Cs_source(nx,nvar-2))   ; Cs_source = 0.0d0
+      allocate(Cs_sink(nx,nvar-2))     ; Cs_sink = 0.0d0
+      allocate(fctr_wave(nx))          ; fctr_wave = 1.0d0
       ! user-defined allocatable arrays
       allocate(rk4_K1(nx,nvar))        ; rk4_K1 = 0.0d0
       allocate(rk4_K2(nx,nvar))        ; rk4_K2 = 0.0d0
@@ -114,18 +112,6 @@ contains
          end if
          m_uhydro(ii,1) = max(-m_Zh(ii), 0.0)
       end do
-      tmp_Qb = (/0.0,0.4637,0.5005,0.5260,0.5461,0.5631,0.5780,0.5914, &
-         0.6035,0.6147,0.6252,0.6350,0.6442,0.6530,0.6614,0.6694,0.6770, &
-         0.6844,0.6915,0.6984,0.7050,0.7115,0.7177,0.7238,0.7298,0.7355, &
-         0.7412,0.7467,0.7521,0.7573,0.7625,0.7676,0.7725,0.7774,0.7822, &
-         0.7869,0.7915,0.7960,0.8005,0.8049,0.8092,0.8135,0.8177,0.8218, &
-         0.8259,0.8299,0.8339,0.8378,0.8417,0.8455,0.8493,0.8531,0.8568, &
-         0.8604,0.8640,0.8676,0.8711,0.8746,0.8781,0.8815,0.8849,0.8883, &
-         0.8916,0.8949,0.8981,0.9014,0.9046,0.9078,0.9109,0.9140,0.9171, &
-         0.9202,0.9232,0.9262,0.9292,0.9322,0.9352,0.9381,0.9410,0.9439, &
-         0.9467,0.9496,0.9524,0.9552,0.9580,0.9607,0.9635,0.9662,0.9689, &
-         0.9716,0.9742,0.9769,0.9795,0.9821,0.9847,0.9873,0.9899,0.9924, &
-         0.9950,0.9975,1.0/)
    end subroutine
 
    subroutine FinalizeHydroMod()
@@ -142,15 +128,13 @@ contains
       deallocate(m_kwav)
       deallocate(m_Ewav)
       deallocate(m_Uwav)
-      deallocate(m_tau)
       deallocate(m_Qb)
+      deallocate(m_tau)
       deallocate(m_Swg)
       deallocate(m_Sbf)
       deallocate(m_Swc)
       deallocate(m_Sbrk)
       deallocate(m_Cz)
-      deallocate(m_Cg)
-      deallocate(m_Nmax)
       deallocate(m_Cs)
       ! deallocate hydrodynamics temporary arrays
       deallocate(tmp_uhydro)
@@ -166,7 +150,6 @@ contains
       deallocate(tmp_aR)
       deallocate(tmp_U)
       deallocate(tmp_B)
-      deallocate(tmp_Qb)
       deallocate(sim_h)
       deallocate(sim_U)
       deallocate(sim_Hwav)
@@ -176,6 +159,7 @@ contains
       deallocate(sim_Cj)
       deallocate(Cs_source)
       deallocate(Cs_sink)
+      deallocate(fctr_wave)
       ! deallocate user-defined arrays
       deallocate(rk4_K1)
       deallocate(rk4_K2)
@@ -200,14 +184,14 @@ contains
    ! Purpose: Set model parameters.
    !
    !------------------------------------------------------------------------------
-   subroutine SetModelParams(d50, Cz0, Kdf, cbc, fr, alphaA, betaA, &
+   subroutine SetModelParams(d50, Cz0, Kdf, cbc, cwc, fr, alphaA, betaA, &
                              alphaD, betaD, cD0, ScD, n)
       implicit none
-      !f2py real(kind=8), intent(in) :: d50, Cz0, Kdf, cbc, fr
+      !f2py real(kind=8), intent(in) :: d50, Cz0, Kdf, cbc, cwc, fr
       !f2py real(kind=8), intent(in) :: alphaA, betaA, alphaD, betaD
       !f2py real(kind=8), intent(in) :: cD0, ScD
       !f2py integer, intent(hide), depend(alphaA) :: n = len(alphaA)
-      real(kind=8) :: d50, Cz0, Kdf, cbc, fr
+      real(kind=8) :: d50, Cz0, Kdf, cbc, cwc, fr
       real(kind=8), dimension(n) :: alphaA, betaA
       real(kind=8), dimension(n) :: alphaD, betaD
       real(kind=8), dimension(n) :: cD0, ScD
@@ -217,6 +201,7 @@ contains
       par_Cz0 = Cz0
       par_Kdf = Kdf
       par_cbc = cbc
+      par_cwc = cwc
       par_fr = fr
       par_alphaA = alphaA
       par_betaA = betaA
@@ -232,32 +217,33 @@ contains
    !          conditions.
    !
    !------------------------------------------------------------------------------
-   subroutine ModelSetup(sources, sinks, zh, pft, Bag, Twav, U10, h0, & 
-                         U0, Hwav0, Cs0, n, m)
+   subroutine ModelSetup(sources, sinks, zh, pft, Bag, xref, Twav, &
+                         h0, U0, U10, Cs0, n, m)
       implicit none
       !f2py real(kind=8), intent(in) :: sources, sinks
-      !f2py real(kind=8), intent(in) :: zh, Bag, Esed, Dsed
+      !f2py real(kind=8), intent(in) :: zh, Bag
       !f2py integer, intent(in) :: pft
-      !f2py real(kind=8), intent(in) :: Twav, U10, h0, U0, Hwav0
-      !f2py real(kind=8), intent(in) :: Cs0
+      !f2py real(kind=8), intent(in) :: xref
+      !f2py real(kind=8), intent(in) :: Twav, h0, U0, U10
+      !f2py real(kind=8), intent(in) :: U10, Cs0
       !f2py integer, intent(hide), depend(sources) :: n = shape(sources,0)
       !f2py integer, intent(hide), depend(sources) :: m = shape(sources,1)
       real(kind=8), dimension(n,m) :: sources, sinks
       real(kind=8), dimension(n) :: zh, Bag
       integer, dimension(n) :: pft
-      real(kind=8) :: Twav, U10, h0, U0, Hwav0
+      real(kind=8) :: xref
+      real(kind=8) :: Twav, h0, U0, U10
       real(kind=8) :: Cs0(m)
       integer :: n, m
       ! local variables
-      real(kind=8) :: sigma, Nwav
       integer :: ii
 
       Cs_source = sources
       Cs_sink = sinks
       ! a typical wave period is 2s but increase greatly with the increase
       ! of wave speed (https://en.wikipedia.org/wiki/Wind_wave)
-      force_Twav = Twav
-      force_U10 = U10
+      frc_Twav = Twav
+      frc_U10 = U10
 
       m_Zh = zh
       do ii = 1, n, 1
@@ -269,40 +255,14 @@ contains
             m_dZh(ii) = 0.5 * (m_Zh(ii+1) - m_Zh(ii-1))
          end if
       end do
-
+      call CalcWaveReductionByVeg(m_X, m_dX, Bag, xref, fctr_wave)
       call UpdateGroundRoughness(pft, Bag, m_uhydro(:,1), m_Cz)
-      !call UpdateWaveNumber(Twav, m_uhydro(:,1), m_kwav)
-      call UpdateWaveNumber2(Twav, m_uhydro(:,1), m_kwav)
-      !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_Qb)
-      call UpdateWaveBrkProb2(m_uhydro(:,1), m_Hwav, tmp_Qb, m_Qb)
-      call UpdateWaveGeneration(Twav, U10, m_uhydro(:,1), m_kwav, m_Ewav, m_Swg)
-      call UpdateWaveBtmFriction(Twav, m_uhydro(:,1), m_Hwav, &
-                                 m_kwav, m_Ewav, m_Qb, m_Sbf)
-      call UpdateWaveWhiteCapping(Twav, m_Ewav, m_Swc)
-      call UpdateWaveDepthBrking(Twav, U10, m_uhydro(:,1), m_Hwav, &
-                                 m_kwav, m_Ewav, m_Qb, m_Sbrk)
 
-      sigma = 2.0*PI/Twav
-      do ii = 1, n, 1
-         if (m_uhydro(ii,1)>TOL_REL .and. m_kwav(ii)>TOL_REL) then
-            m_Cg(ii) = 0.5*sigma*(1.0+2.0*m_kwav(ii)*m_uhydro(ii,1)/ &
-               sinh(2.0*m_kwav(ii)*m_uhydro(ii,1)))/m_kwav(ii)
-         else
-            m_Cg(ii) = 0.0
-         end if
-         if (m_uhydro(ii,1)>TOL_REL) then
-            m_Nmax(ii) = 0.125*Roul*G*(par_fr*m_uhydro(ii,1))**2/sigma
-         else
-            m_Nmax(ii) = 0.0
-         end if
-      end do
-      Nwav = 0.125*Roul*G*(Hwav0**2)/sigma
       ! boundary conditions
       m_uhydro(1,1) = h0
       m_uhydro(1,2) = h0*U0
-      m_uhydro(1,3) = Nwav
       do ii = 1, m, 1
-         m_uhydro(1,ii+3) = h0*Cs0(ii)
+         m_uhydro(1,ii+2) = h0*Cs0(ii)
       end do
    end subroutine
 
@@ -313,52 +273,93 @@ contains
    !          transport are taken to zero (linearly interpolated to zero)??
    !
    !------------------------------------------------------------------------------
-   subroutine ModelCallback()
+   subroutine ModelCallback(xfetch, wave_mod)
       implicit none
+      !f2py real(kind=8), intent(in) :: xfetch
+      !f2py integer, intent(in) :: wave_mod
+      real(kind=8) :: xfetch  ! units: km
+      integer :: wave_mod     ! wave mode
       ! local variables
       real(kind=8) :: sigma, h, kwav
+      real(kind=8) :: Twav
       integer :: ii, n, m
       
       n = size(m_uhydro,1)
       m = size(m_uhydro,2)
-      sigma = 2.0*PI/force_Twav
+      sigma = 2.0*PI/frc_Twav
       do ii = 1, n, 1
          if (m_uhydro(ii,1)<=TOL_REL) then
             m_uhydro(ii:n,1) = 0.0
             exit
          end if
       end do
-      where (m_uhydro(:,3)<0) m_uhydro(:,3) = 0.0
-      do ii = 4, m, 1
+      do ii = 3, m, 1
          where (m_uhydro(:,ii)<0) m_uhydro(:,ii) = 0.0
       end do
+
       do ii = 1, n, 1
          h = m_uhydro(ii,1)
-         kwav = m_kwav(ii)
          if (h<=TOL_REL) then
             m_uhydro(ii,2:m) = 0.0
             m_U(ii) = 0.0
             m_Cs(ii,:) = 0.0
-            m_Ewav(ii) = 0.0
-            m_Hwav(ii) = 0.0
-            m_Uwav(ii) = 0.0
          else
             m_U(ii) = m_uhydro(ii,2) / max(0.1,h)
             m_Cs(ii,:) = m_uhydro(ii,4:m) / max(0.1,h)
-            m_Ewav(ii) = sigma * m_uhydro(ii,3)
-            m_Hwav(ii) = sqrt(8.0*m_Ewav(ii)/G/Roul)
-            m_Uwav(ii) = min(PI*m_Hwav(ii)/force_Twav/sinh(kwav*h), 20.0)
          end if 
       end do
-      call UpdateShearStress(force_Twav, m_uhydro(:,1), m_U, m_Hwav, &
-                             m_Uwav, m_tau)
+
+      ! update wave dynamics
+      if (wave_mod==EQM_WAVE) then
+         do ii = 1, n, 1
+            h = m_uhydro(ii,1)
+            if (h<=TOL_REL) then
+               m_Hwav(ii) = 0.0
+               m_Uwav(ii) = 0.0
+            else
+               call UpdateSgnftWaveHeight(frc_U10, 1d3*xfetch, &
+                  h, m_Hwav(ii), Twav)
+               Twav = max(0.2, Twav)
+               call UpdateWaveNumber(Twav, h, kwav)
+               m_kwav(ii) = kwav
+               m_Uwav(ii) = PI*m_Hwav(ii)/Twav/sinh(kwav*max(0.1,h))
+            end if
+         end do
+      else
+         call UpdateWaveNumber(frc_Twav, m_uhydro(:,1), m_kwav)
+         call UpdateSgnftWaveHeight(frc_Twav, frc_U10, m_uhydro(:,1), &
+                                    m_kwav, m_Ewav)
+         do ii = 1, n, 1
+            h = m_uhydro(ii,1)
+            kwav = m_kwav(ii)
+            if (h<=TOL_REL) then
+               m_Hwav(ii) = 0.0
+               m_Uwav(ii) = 0.0
+            else
+               !m_Hwav(ii) = fctr_wave(ii) * sqrt(8.0*m_Ewav(ii)/G/Roul)
+               m_Hwav(ii) = sqrt(8.0*m_Ewav(ii)/G/Roul)
+               m_Uwav(ii) = PI*m_Hwav(ii)/frc_Twav/sinh(kwav*max(0.1,h))
+            end if
+         end do
+         !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_Qb)
+         !call UpdateWaveBrkProb2(m_uhydro(:,1), m_Hwav, m_Qb)
+         !call UpdateWaveGeneration(frc_Twav, frc_U10, m_uhydro(:,1), &
+         !                          m_kwav, m_Ewav, m_Swg)
+         !call UpdateWaveBtmFriction(frc_Twav, m_uhydro(:,1), m_Hwav, &
+         !                           m_kwav, m_Ewav, m_Qb, m_Sbf)
+         !call UpdateWaveWhiteCapping(frc_Twav, m_Ewav, m_Swc)
+         !call UpdateWaveDepthBrking(frc_Twav, frc_U10, m_uhydro(:,1), &
+         !                           m_Hwav, m_kwav, m_Ewav, m_Qb, m_Sbrk)
+      end if
+      call UpdateShearStress(frc_Twav, m_uhydro(:,1), m_U, m_Uwav, m_tau)
+
       sim_h = m_uhydro(:,1)
       sim_U = m_U
+      sim_Css = m_Cs(:,Wss)
+      sim_Cj = m_Cs(:,Wsal)
       sim_Hwav = m_Hwav
       sim_Uwav = m_Uwav
       sim_tau = m_tau
-      sim_Css = m_Cs(:,Wss)
-      sim_Cj = m_Cs(:,Wsal)
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -408,7 +409,7 @@ contains
       real(kind=8) :: sigma, U
       integer :: ii
 
-      sigma = 2.0*PI/force_Twav
+      sigma = 2.0*PI/frc_Twav
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             U = uhydro(ii,2) / max(0.1,uhydro(ii,1))
@@ -417,8 +418,7 @@ contains
          end if
          fluxes(ii,1) = uhydro(ii,2)
          fluxes(ii,2) = uhydro(ii,1)*(U**2)
-         fluxes(ii,3) = m_Cg(ii)*min(uhydro(ii,3),m_Nmax(ii))
-         fluxes(ii,4:m) = U*uhydro(ii,4:m)
+         fluxes(ii,3:m) = U*uhydro(ii,3:m)
       end do
    end subroutine
 
@@ -447,7 +447,7 @@ contains
       real(kind=8) :: sigma, U
       integer :: ii
 
-      sigma = 2.0*PI/force_Twav
+      sigma = 2.0*PI/frc_Twav
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             U = uhydro(ii,2) / max(0.1,uhydro(ii,1))
@@ -456,8 +456,7 @@ contains
          end if
          tmp_eigval(ii,1) = 1.5*U + sqrt(1.25*(U**2))
          tmp_eigval(ii,2) = 1.5*U - sqrt(1.25*(U**2))      
-         tmp_eigval(ii,3) = m_Cg(ii)
-         tmp_eigval(ii,4:m) = U
+         tmp_eigval(ii,3:m) = U
       end do
       gradient = maxval(abs(tmp_eigval), dim=2)
    end subroutine
@@ -476,23 +475,23 @@ contains
       integer :: ii
 
       do ii = 1, n, 1
-         fluxes(ii,1:3) = 0.0d0
+         fluxes(ii,1:2) = 0.0d0
          if (ii<n) then
             h1 = uhydro(ii,1)
             h2 = uhydro(ii+1,1)
             if (h1>TOL_REL) then
-               Cs1 = uhydro(ii,4:m) / max(0.1,h1)
+               Cs1 = uhydro(ii,3:m) / max(0.1,h1)
             else
                Cs1 = 0.0
             end if
             if (h2>TOL_REL) then
-               Cs2 = uhydro(ii+1,4:m) / max(0.1,h2)
+               Cs2 = uhydro(ii+1,3:m) / max(0.1,h2)
             else
                Cs2 = 0.0
             end if
-            fluxes(ii,4:m) = 0.5*par_Kdf*(h1+h2)*(Cs2-Cs1)/m_dX(ii)
+            fluxes(ii,3:m) = 0.5*par_Kdf*(h1+h2)*(Cs2-Cs1)/m_dX(ii)
          else
-            fluxes(ii,4:m) = 0.0d0
+            fluxes(ii,3:m) = 0.0d0
          end if
       end do
    end subroutine
@@ -509,7 +508,7 @@ contains
       real(kind=8) :: sigma, scaler(m-3)
       integer :: ii
 
-      sigma = 2.0*PI/force_Twav
+      sigma = 2.0*PI/frc_Twav
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             tmp_U(ii) = uhydro(ii,2) / max(0.1,uhydro(ii,1))
@@ -530,33 +529,26 @@ contains
       
       sources(:,1) = 0.0d0
       do ii = 1, n, 1
-         scaler = max(0.0,uhydro(ii,4:m))/(m_uhydro(ii,4:m)+TOL_REL)
+         scaler = max(0.0,uhydro(ii,3:m))/(m_uhydro(ii,3:m)+TOL_REL)
          if (ii==1) then
-            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
-               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2) - &
+            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
+               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G*m_Cz(ii+1)) - &
                G*(0.75*uhydro(ii,1)+0.25*uhydro(ii+1,1))*tmp_B(ii)/m_dX(ii)
-            sources(ii,3) = (0.75*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
-               0.25*(m_Swg(ii+1)-m_Sbf(ii+1)-m_Swc(ii+1)-m_Sbrk(ii+1))) / sigma
-            sources(ii,4:m) = (0.75*Cs_source(ii,:)+0.25*Cs_source(ii+1,:)) - &
+            sources(ii,3:m) = (0.75*Cs_source(ii,:)+0.25*Cs_source(ii+1,:)) - &
                (0.75*Cs_sink(ii,:)+0.25*Cs_sink(ii+1,:))*scaler
          else if (ii==n) then
-            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
-               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2) - &
+            sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
+               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G*m_Cz(ii-1)) - &
                G*(0.75*uhydro(ii,1)+0.25*uhydro(ii-1,1))*tmp_B(ii)/m_dX(ii)
-            sources(ii,3) = (0.75*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
-               0.25*(m_Swg(ii-1)-m_Sbf(ii-1)-m_Swc(ii-1)-m_Sbrk(ii-1))) / sigma
-            sources(ii,4:m) = (0.25*Cs_source(ii-1,:)+0.75*Cs_source(ii,:)) - &
+            sources(ii,3:m) = (0.25*Cs_source(ii-1,:)+0.75*Cs_source(ii,:)) - &
                (0.25*Cs_sink(ii-1,:)+0.75*Cs_sink(ii,:))*scaler
          else
-            sources(ii,2) = -(0.5*tmp_U(ii)*abs(tmp_U(ii))*G/m_Cz(ii)**2+ &
-               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G/m_Cz(ii-1)**2+ &
-               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G/m_Cz(ii+1)**2) - &
+            sources(ii,2) = -(0.5*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
+               0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G*m_Cz(ii-1)+ &
+               0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G*m_Cz(ii+1)) - &
                G*(0.5*uhydro(ii,1)+0.25*uhydro(ii-1,1)+0.25*uhydro(ii+1,1))* &
                tmp_B(ii)/m_dX(ii)
-            sources(ii,3) = (0.5*(m_Swg(ii)-m_Sbf(ii)-m_Swc(ii)-m_Sbrk(ii)) + &
-               0.25*(m_Swg(ii+1)-m_Sbf(ii+1)-m_Swc(ii+1)-m_Sbrk(ii+1)) + &
-               0.25*(m_Swg(ii-1)-m_Sbf(ii-1)-m_Swc(ii-1)-m_Sbrk(ii-1))) / sigma
-            sources(ii,4:m) = (0.25*Cs_source(ii-1,:)+0.5*Cs_source(ii,:)+ &
+            sources(ii,3:m) = (0.25*Cs_source(ii-1,:)+0.5*Cs_source(ii,:)+ &
                0.25*Cs_source(ii+1,:)) - (0.25*Cs_sink(ii-1,:)+ &
                0.5*Cs_sink(ii,:)+0.25*Cs_sink(ii+1,:))*scaler
          end if
@@ -621,7 +613,6 @@ contains
          end if
       end do
       where (uhydro(:,3)<=0 .and. duhydro(:,3)<0) duhydro(:,3) = 0
-      where (uhydro(:,4)<=0 .and. duhydro(:,4)<0) duhydro(:,4) = 0
    end subroutine
 
 end module tai_hydro_mod 

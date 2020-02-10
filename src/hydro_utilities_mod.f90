@@ -7,7 +7,7 @@ module hydro_utilities_mod
 !---------------------------------------------------------------------------------
    use data_buffer_mod,    only : par_d50, par_Cz0, par_Kdf, par_cbc, par_fr
    use data_buffer_mod,    only : par_alphaA, par_betaA, par_alphaD, par_betaD
-   use data_buffer_mod,    only : par_cD0, par_ScD
+   use data_buffer_mod,    only : par_cD0, par_ScD, par_cwc
    use data_buffer_mod,    only : rk4_K1, rk4_K2, rk4_K3, rk4_K4, rk4_K5
    use data_buffer_mod,    only : rk4_K6, rk4_nxt4th, rk4_nxt5th
    use data_buffer_mod,    only : rk4_interim, rk4_rerr
@@ -19,6 +19,7 @@ module hydro_utilities_mod
    integer, parameter :: adaptive_mode = 101, fixed_mode = 102
    real(kind=8), parameter :: TOL_REL = 1.d-6
    real(kind=8), parameter :: INFTSML = 1.d-30
+   real(kind=8), parameter :: INFNT = 1.d+30
    ! physical constants 
    real(kind=8), parameter :: PI = 3.14159265d+0
    real(kind=8), parameter :: e = 2.71828183d+0
@@ -26,6 +27,16 @@ module hydro_utilities_mod
    real(kind=8), parameter :: Roua = 1.225
    real(kind=8), parameter :: Karman = 0.41
    real(kind=8), parameter :: G = 9.8
+
+   interface UpdateWaveNumber
+      module procedure UpdateWaveNumber4Sgl
+      module procedure UpdateWaveNumber4Arr
+   end interface
+
+   interface UpdateSgnftWaveHeight
+      module procedure UpdateSgnftWaveHeightEQM
+      module procedure UpdateSgnftWaveHeightTSNT
+   end interface
 
 contains
    subroutine Norm(matrix, dir, values)
@@ -74,24 +85,26 @@ contains
    ! https://rosettacode.org/wiki/Roots_of_a_function#Brent.27s_Method
    !
    !------------------------------------------------------------------------------
-   subroutine NonLRBrents(NonLREQ, coefs, xbounds, tol, root)
+   subroutine NonLRBrents(NonLREQ, coefs, xbounds, xtol, ytol, root, err)
       implicit none
       external :: NonLREQ
       real(kind=8), intent(in) :: coefs(:)
       real(kind=8), intent(in) :: xbounds(2)
-      real(kind=8), intent(in) :: tol
+      real(kind=8), intent(in) :: xtol
+      real(kind=8), intent(in) :: ytol
       real(kind=8), intent(out) :: root
+      integer, intent(out) :: err
       real(kind=8) :: xa, xb, ya, yb
       real(kind=8) :: xc, yc, xd, ys
-      character(len=32) :: fname
       integer :: iter
       logical :: mflag
 
+      err = 0
       xa = xbounds(1)
       xb = xbounds(2)
-      call NonLREQ(xa, coefs, ya, fname)
-      call NonLREQ(xb, coefs, yb, fname)
-      if (abs(ya)<1d-3 .or. abs(yb)<1d-3) then
+      call NonLREQ(xa, coefs, ya)
+      call NonLREQ(xb, coefs, yb)
+      if (abs(ya)<ytol .or. abs(yb)<ytol) then
          ! root at the boundary
          if (abs(ya)<=abs(yb)) then
             root = xa
@@ -105,7 +118,7 @@ contains
          else
             root = xb
          end if
-         print *, trim(fname) // ": Root is not within xbounds"
+         err = 1
       else
          if (abs(ya)<abs(yb)) then
             call swap(xa, xb)
@@ -117,7 +130,7 @@ contains
          mflag = .True.
          do iter = 1, MAXITER, 1
             ! stop if converged on root or error is less than tolerance
-            if (abs(xb-xa)<tol) then
+            if (abs(xb-xa)<xtol) then
                exit
             end if
             if (ya /= yc .and. yb /= yc) then
@@ -133,15 +146,15 @@ contains
             if ( ( root<(3.0*xa+xb)*0.25 .or. root>xb ) .or. &
                   ( mflag .and. abs(root-xb)>=abs(xb-xc)*0.5 ) .or. &
                   ( (.NOT. mflag) .and. abs(root-xb)>=abs(xc-xd)*0.5 ) .or. &
-                  ( mflag .and. abs(xb-xc)<tol ) .or. &
-                  ( (.NOT. mflag) .and. abs(xc-xd)<tol ) ) then
+                  ( mflag .and. abs(xb-xc)<xtol ) .or. &
+                  ( (.NOT. mflag) .and. abs(xc-xd)<xtol ) ) then
                ! bisection method
                root = 0.5 * (xa + xb)
                mflag = .True.
             else
                mflag = .False.
             end if
-            call NonLREQ(root, coefs, ys, fname)
+            call NonLREQ(root, coefs, ys)
             xd = xc  ! first time xd is being used
             xc = xb  ! set xc equal to upper bound
             yc = yb
@@ -170,6 +183,49 @@ contains
       c = a
       a = b
       b = c
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Solve non-linear equation using the Newton Downhill method.
+   !
+   !------------------------------------------------------------------------------
+   subroutine NonLRNewtonDownhill(NonLREQ, NonLREQDr, coefs, xtol, root, err)
+      implicit none
+      external :: NonLREQ, NonLREQDr
+      real(kind=8), intent(in) :: coefs(:)
+      real(kind=8), intent(in) :: xtol
+      real(kind=8), intent(inout) :: root
+      integer, intent(out) :: err
+      real(kind=8) :: xk, yk, dyk
+      real(kind=8) :: xk2, yk2, dx
+      real(kind=8) :: lamda
+      integer :: iter
+      
+      err = 0
+      iter = 0
+      xk = root
+      dx = 2.0 * xtol
+      do while (dx>xtol)
+         if (iter>MAXITER) then
+            err = 1
+            return
+         end if
+         lamda = 1.0
+         call NonLREQ(xk, coefs, yk)
+         call NonLREQDr(xk, coefs, dyk)
+         xk2 = xk - lamda*yk/dyk
+         call NonLREQ(xk2, coefs, yk2)
+         do while (abs(yk2)>=abs(yk))
+            lamda = 0.5 * lamda
+            xk2 = xk - lamda*yk/dyk
+            call NonLREQ(xk2, coefs, yk2)
+         end do
+         dx = abs(xk2-xk)
+         xk = xk2
+         iter = iter + 1
+      end do
+      root = xk2
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -288,7 +344,7 @@ contains
       integer, intent(in) :: pft(:)
       real(kind=8), intent(in) :: Bag(:)
       real(kind=8), intent(in) :: h(:)
-      real(kind=8), intent(out) :: Cz(:)
+      real(kind=8), intent(out) :: Cz(:)     ! inverse of square of Cz
       real(kind=8), parameter :: Cb = 2.5d-3    ! bed drag coefficient (unitless)
       real(kind=8) :: cD0, ScD, alphaA, alphaD
       real(kind=8) :: betaA, betaD
@@ -306,16 +362,16 @@ contains
          asb = alphaA * Bag(ii)**betaA
          dsb = alphaD * Bag(ii)**betaD
          cD = cD0 + ScD * Bag(ii)
-         Cz(ii) = par_Cz0*sqrt(2.0/(cD*asb*h(ii)+2.0*(1.0-asb*dsb)*Cb))
+         !Cz(ii) = par_Cz0*sqrt(2.0/(cD*asb*h(ii)+2.0*(1.0-asb*dsb)*Cb))
+         Cz(ii) = (0.5*cD*asb*h(ii)+(1.0-asb*dsb)*Cb)/par_Cz0**2
       end do
    end subroutine
 
-   subroutine UpdateShearStress(Twav, h, U, Hwav, Uwav, tau)
+   subroutine UpdateShearStress(Twav, h, U, Uwav, tau)
       implicit none
       real(kind=8), intent(in) :: Twav
       real(kind=8), intent(in) :: h(:)
       real(kind=8), intent(in) :: U(:)
-      real(kind=8), intent(in) :: Hwav(:)
       real(kind=8), intent(in) :: Uwav(:)
       real(kind=8), intent(out) :: tau(:)
       real(kind=8) :: fcurr, fwave
@@ -326,24 +382,17 @@ contains
       do ii = 1, nx, 1
          if (h(ii)>TOL_REL) then
             ! bottom shear stress by currents
-            fcurr = 0.24/(log(4.8*h(ii)/par_d50))**2
+            fcurr = 0.24/(log(4.8*max(1.,h(ii)/par_d50)))**2
             tau_curr = 0.125*Roul*fcurr*U(ii)**2
-            if (tau_curr>TOL_REL) then
-               ! bottom shear stress by wave
-               if (Uwav(ii)>TOL_REL) then
-                  fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
-                  tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
-               else
-                  tau_wave = 0.0
-               end if
-               tau(ii) = tau_curr*(1.0+1.2*(tau_wave/(tau_curr+tau_wave))**3.2)
+            ! bottom shear stress by wave
+            fwave = 1.39*(6.0*Twav/PI/par_d50)**(-0.52)
+            tau_wave = 0.5*fwave*Roul*Uwav(ii)**1.48
+            ! combined shear stress
+            if (tau_curr<TOL_REL .and. tau_wave<TOL_REL) then
+               tau(ii) = 0.0d0
             else
-               if (Uwav(ii)>TOL_REL) then
-                  fwave = 1.39*(6.0*Uwav(ii)*Twav/PI/par_d50)**(-0.52)
-                  tau(ii) = 0.5*fwave*Roul*Uwav(ii)**2
-               else
-                  tau(ii) = 0.0
-               end if
+               tau(ii) = tau_wave + tau_curr * (1.0 + 1.2* &
+                  (tau_wave/(tau_curr+tau_wave))**3.2)
             end if
          else
             tau(ii) = 0.0d0
@@ -351,74 +400,122 @@ contains
       end do
    end subroutine
 
+   subroutine CalcWaveReductionByVeg(x, dx, Bag, xref, fwave)
+      implicit none
+      real(kind=8), intent(in) :: x(:)
+      real(kind=8), intent(in) :: dx(:)
+      real(kind=8), intent(in) :: Bag(:)
+      real(kind=8), intent(in) :: xref
+      real(kind=8), intent(out) :: fwave(:)
+      real(kind=8) :: Latt, xLatt
+      integer :: ii, nx
+
+      nx = size(x)
+      do ii = 1, nx, 1
+         if (x(ii)>xref) then
+            if (fwave(ii-1)<TOL_REL) then
+               fwave(ii) = 0.0
+            else
+               if (Bag(ii)>TOL_REL) then
+                  xLatt = 1.0/(0.03*Bag(ii)/2.0)
+                  fwave(ii) = fwave(ii-1) - 0.5*xLatt/dx(ii)
+                  fwave(ii) = max(0.0, fwave(ii))
+               else
+                  fwave(ii) = fwave(ii-1)
+               end if
+            end if
+         else
+            fwave(ii) = 1.0
+         end if
+      end do
+   end subroutine
+
    !------------------------------------------------------------------------------
    !
    ! Purpose: Calculate wave number.
-   !          UpdateWaveNumber2() is much more efficient but less accurate.
    !
    !------------------------------------------------------------------------------
-   subroutine WaveNumberEQ(kwav, coefs, fval, fname)
+   subroutine WaveNumberEQ(kwav, coefs, fval)
       implicit none
       real(kind=8), intent(in) :: kwav
       real(kind=8), intent(in) :: coefs(2)
       real(kind=8), intent(out) :: fval
-      character(len=32), intent(out) :: fname
       real(kind=8) :: sigma, T, h
 
-      fname = "WaveNumberEQ" 
       T = coefs(1)
       h = coefs(2)
       sigma = 2.0*PI/T
       fval = sqrt(G*kwav*tanh(kwav*h)) - sigma
    end subroutine
 
-   subroutine UpdateWaveNumber(Twav, h, kwav)
+   subroutine WaveNumberEQDr(kwav, coefs, fval)
       implicit none
-      real(kind=8), intent(in) :: Twav
-      real(kind=8), intent(in) :: h(:)
-      real(kind=8), intent(out) :: kwav(:)
-      real(kind=8) :: coefs(2), xbounds(2)
-      real(kind=8) :: sigma
-      integer :: ii, nx
+      real(kind=8), intent(in) :: kwav
+      real(kind=8), intent(in) :: coefs(2)
+      real(kind=8), intent(out) :: fval
+      real(kind=8) :: T, h
 
-      nx = size(h)
-      sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
-      do ii = 1, nx, 1
-         if (h(ii)>TOL_REL) then
-            xbounds = (/sigma**2/G, sigma/sqrt(G*0.1)/)
-            coefs = (/Twav, h(ii)/)
-            call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(ii))
-         else
-            kwav(ii) = 0.0d0
-         end if
-      end do
+      T = coefs(1)
+      h = coefs(2)
+      fval = 0.5*(G*tanh(kwav*h)+G*kwav*h/(cosh(kwav*h))**2)/ &
+         sqrt(G*kwav*tanh(kwav*h))
    end subroutine
 
-   subroutine UpdateWaveNumber2(Twav, h, kwav)
+   subroutine UpdateWaveNumber4Sgl(Twav, h, kwav)
+      implicit none
+      real(kind=8), intent(in) :: Twav
+      real(kind=8), intent(in) :: h
+      real(kind=8), intent(out) :: kwav
+      real(kind=8) :: coefs(2), xbounds(2)
+      real(kind=8) :: sigma, xtol
+      character(len=128) :: msg
+      integer :: err
+
+      sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
+      xtol = 1d-6
+      if (h>TOL_REL) then
+         xbounds = (/2.51d-2, 6.2832d0/)
+         coefs = (/Twav, max(0.1,h)/)
+         kwav = 1.0d0
+         call NonLRNewtonDownhill(WaveNumberEQ, WaveNumberEQDr, coefs, &
+            xtol, kwav, err)
+         if (err==1) then
+            write(msg, "(F8.4, F8.4)") Twav, h
+            print *, "Wave number isn't available: " // trim(msg)
+         end if
+      else
+         kwav = INFNT
+      end if
+   end subroutine
+
+   subroutine UpdateWaveNumber4Arr(Twav, h, kwav)
       implicit none
       real(kind=8), intent(in) :: Twav
       real(kind=8), intent(in) :: h(:)
       real(kind=8), intent(out) :: kwav(:)
       real(kind=8) :: coefs(2), xbounds(2)
-      real(kind=8) :: sigma
-      integer :: ii, nx
+      real(kind=8) :: sigma, xtol, ytol
+      character(len=128) :: msg
+      integer :: err, ii, nx
 
-      nx = size(h)
       sigma = 2.0*PI/Twav     ! wave frequency (dispersion)
-      if (h(1)>TOL_REL) then
-         xbounds = (/sigma**2/G, sigma/sqrt(G*0.1)/)
-         coefs = (/Twav, h(1)/)
-         call NonLRBrents(WaveNumberEQ, coefs, xbounds, 1d-4, kwav(1))
-         do ii = 2, nx, 1
-            if (h(ii)>TOL_REL) then
-               kwav(ii) = kwav(1)*sqrt(h(1)/max(0.1,h(ii)))
-            else
-               kwav(ii) = 0.0d0
+      xtol = 1d-6
+      xbounds = (/2.51d-2, 6.2832d0/)
+      nx = size(h)
+      do ii = 1, nx, 1
+         if (h(ii)>TOL_REL) then
+            coefs = (/Twav, max(0.1,h(ii))/)
+            kwav(ii) = 1.0d0
+            call NonLRNewtonDownhill(WaveNumberEQ, WaveNumberEQDr, &
+               coefs, xtol, kwav(ii), err)
+            if (err==1) then
+               write(msg, "(F8.4, F8.4)") Twav, h(ii)
+               print *, "Wave number isn't available: " // trim(msg)
             end if
-         end do
-      else
-         kwav = 0.0d0
-      end if
+         else
+            kwav(ii) = INFNT
+         end if
+      end do
    end subroutine
 
    !------------------------------------------------------------------------------
@@ -427,15 +524,13 @@ contains
    !          UpdateWaveBrkProb2() is much more efficient but less accurate.
    !
    !------------------------------------------------------------------------------
-   subroutine BreakProbEQ(Qb, coefs, fval, fname)
+   subroutine BreakProbEQ(Qb, coefs, fval)
       implicit none
       real(kind=8), intent(in) :: Qb
       real(kind=8), intent(in) :: coefs(2)
       real(kind=8), intent(out) :: fval
-      character(len=32), intent(out) :: fname
       real(kind=8) :: Hrms, Hmax
 
-      fname = "BreakProbEQ"
       Hmax = coefs(1)
       Hrms = coefs(2)
       fval = (1-Qb)/log(Qb) + (Hrms/Hmax)**2
@@ -447,40 +542,58 @@ contains
       real(kind=8), intent(in) :: Hwav(:)
       real(kind=8), intent(out) :: Qb(:)
       real(kind=8) :: xbounds(2), coefs(2)
-      real(kind=8) :: Hrms, Hmax
-      integer :: ii, nx
+      real(kind=8) :: xtol, ytol, Hrms, Hmax
+      character(len=128) :: msg
+      integer :: ii, nx, err
 
       nx = size(h)
+      xtol = 1d-4
+      ytol = 1d-10
       do ii = 1, nx, 1
          if (h(ii)>TOL_REL) then
             Hmax = par_fr * h(ii)
             Hrms = Hwav(ii)
             xbounds = (/1d-10, 1.0-1d-10/)
             coefs = (/Hmax, Hrms/)
-            call NonLRBrents(BreakProbEQ, coefs, xbounds, 1d-4, Qb(ii))
+            call NonLRBrents(BreakProbEQ, coefs, xbounds, xtol, &
+                             ytol, Qb(ii), err)
+            if (err==1) then
+               write(msg, "(E10.2E2, E10.2E2)") Hmax, Hrms
+               print *, "Qb isn't available: " // trim(msg)
+            end if
          else
             Qb(ii) = 1.0d0
          end if
       end do
    end subroutine
 
-   subroutine UpdateWaveBrkProb2(h, Hwav, rawQb, Qb)
+   subroutine UpdateWaveBrkProb2(h, Hwav, Qb)
       implicit none
       real(kind=8), intent(in) :: h(:)
       real(kind=8), intent(in) :: Hwav(:)
-      real(kind=8), intent(in) :: rawQb(:)
       real(kind=8), intent(out) :: Qb(:)
+      real(kind=8), parameter :: rawQb(101) = (/0.4,0.4637,0.5005,0.5260, &
+         0.5461,0.5631,0.5780,0.5914,0.6035,0.6147,0.6252,0.6350,0.6442, &
+         0.6530,0.6614,0.6694,0.6770,0.6844,0.6915,0.6984,0.7050,0.7115, &
+         0.7177,0.7238,0.7298,0.7355,0.7412,0.7467,0.7521,0.7573,0.7625, &
+         0.7676,0.7725,0.7774,0.7822,0.7869,0.7915,0.7960,0.8005,0.8049, &
+         0.8092,0.8135,0.8177,0.8218,0.8259,0.8299,0.8339,0.8378,0.8417, &
+         0.8455,0.8493,0.8531,0.8568,0.8604,0.8640,0.8676,0.8711,0.8746, &
+         0.8781,0.8815,0.8849,0.8883,0.8916,0.8949,0.8981,0.9014,0.9046, &
+         0.9078,0.9109,0.9140,0.9171,0.9202,0.9232,0.9262,0.9292,0.9322, &
+         0.9352,0.9381,0.9410,0.9439,0.9467,0.9496,0.9524,0.9552,0.9580, &
+         0.9607,0.9635,0.9662,0.9689,0.9716,0.9742,0.9769,0.9795,0.9821, &
+         0.9847,0.9873,0.9899,0.9924,0.9950,0.9975,1.0/)
       real(kind=8) :: fHrms
-      integer :: ii, nx, nQb, idx
+      integer :: ii, nx, idx
 
-      nQb = size(rawQb)
       nx = size(h)
       do ii = 1, nx, 1
          if (h(ii)>TOL_REL) then
             fHrms = Hwav(ii) / (par_fr*h(ii))
             if (fHrms<=rawQb(1)) then
                Qb(ii) = 0.0d0
-            else if (fHrms>=rawQb(nQb)) then
+            else if (fHrms>=rawQb(101)) then
                Qb(ii) = 1.0d0
             else
                call BinarySearch(rawQb, fHrms, idx)
@@ -491,6 +604,134 @@ contains
          end if
       end do
    end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate stead-state wave regime.
+   !
+   !------------------------------------------------------------------------------
+   subroutine SgnftWaveHeightEQ(Ewav, coefs, fval)
+      implicit none
+      real(kind=8), intent(in) :: Ewav
+      real(kind=8), intent(in) :: coefs(4)
+      real(kind=8), intent(out) :: fval
+      real(kind=8), parameter :: rawQb(101) = (/0.4,0.4637,0.5005,0.5260, &
+         0.5461,0.5631,0.5780,0.5914,0.6035,0.6147,0.6252,0.6350,0.6442, &
+         0.6530,0.6614,0.6694,0.6770,0.6844,0.6915,0.6984,0.7050,0.7115, &
+         0.7177,0.7238,0.7298,0.7355,0.7412,0.7467,0.7521,0.7573,0.7625, &
+         0.7676,0.7725,0.7774,0.7822,0.7869,0.7915,0.7960,0.8005,0.8049, &
+         0.8092,0.8135,0.8177,0.8218,0.8259,0.8299,0.8339,0.8378,0.8417, &
+         0.8455,0.8493,0.8531,0.8568,0.8604,0.8640,0.8676,0.8711,0.8746, &
+         0.8781,0.8815,0.8849,0.8883,0.8916,0.8949,0.8981,0.9014,0.9046, &
+         0.9078,0.9109,0.9140,0.9171,0.9202,0.9232,0.9262,0.9292,0.9322, &
+         0.9352,0.9381,0.9410,0.9439,0.9467,0.9496,0.9524,0.9552,0.9580, &
+         0.9607,0.9635,0.9662,0.9689,0.9716,0.9742,0.9769,0.9795,0.9821, &
+         0.9847,0.9873,0.9899,0.9924,0.9950,0.9975,1.0/) 
+      real(kind=8), parameter :: Cd = 1.3d-3    ! drag coefficient for U10
+      real(kind=8), parameter :: gammaPM = 0.055
+      real(kind=8), parameter :: m = 2.0
+      real(kind=8) :: Hrms, Hmax, fHrms, Qb
+      real(kind=8) :: Twav, U10, kwav, h
+      real(kind=8) :: sigma, alpha, beta, Cf
+      real(kind=8) :: gammaR
+      real(kind=8) :: Swg, Sbf, Swc, Sbrk
+      integer :: idx
+
+      Twav = coefs(1)
+      U10 = coefs(2)
+      h = coefs(3)
+      kwav = coefs(4)
+      Hmax = par_fr * h
+      Hrms = sqrt(8.0*Ewav/G/Roul) 
+      fHrms = Hrms / Hmax
+      if (fHrms<=rawQb(1)) then
+         Qb = 0.0d0
+      else if (fHrms>=rawQb(101)) then
+         Qb = 1.0d0
+      else
+         call BinarySearch(rawQb, fHrms, idx)
+         Qb = 0.01*DBLE(idx) - 0.005
+      end if
+      sigma = 2.0*PI/Twav
+      if (h>TOL_REL) then
+         ! wave generation
+         alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav)**2
+         beta = 5.0*Roua/Roul/Twav*max(0.0,U10*kwav/sigma-0.9)
+         Swg = alpha + beta * Ewav
+         ! wave reduction by bottom friction
+         Cf = par_cbc*Hrms*sigma/sinh(kwav*h)
+         Sbf = (1-Qb)*2.0*Cf*kwav*Ewav/sinh(2.0*kwav*h)
+         ! wave reduction by white capping
+         gammaR = Ewav*(sigma**4)/G**2
+         Swc = par_cwc*sigma*Ewav*(gammaR/gammaPM)**m
+         ! wave reduction by breaking
+         Sbrk = 0.25*alpha/Twav*Qb*(Hmax**2)*Roul*G
+         ! wave energy balance equation
+         fval = Swg - Sbf - Swc - Sbrk
+      else
+         fval = 0.0
+      end if
+   end subroutine
+
+   subroutine UpdateSgnftWaveHeightTSNT(Twav, U10, h, kwav, Ewav)
+      implicit none
+      real(kind=8), intent(in) :: Twav
+      real(kind=8), intent(in) :: U10
+      real(kind=8), intent(in) :: h(:)
+      real(kind=8), intent(in) :: kwav(:)
+      real(kind=8), intent(out) :: Ewav(:)      ! wave energy
+      real(kind=8) :: xbounds(2), coefs(4)
+      real(kind=8) :: xtol, ytol
+      character(len=128) :: msg
+      integer :: ii, nx, err
+
+      nx = size(h)
+      xtol = 1d-3
+      ytol = 1d-15
+      xbounds = (/0.0d0, 4.9d5/)
+      do ii = 1, nx, 1
+         if (h(ii)>TOL_REL) then
+            coefs = (/Twav, U10, h(ii), kwav(ii)/)
+            call NonLRBrents(SgnftWaveHeightEQ, coefs, xbounds, xtol, &
+                             ytol, Ewav(ii), err)
+            if (err==1) then
+               write(msg, "(E10.2E2, E10.2E2, E10.2E2, E10.2E2)") &
+                  Twav, U10, h(ii), kwav(ii)
+               print *, "Ewav isn't available: " // trim(msg)
+            end if
+         else
+            Ewav(ii) = 0d0
+         end if 
+      end do
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate wave dynamics using an empirical method (Tambroni & 
+   !          Seminara, 2012, JGR).
+   !
+   !------------------------------------------------------------------------------
+   subroutine UpdateSgnftWaveHeightEQM(U10, xfetch, h, Hwav, Twav)
+      implicit none
+      real(kind=8), intent(in) :: U10
+      real(kind=8), intent(in) :: xfetch
+      real(kind=8), intent(in) :: h
+      real(kind=8), intent(out) :: Hwav   ! units: meter
+      real(kind=8), intent(out) :: Twav   ! units: second
+      real(kind=8) :: A1, A2, B1, B2
+
+      if (h>TOL_REL) then
+         A1 = 0.493*(h*G/U10**2)**0.75
+         B1 = 3.13d-3*(xfetch*G/U10**2)**0.57
+         A2 = 0.331*(h*G/U10**2)**1.01
+         B2 = 5.21d-4*(xfetch*G/U10**2)**0.73
+         Hwav = 0.17*U10**2/G*(tanh(A1)*tanh(B1/tanh(A1)))**0.87
+         Twav = 7.518*U10/G*(tanh(A2)*tanh(B2/tanh(A2)))**0.37
+      else
+         Hwav = 0.0
+         Twav = 2.0
+      end if
+   end subroutine   
 
    !------------------------------------------------------------------------------
    !
@@ -512,9 +753,9 @@ contains
       nx = size(h)
       sigma = 2.0*PI/Twav
       do ii = 1, nx, 1
-         if (h(ii)>TOL_REL .and. kwav(ii)>TOL_REL) then
+         if (h(ii)>TOL_REL) then
             alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav(ii))**2
-            beta = 5.0*Roua/Roul/Twav*(U10*kwav(ii)/sigma-0.9)
+            beta = 5.0*Roua/Roul/Twav*max(0.0,U10*kwav(ii)/sigma-0.9)
             Swg(ii) = alpha + beta * Ewav(ii)
          else
             Swg(ii) = 0.0d0
@@ -537,7 +778,7 @@ contains
 
       nx = size(h)
       do ii = 1, nx, 1
-         if (h(ii)>TOL_REL .and. kwav(ii)>TOL_REL) then
+         if (h(ii)>TOL_REL) then
             Cf = 2.0*par_cbc*PI*Hwav(ii)/Twav/sinh(kwav(ii)*h(ii))
             Sbf(ii) = (1-Qb(ii))*2.0*Cf*kwav(ii)*Ewav(ii)/ &
                sinh(2.0*kwav(ii)*h(ii))
@@ -552,13 +793,12 @@ contains
       real(kind=8), intent(in) :: Twav
       real(kind=8), intent(in) :: Ewav(:)
       real(kind=8), intent(out) :: Swc(:)
-      real(kind=8), parameter :: gammaPM = 4.57d-3
+      real(kind=8), parameter :: gammaPM = 0.055
       real(kind=8), parameter :: m = 2.0d0
-      real(kind=8), parameter :: cwc = 3.33d-5
       real(kind=8) :: sigma
 
       sigma = 2.0*PI/Twav
-      Swc = cwc*sigma*((Ewav*(sigma**4)/G**2/gammaPM)**m)*Ewav
+      Swc = par_cwc*sigma*Ewav*(Ewav*(sigma**4)/G**2/gammaPM)**m
    end subroutine
 
    subroutine UpdateWaveDepthBrking(Twav, U10, h, Hwav, kwav, Ewav, &
@@ -579,7 +819,7 @@ contains
       nx = size(h)
       sigma = 2.0*PI/Twav
       do ii = 1, nx, 1
-         if (h(ii)>TOL_REL .and. kwav(ii)>TOL_REL .and. Hwav(ii)>TOL_REL) then
+         if (h(ii)>TOL_REL) then
             Hmax = par_fr * h(ii)
             alpha = 80.0*sigma*(Roua*Cd*U10/Roul/G/kwav(ii))**2
             Sbrk(ii) = 2.0*alpha/Twav*Qb(ii)*((Hmax/Hwav(ii))**2)*Ewav(ii)

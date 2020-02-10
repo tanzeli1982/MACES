@@ -183,6 +183,7 @@ if __name__=='__main__':
         iid = np.mod( ii*numprocs + rank, nrun )
         site_id = site_ids[iid]
         print( "Simulate site ", site_id )
+        sys.stdout.flush()
         
         try:
             # construct site platform
@@ -202,8 +203,7 @@ if __name__=='__main__':
                     site_dx[jj] = 0.5*(site_x[jj]-site_x[jj-1])
                 else:
                     site_dx[jj] = 0.5*(site_x[jj+1]-site_x[jj-1])
-            xref = utils.get_refshore_coordinate(site_x, site_zh)
-            coords = {'x': site_x, 'dx': site_dx, 'xref': xref}
+            coords = {'x': site_x, 'dx': site_dx, 'xfetch': site_length[iid]}
             
             # construct pft distribution
             segments = []
@@ -226,10 +226,10 @@ if __name__=='__main__':
             taihydro.inithydromod(site_x, site_zh, nvar, npft)
             taihydro.setmodelparams(hydro_params['d50'], hydro_params['Cz0'], 
                                     hydro_params['Kdf'], hydro_params['cbc'], 
-                                    hydro_params['fr'], hydro_params['alphaA'], 
-                                    hydro_params['betaA'], hydro_params['alphaD'], 
-                                    hydro_params['betaD'], hydro_params['cD0'], 
-                                    hydro_params['ScD'])
+                                    hydro_params['cwc'], hydro_params['fr'], 
+                                    hydro_params['alphaA'], hydro_params['betaA'], 
+                                    hydro_params['alphaD'], hydro_params['betaD'], 
+                                    hydro_params['cD0'], hydro_params['ScD'])
         
             # instantiate ecogeomorphology models
             mac_mod = mac_class(mac_params)
