@@ -317,7 +317,7 @@ contains
                m_Hwav(ii) = 0.0
                m_Uwav(ii) = 0.0
             else
-               call UpdateSgnftWaveHeight2(frc_U10, 1d3*xfetch, &
+               call UpdateSgnftWaveHeight(frc_U10, 1d3*xfetch, &
                   h, m_Hwav(ii), Twav)
                Twav = max(0.2, Twav)
                call UpdateWaveNumber(Twav, h, kwav)

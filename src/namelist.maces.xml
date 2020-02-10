@@ -5,7 +5,7 @@
    during a run.
    </header>
    <group id="models">
-      <entry id="WAVE_TYPE" value="1">
+      <entry id="WAVE_TYPE" value="2">
          <type>integer</type>
          <valid_values>
          1,2

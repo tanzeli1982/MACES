@@ -33,6 +33,11 @@ module hydro_utilities_mod
       module procedure UpdateWaveNumber4Arr
    end interface
 
+   interface UpdateSgnftWaveHeight
+      module procedure UpdateSgnftWaveHeightEQM
+      module procedure UpdateSgnftWaveHeightTSNT
+   end interface
+
 contains
    subroutine Norm(matrix, dir, values)
       implicit none
@@ -660,7 +665,7 @@ contains
          gammaR = Ewav*(sigma**4)/G**2
          Swc = par_cwc*sigma*Ewav*(gammaR/gammaPM)**m
          ! wave reduction by breaking
-         Sbrk = 2.0*alpha/Twav*Qb*((Hmax/(1d-12+Hrms))**2)*Ewav
+         Sbrk = 0.25*alpha/Twav*Qb*(Hmax**2)*Roul*G
          ! wave energy balance equation
          fval = Swg - Sbf - Swc - Sbrk
       else
@@ -668,7 +673,7 @@ contains
       end if
    end subroutine
 
-   subroutine UpdateSgnftWaveHeight(Twav, U10, h, kwav, Ewav)
+   subroutine UpdateSgnftWaveHeightTSNT(Twav, U10, h, kwav, Ewav)
       implicit none
       real(kind=8), intent(in) :: Twav
       real(kind=8), intent(in) :: U10
@@ -681,11 +686,11 @@ contains
       integer :: ii, nx, err
 
       nx = size(h)
-      xtol = 1d-6
+      xtol = 1d-3
       ytol = 1d-15
+      xbounds = (/0.0d0, 4.9d5/)
       do ii = 1, nx, 1
          if (h(ii)>TOL_REL) then
-            xbounds = (/0.0d0, 4.9d5/)
             coefs = (/Twav, U10, h(ii), kwav(ii)/)
             call NonLRBrents(SgnftWaveHeightEQ, coefs, xbounds, xtol, &
                              ytol, Ewav(ii), err)
@@ -706,7 +711,7 @@ contains
    !          Seminara, 2012, JGR).
    !
    !------------------------------------------------------------------------------
-   subroutine UpdateSgnftWaveHeight2(U10, xfetch, h, Hwav, Twav)
+   subroutine UpdateSgnftWaveHeightEQM(U10, xfetch, h, Hwav, Twav)
       implicit none
       real(kind=8), intent(in) :: U10
       real(kind=8), intent(in) :: xfetch
