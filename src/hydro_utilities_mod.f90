@@ -369,7 +369,7 @@ contains
 
    subroutine UpdateShearStress(Twav, h, U, Uwav, tau)
       implicit none
-      real(kind=8), intent(in) :: Twav
+      real(kind=8), intent(in) :: Twav(:)
       real(kind=8), intent(in) :: h(:)
       real(kind=8), intent(in) :: U(:)
       real(kind=8), intent(in) :: Uwav(:)
@@ -385,7 +385,7 @@ contains
             fcurr = 0.24/(log(4.8*max(1.,h(ii)/par_d50)))**2
             tau_curr = 0.125*Roul*fcurr*U(ii)**2
             ! bottom shear stress by wave
-            fwave = 1.39*(6.0*Twav/PI/par_d50)**(-0.52)
+            fwave = 1.39*(6.0*Twav(ii)/PI/par_d50)**(-0.52)
             tau_wave = 0.5*fwave*Roul*Uwav(ii)**1.48
             ! combined shear stress
             if (tau_curr<TOL_REL .and. tau_wave<TOL_REL) then
@@ -731,7 +731,24 @@ contains
          Hwav = 0.0
          Twav = 2.0
       end if
-   end subroutine   
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate wave period (Carniello et al., 2011 ESTUAR COAST SHELF S).
+   !
+   !------------------------------------------------------------------------------
+   subroutine CalcWavePeriod(U10, h, Twav)
+      implicit none
+      real(kind=8), intent(in) :: U10
+      real(kind=8), intent(in) :: h
+      real(kind=8), intent(out) :: Twav
+      real(kind=8) :: Twav_dim, h_dim
+
+      h_dim = G*max(1.,h)/U10**2
+      Twav_dim = 3.5 * h_dim**0.35
+      Twav = Twav_dim * U10 / G
+   end subroutine
 
    !------------------------------------------------------------------------------
    !

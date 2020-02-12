@@ -25,6 +25,7 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: m_Hwav
    real(kind=8), allocatable, dimension(:)   :: m_Ewav
    real(kind=8), allocatable, dimension(:)   :: m_Uwav
+   real(kind=8), allocatable, dimension(:)   :: m_Twav
    ! bottom shear stress (Pa)
    real(kind=8), allocatable, dimension(:)   :: m_tau
    ! wave source and sink

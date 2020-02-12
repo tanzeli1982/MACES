@@ -50,6 +50,7 @@ contains
       allocate(m_kwav(nx))             ; m_kwav = INFNT
       allocate(m_Ewav(nx))             ; m_Ewav = 0.0d0
       allocate(m_Uwav(nx))             ; m_Uwav = 0.0d0
+      allocate(m_Twav(nx))             ; m_Twav = 2.0d0
       allocate(m_Qb(nx))               ; m_Qb = 0.0d0
       allocate(m_tau(nx))              ; m_tau = 0.0d0
       allocate(m_Swg(nx))              ; m_Swg = 0.0d0
@@ -128,6 +129,7 @@ contains
       deallocate(m_kwav)
       deallocate(m_Ewav)
       deallocate(m_Uwav)
+      deallocate(m_Twav)
       deallocate(m_Qb)
       deallocate(m_tau)
       deallocate(m_Swg)
@@ -280,13 +282,11 @@ contains
       real(kind=8) :: xfetch  ! units: km
       integer :: wave_mod     ! wave mode
       ! local variables
-      real(kind=8) :: sigma, h, kwav
-      real(kind=8) :: Twav
+      real(kind=8) :: h, kwav, Twav
       integer :: ii, n, m
       
       n = size(m_uhydro,1)
       m = size(m_uhydro,2)
-      sigma = 2.0*PI/frc_Twav
       do ii = 1, n, 1
          if (m_uhydro(ii,1)<=TOL_REL) then
             m_uhydro(ii:n,1) = 0.0
@@ -316,18 +316,23 @@ contains
             if (h<=TOL_REL) then
                m_Hwav(ii) = 0.0
                m_Uwav(ii) = 0.0
+               m_kwav(ii) = INFNT
+               m_Twav(ii) = frc_Twav
             else
                call UpdateSgnftWaveHeight(frc_U10, 1d3*xfetch, &
                   h, m_Hwav(ii), Twav)
                Twav = max(0.2, Twav)
+               m_Twav(ii) = Twav
                call UpdateWaveNumber(Twav, h, kwav)
                m_kwav(ii) = kwav
                m_Uwav(ii) = PI*m_Hwav(ii)/Twav/sinh(kwav*max(0.1,h))
             end if
          end do
       else
-         call UpdateWaveNumber(frc_Twav, m_uhydro(:,1), m_kwav)
-         call UpdateSgnftWaveHeight(frc_Twav, frc_U10, m_uhydro(:,1), &
+         Twav = frc_Twav
+         m_Twav = frc_Twav
+         call UpdateWaveNumber(Twav, m_uhydro(:,1), m_kwav)
+         call UpdateSgnftWaveHeight(Twav, frc_U10, m_uhydro(:,1), &
                                     m_kwav, m_Ewav)
          do ii = 1, n, 1
             h = m_uhydro(ii,1)
@@ -351,7 +356,7 @@ contains
          !call UpdateWaveDepthBrking(frc_Twav, frc_U10, m_uhydro(:,1), &
          !                           m_Hwav, m_kwav, m_Ewav, m_Qb, m_Sbrk)
       end if
-      call UpdateShearStress(frc_Twav, m_uhydro(:,1), m_U, m_Uwav, m_tau)
+      call UpdateShearStress(m_Twav, m_uhydro(:,1), m_U, m_Uwav, m_tau)
 
       sim_h = m_uhydro(:,1)
       sim_U = m_U
@@ -406,10 +411,9 @@ contains
       real(kind=8), dimension(n,m) :: uhydro, fluxes
       integer :: n, m
       ! local variables
-      real(kind=8) :: sigma, U
+      real(kind=8) :: U
       integer :: ii
 
-      sigma = 2.0*PI/frc_Twav
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             U = uhydro(ii,2) / max(0.1,uhydro(ii,1))
@@ -444,10 +448,9 @@ contains
       real(kind=8), dimension(n) :: gradient
       integer :: n, m
       ! local variables
-      real(kind=8) :: sigma, U
+      real(kind=8) :: U
       integer :: ii
 
-      sigma = 2.0*PI/frc_Twav
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             U = uhydro(ii,2) / max(0.1,uhydro(ii,1))
@@ -505,10 +508,9 @@ contains
       real(kind=8), dimension(n,m) :: uhydro, sources
       integer :: n, m
       ! local variables
-      real(kind=8) :: sigma, scaler(m-3)
+      real(kind=8) :: scaler(m-3)
       integer :: ii
 
-      sigma = 2.0*PI/frc_Twav
       do ii = 1, n, 1
          if (uhydro(ii,1)>TOL_REL) then
             tmp_U(ii) = uhydro(ii,2) / max(0.1,uhydro(ii,1))
