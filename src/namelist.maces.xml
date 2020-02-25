@@ -67,11 +67,11 @@
          <valid_values>regular,calibration,sensitivity</valid_values>
          <desc>Simulation type</desc>
       </entry>
-      <entry id="RUN_STARTDATE" value="2001-01-01">
+      <entry id="RUN_STARTDATE" value="2002-01-01">
          <type>char</type>
          <desc>Run start date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
-      <entry id="RUN_STOPDATE" value="2001-01-06">
+      <entry id="RUN_STOPDATE" value="2004-01-01">
          <type>char</type>
          <desc>Run stop date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
@@ -110,7 +110,7 @@
          <type>char</type>
          <desc>Path of the landward migration model parameter file</desc>
       </entry>
-      <entry id="SITE_FILE" value="$RUNROOT/DIVA_maces.xlsx">
+      <entry id="SITE_FILE" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/DIVA_maces.xlsx">
          <type>char</type>
          <desc>Path of the site information file</desc>
       </entry>
@@ -118,7 +118,7 @@
          <type>integer</type>
          <desc>First site index of the run</desc>
       </entry>
-      <entry id="LAST_ID" value="3">
+      <entry id="LAST_ID" value="1">
          <type>integer</type>
          <desc>Last site index of the run</desc>
       </entry>
@@ -158,7 +158,7 @@
       </entry>
    </group>
    <group id="run_inputs">
-      <entry id="DIN_ROOT" value="/Users/tanz151/Downloads">
+      <entry id="DIN_ROOT" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon">
          <type>char</type>
          <desc>Input data root directory</desc>
       </entry>
@@ -178,19 +178,11 @@
          <type>integer</type>
          <desc>Time step in hours of the Tair data</desc>
       </entry>
-      <entry id="FILE_U" value="$DIN_ROOT/force_U.nc">
-         <type>char</type>
-         <desc>Path of boundary water flow velocity file</desc>
-      </entry>
-      <entry id="U_TSTEP" value="60">
-         <type>integer</type>
-         <desc>Time step in minutes of the U data</desc>
-      </entry>
       <entry id="FILE_h" value="$DIN_ROOT/force_h.nc">
          <type>char</type>
          <desc>Path of boundary water level file</desc>
       </entry>
-      <entry id="h_TSTEP" value="60">
+      <entry id="h_TSTEP" value="10">
          <type>integer</type>
          <desc>Time step in minutes of the h data</desc>
       </entry>
@@ -198,15 +190,15 @@
          <type>char</type>
          <desc>Path of boundary 10-m wind speed file</desc>
       </entry>
-      <entry id="U10_TSTEP" value="24">
+      <entry id="U10_TSTEP" value="10">
          <type>integer</type>
-         <desc>Time step in hours of the U10 data</desc>
+         <desc>Time step in minutes of the U10 data</desc>
       </entry>
       <entry id="FILE_Wave" value="$DIN_ROOT/force_wave.nc">
          <type>char</type>
-         <desc>Path of boundary significant wave height and wave period file</desc>
+         <desc>Path of boundary wave period file</desc>
       </entry>
-      <entry id="Wave_TSTEP" value="60">
+      <entry id="Wave_TSTEP" value="10">
          <type>integer</type>
          <desc>Time step in minutes of the wave data</desc>
       </entry>

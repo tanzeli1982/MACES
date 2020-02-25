@@ -138,7 +138,7 @@ if __name__=='__main__':
         Tair = utils.read_force_data(namelist['FILE_Tair'], 'Tair', \
             run_date0, run_date1, namelist['Tair_TSTEP'], 'hour', sid_range)
         U10 = utils.read_force_data(namelist['FILE_U10'], 'U10', \
-            run_date0, run_date1, namelist['U10_TSTEP'], 'hour', sid_range)
+            run_date0, run_date1, namelist['U10_TSTEP'], 'minute', sid_range)
         h0 = utils.read_force_data(namelist['FILE_h'], 'h', \
             run_date0, run_date1, namelist['h_TSTEP'], 'minute', sid_range)
         U0 = utils.read_force_data(namelist['FILE_U'], 'U', \
