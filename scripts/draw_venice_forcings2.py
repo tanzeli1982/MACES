@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 #from matplotlib.ticker import AutoMinorLocator
 from netCDF4 import Dataset
 
-day0 = 343
-day1 = 345
+day0 = 456
+day1 = 459
 # read data
 filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
     r'VeniceLagoon/force_h.nc'
@@ -49,7 +49,7 @@ ax.set_xlim(0, nt_h-1)
 #ax.set_ylim(-75, 75)
 ax.xaxis.set_ticks(np.arange(0,nt_h,144))
 #ax.yaxis.set_ticks(np.linspace(-75,75,7))
-ax.set_xticklabels(['12/10','12/11','12/12'])
+ax.set_xticklabels(['4/2','4/3','4/4','4/5'])
 #ax.xaxis.set_minor_locator(AutoMinorLocator(2))
 ylabel = 'Water level ($\mathregular{cm}$ $\mathregular{asl}$)'
 ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
@@ -64,7 +64,7 @@ ax.set_xlim(0, nt_U10-1)
 #ax.set_ylim(0, 15)
 ax.xaxis.set_ticks(np.arange(0,nt_U10,96))
 #ax.yaxis.set_ticks(np.linspace(0,15,6))
-ax.set_xticklabels(['12/10','12/11','12/12'])
+ax.set_xticklabels(['4/2','4/3','4/4','4/5'])
 #ax.xaxis.set_minor_locator(AutoMinorLocator(2))
 ylabel = 'Wind speed ($\mathregular{m}$ $\mathregular{{s}^{-1}}$)'
 ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
@@ -79,7 +79,7 @@ ax.set_xlim(0, nt_U10-1)
 #ax.set_ylim(0, 15)
 ax.xaxis.set_ticks(np.arange(0,nt_U10,96))
 #ax.yaxis.set_ticks(np.linspace(0,15,6))
-ax.set_xticklabels(['12/10','12/11','12/12'])
+ax.set_xticklabels(['4/2','4/3','4/4','4/5'])
 #ax.xaxis.set_minor_locator(AutoMinorLocator(2))
 ylabel = 'Wind direction (degree)'
 ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
@@ -89,6 +89,6 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_color('black') for label in labels]
 
 plt.tight_layout()
-fig.savefig('venice_forcing1.png', dpi=300)
-#fig.savefig('venice_forcing1.pdf', dpi=600)
+fig.savefig('venice_forcing2.png', dpi=300)
+#fig.savefig('venice_forcing2.pdf', dpi=600)
 plt.show()

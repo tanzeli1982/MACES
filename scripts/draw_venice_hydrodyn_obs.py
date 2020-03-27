@@ -65,7 +65,7 @@ ax.xaxis.set_ticks(np.arange(0,193,96))
 ax.yaxis.set_ticks(np.linspace(-100,100,5))
 ax.set_xticklabels(['12/10','12/11','12/12'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(24))
-ylabel = 'Wave depth ($\mathregular{cm}$)'
+ylabel = 'Water depth ($\mathregular{cm}$)'
 ax.set_ylabel(ylabel, fontsize=14, fontname='Times New Roman', color='black')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
