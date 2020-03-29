@@ -35,9 +35,11 @@ class MACMODSuper(object):
 
     Attributes:
         m_params : model calibration parameters
+        m_update_Css : control whether update suspended sediment concentration
     """
     
     m_params = {}
+    m_update_Css = True
     
     __metaclass__ = ABCMeta
     

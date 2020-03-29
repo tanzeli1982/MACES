@@ -60,11 +60,19 @@ tt_model = np.arange(nt_model)
 filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
     'VeniceLagoon/1BF_OBS.xls'
 df = pd.read_excel(filename, sheet_name='1BF', header=None, skiprows=range(3), 
-                   usecols='A,B,O,Q')
-df.columns = ['Time','Hmo','hw','Turbidity']
+                   usecols='A,B,F,O,Q')
+df.columns = ['Time','Hmo','Hmax','hw','Turbidity']
 Hwav_obs_1BF = 100 * np.array(df['Hmo'])[5334:5526] # cm
-h_obs_1BF = 100 * np.array(df['hw'])[5334:5526]     # cm
 sed_obs_1BF = np.array(df['Turbidity'])[5334:5526]  # mg/l
+
+filename = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
+    'VeniceLagoon/WaterLevelClose1BF.xls'
+df = pd.read_excel(filename, sheet_name='Valori orari 2002', header=None, 
+                   skiprows=range(4), usecols='A:C')
+df.columns = ['Date','Hour','hw']
+h_obs_1BF = 100 * np.array(df['hw'])[8231:8303]
+nt_obs2 = np.size(h_obs_1BF)
+tt_obs2 = np.arange(nt_obs2)
 
 filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
     'VeniceLagoon/2BF_OBS.xls'
@@ -75,10 +83,10 @@ Hwav_obs_2BF = 100 * np.array(df['Hmo'])[5319:5511]
 h_obs_2BF = 100 * np.array(df['hw'])[5319:5511]
 sed_obs_2BF = np.array(df['Turbidity'])[5319:5511]
 
-h_obs_1BF = h_obs_1BF - 30
-h_obs_2BF = h_obs_2BF + 240
+h_obs_1BF = h_obs_1BF + 110
+h_obs_2BF = h_obs_2BF + 210
 
-nt_obs = np.size(h_obs_1BF)
+nt_obs = np.size(Hwav_obs_1BF)
 tt_obs = np.arange(nt_obs)/4
 
 # plot water level, significant wave height, suspended sediment
@@ -88,7 +96,7 @@ fig, axes = plt.subplots(4, 2, figsize=(8,10))
 # 1BF
 ax = axes[0][0]
 ax.plot(tt_model, h_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
-ax.plot(tt_obs, h_obs_1BF, color='C3', linestyle='-', marker='.', markersize=5)
+ax.plot(tt_obs2, h_obs_1BF, color='C3', linestyle='-', marker='.', markersize=5)
 ax.set_xlim(0, nt_model-1)
 #ax.set_ylim(-100, 100)
 ax.xaxis.set_ticks(np.arange(0,nt_model,24))

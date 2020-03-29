@@ -190,7 +190,7 @@
          <type>char</type>
          <desc>Path of boundary 10-m wind speed file</desc>
       </entry>
-      <entry id="U10_TSTEP" value="10">
+      <entry id="U10_TSTEP" value="15">
          <type>integer</type>
          <desc>Time step in minutes of the U10 data</desc>
       </entry>
@@ -198,7 +198,7 @@
          <type>char</type>
          <desc>Path of boundary wave period file</desc>
       </entry>
-      <entry id="Wave_TSTEP" value="10">
+      <entry id="Wave_TSTEP" value="15">
          <type>integer</type>
          <desc>Time step in minutes of the wave data</desc>
       </entry>
