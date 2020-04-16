@@ -5,7 +5,7 @@
    during a run.
    </header>
    <group id="models">
-      <entry id="WAVE_TYPE" value="2">
+      <entry id="WAVE_TYPE" value="1">
          <type>integer</type>
          <valid_values>
          1,2
@@ -16,7 +16,7 @@
          2: Transient.
          </desc>
       </entry>
-      <entry id="MINAC_TYPE" value="F06MOD">
+      <entry id="MINAC_TYPE" value="M12MOD">
          <type>char</type>
          <valid_values>
          F06MOD,T03MOD,KM12MOD,M12MOD,F07MOD,VDK05MOD,DA07MOD
@@ -58,7 +58,7 @@
       </entry>
    </group>
    <group id="run_desc">
-      <entry id="CASE" value="F06%NULL%NULL%NULL">
+      <entry id="CASE" value="M12MOD%NULL%NULL%NULL">
          <type>char</type>
          <desc>Simulation case name</desc>
       </entry>
@@ -67,11 +67,11 @@
          <valid_values>regular,calibration,sensitivity</valid_values>
          <desc>Simulation type</desc>
       </entry>
-      <entry id="RUN_STARTDATE" value="2002-01-01">
+      <entry id="RUN_STARTDATE" value="2002-12-01">
          <type>char</type>
          <desc>Run start date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
-      <entry id="RUN_STOPDATE" value="2004-01-01">
+      <entry id="RUN_STOPDATE" value="2002-12-13">
          <type>char</type>
          <desc>Run stop date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
@@ -80,7 +80,7 @@
          <valid_values>ndays,nmonths,nyears</valid_values>
          <desc>Sets the spinup length along with SPINUP_N</desc>
       </entry>
-      <entry id="SPINUP_N" value="5">
+      <entry id="SPINUP_N" value="10">
          <type>integer</type>
          <desc>Provides a numerical count for $SPINUP_OPTION</desc>
       </entry>

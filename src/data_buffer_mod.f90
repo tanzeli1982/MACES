@@ -19,6 +19,7 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: m_dX
    real(kind=8), allocatable, dimension(:)   :: m_Zh
    real(kind=8), allocatable, dimension(:)   :: m_dZh
+   real(kind=8), allocatable, dimension(:)   :: m_xfetch
    ! current speed (m/s)
    real(kind=8), allocatable, dimension(:)   :: m_U
    ! significant wave height (m) and wave energy (W)

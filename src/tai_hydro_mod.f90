@@ -26,13 +26,14 @@ module tai_hydro_mod
    real(kind=8), allocatable, dimension(:) :: sim_Cj
 
 contains
-   subroutine InitHydroMod(xin, zhin, nvar, npft, nx)
+   subroutine InitHydroMod(xin, zhin, fetchin, nvar, npft, nx)
       implicit none
-      !f2py real(kind=8), intent(in) :: xin, zhin
+      !f2py real(kind=8), intent(in) :: xin, zhin, fetchin
       !f2py integer, intent(in) :: nvar, npft
       !f2py integer, intent(hide), depend(xin) :: nx = len(xin)
       real(kind=8), dimension(nx) :: xin     ! platform x coordinate (m) 
       real(kind=8), dimension(nx) :: zhin    ! platform surface elevation (msl)
+      real(kind=8), dimension(nx) :: fetchin ! platform fetch length (m)
       integer :: nvar               ! state variable number
       integer :: npft               ! pft number
       integer :: nx                 ! grid cell number
@@ -45,6 +46,7 @@ contains
       allocate(m_dX(nx))               ; m_dX = 0.0d0
       allocate(m_Zh(nx))               ; m_Zh = zhin
       allocate(m_dZh(nx))              ; m_dZh = 0.0d0
+      allocate(m_xfetch(nx))           ; m_xfetch = fetchin
       allocate(m_U(nx))                ; m_U = 0.0d0
       allocate(m_Hwav(nx))             ; m_Hwav = 0.0d0
       allocate(m_kwav(nx))             ; m_kwav = INFNT
@@ -220,13 +222,13 @@ contains
    !
    !------------------------------------------------------------------------------
    subroutine ModelSetup(sources, sinks, zh, pft, Bag, xref, Twav, &
-                         h0, U0, U10, Cs0, n, m)
+                         h0, U10, Cs0, n, m)
       implicit none
       !f2py real(kind=8), intent(in) :: sources, sinks
       !f2py real(kind=8), intent(in) :: zh, Bag
       !f2py integer, intent(in) :: pft
       !f2py real(kind=8), intent(in) :: xref
-      !f2py real(kind=8), intent(in) :: Twav, h0, U0, U10
+      !f2py real(kind=8), intent(in) :: Twav, h0, U10
       !f2py real(kind=8), intent(in) :: U10, Cs0
       !f2py integer, intent(hide), depend(sources) :: n = shape(sources,0)
       !f2py integer, intent(hide), depend(sources) :: m = shape(sources,1)
@@ -234,7 +236,7 @@ contains
       real(kind=8), dimension(n) :: zh, Bag
       integer, dimension(n) :: pft
       real(kind=8) :: xref
-      real(kind=8) :: Twav, h0, U0, U10
+      real(kind=8) :: Twav, h0, U10
       real(kind=8) :: Cs0(m)
       integer :: n, m
       ! local variables
@@ -262,7 +264,7 @@ contains
 
       ! boundary conditions
       m_uhydro(1,1) = h0
-      m_uhydro(1,2) = h0*U0
+      !m_uhydro(1,2) = h0*U0
       do ii = 1, m, 1
          m_uhydro(1,ii+2) = h0*Cs0(ii)
       end do
@@ -275,11 +277,9 @@ contains
    !          transport are taken to zero (linearly interpolated to zero)??
    !
    !------------------------------------------------------------------------------
-   subroutine ModelCallback(xfetch, wave_mod)
+   subroutine ModelCallback(wave_mod)
       implicit none
-      !f2py real(kind=8), intent(in) :: xfetch
       !f2py integer, intent(in) :: wave_mod
-      real(kind=8) :: xfetch  ! units: km
       integer :: wave_mod     ! wave mode
       ! local variables
       real(kind=8) :: h, kwav, Twav
@@ -305,7 +305,7 @@ contains
             m_Cs(ii,:) = 0.0
          else
             m_U(ii) = m_uhydro(ii,2) / max(0.1,h)
-            m_Cs(ii,:) = m_uhydro(ii,4:m) / max(0.1,h)
+            m_Cs(ii,:) = m_uhydro(ii,3:m) / max(0.1,h)
          end if 
       end do
 
@@ -319,9 +319,9 @@ contains
                m_kwav(ii) = INFNT
                m_Twav(ii) = frc_Twav
             else
-               call UpdateSgnftWaveHeight(frc_U10, 1d3*xfetch, &
-                  h, m_Hwav(ii), Twav)
-               Twav = max(0.2, Twav)
+               call UpdateSgnftWaveHeight(frc_U10, m_xfetch(ii), &
+                                          h, m_Hwav(ii), Twav)
+               !Twav = max(0.2, Twav)
                m_Twav(ii) = Twav
                call UpdateWaveNumber(Twav, h, kwav)
                m_kwav(ii) = kwav

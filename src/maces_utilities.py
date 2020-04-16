@@ -76,17 +76,20 @@ def get_spinup_stop_date(date0, tstep, nstep):
         year = date0.year + nstep
     return date(year, month, day)
         
-def construct_tai_platform(diva_segments, xRes, nmax):
+def construct_tai_platform(diva_segments, coastline, fetchagl, xRes, nmax):
     """Construct the MACES TAI platform.
        DIVA elevations are fixed at -12.5, -8.5, -5.5, -4.5, -3.5, -2.5, -1.5,
        -0.5, 0, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 8.5, 12.5, 16.5 msl.
     Arguments:
         diva_segments : DIVA segment length (km)
+        coastline : coastline length (km)
+        fetchagl: coast fetch angle (degree)
         xRes : reference node cell length (m)
         nmax : maximum cell number in a segment
     Returns :
         x_tai   : platform grid coordinate (m)
         zh_tai  : platform grid elevation (m)
+        fetch_tai : platform grid fetch (m)
     """
     zhs = [-12.5, -8.5, -5.5, -4.5, -3.5, -2.5, -1.5, -0.5, 0, 0.5, 1.5, 
            2.5, 3.5, 4.5, 5.5, 8.5, 12.5, 16.5]
@@ -100,6 +103,7 @@ def construct_tai_platform(diva_segments, xRes, nmax):
     Nx = Nx + 1     # the end node
     x_tai = np.zeros(Nx, dtype=np.float64, order='F')
     zh_tai = np.zeros(Nx, dtype=np.float64, order='F')
+    fetch_tai = np.zeros(Nx, dtype=np.float64, order='F')
     indx = 0
     x0 = 0.0
     for ii, length in enumerate(diva_segments):
@@ -114,7 +118,12 @@ def construct_tai_platform(diva_segments, xRes, nmax):
             # the end node
             x_tai[-1] = x0
             zh_tai[-1] = zhs[ii+1]
-    return x_tai, zh_tai
+    fetch_tai[0] = 1e3 * coastline
+    for ii in np.arange(1,Nx):
+        fetch_tai[ii] = fetch_tai[ii-1] - 2.0*(x_tai[ii]-x_tai[ii-1])* \
+            np.tan((90-fetchagl)/180*np.pi)
+        fetch_tai[ii] = max(fetch_tai[ii], 0.01*fetch_tai[0])
+    return x_tai, zh_tai, fetch_tai
 
 def construct_platform_pft(segments, pfts, x_tai):
     """Construct the pft on the MACES platform.
@@ -369,7 +378,7 @@ def read_force_data(filename, varname, date0, date1, ntstep,
         id1 = id_range[1] + 1
         nday = (date1 - date0).days
         day0 = (date0 - refdate).days
-        nyear = date1.year - date0.year
+        nyear = date1.year - date0.year + 1
         year0 = date0.year - refdate.year
         if tstep=='hour':
             nstart = int( 24*day0/ntstep )
@@ -380,7 +389,7 @@ def read_force_data(filename, varname, date0, date1, ntstep,
         elif tstep=='year':
             nstart = int( year0/ntstep )
             ntime = max( int( nyear/ntstep ), 1 )
-        data = np.array(nc.variables[varname][:][id0:id1,nstart:nstart+ntime])
+        data = np.array(nc.variables[varname][nstart:nstart+ntime,id0:id1])
     finally:
         nc.close()
     return data
@@ -548,6 +557,16 @@ def write_hydro_outputs(filename, all_ids, sids, tstep, uhydro_out,
             Cj_var.long_name = r'water salinity'
             Cj_var.units = 'PSU'
             Cj_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
+            Esed_var = nc.createVariable('Esed', 'f4', ('site','time','x',), 
+                                         fill_value=1e20)
+            Esed_var.long_name = r'sediment detachment rate'
+            Esed_var.units = 'kg m-2 s-1'
+            Esed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
+            Dsed_var = nc.createVariable('Dsed', 'f4', ('site','time','x',), 
+                                         fill_value=1e20)
+            Dsed_var.long_name = r'sediment deposition rate'
+            Dsed_var.units = 'kg m-2 s-1'
+            Dsed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
         finally:
             nc.close()
     # write data only
@@ -570,6 +589,10 @@ def write_hydro_outputs(filename, all_ids, sids, tstep, uhydro_out,
             Css_var[iid] = uhydro_out['Css'][ii]
             Cj_var = nc.variables['sal']
             Cj_var[iid] = uhydro_out['Cj'][ii]
+            Esed_var = nc.variables['Esed']
+            Esed_var[iid] = uhydro_out['Esed'][ii]
+            Dsed_var = nc.variables['Dsed']
+            Dsed_var[iid] = uhydro_out['Dsed'][ii]
     finally:
         nc.close()
         
