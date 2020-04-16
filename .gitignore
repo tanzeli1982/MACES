@@ -116,3 +116,4 @@ src/out_hydro_2001-01-01_2001-01-06.nc
 scripts/serc_fco2_fch4.nc
 src/out_ecogeom_2002-01-01_2004-01-01.nc
 src/out_hydro_2002-01-01_2004-01-01.nc
+*.nc

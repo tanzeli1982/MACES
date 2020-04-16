@@ -14,11 +14,11 @@ from netCDF4 import Dataset
 
 z_1BF = -1.1    # 1BF is -1.1 m and 2BF is -2.1 m
 z_2BF = -2.1
-day0 = 456
-day1 = 459
+day0 = 1
+day1 = 4
 
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/out_ecogeom_2002-01-01_2004-01-01.nc'
+filename = '/Users/tanz151/Python_maces/src/out_ecogeom_2003-03-21_2003-04-06.nc'
 try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:][0])
@@ -30,7 +30,7 @@ finally:
 index1 = np.argmin(np.abs(zh - z_1BF))
 index2 = np.argmin(np.abs(zh - z_2BF))
 
-filename = '/Users/tanz151/Python_maces/src/out_hydro_2002-01-01_2004-01-01.nc'
+filename = '/Users/tanz151/Python_maces/src/out_hydro_2003-03-21_2003-04-06.nc'
 try:
     nc = Dataset(filename,'r')
     h_1BF = np.array(nc.variables['h'][0,day0*24:day1*24+1,index1])
