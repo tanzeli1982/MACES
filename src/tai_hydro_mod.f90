@@ -321,11 +321,10 @@ contains
             else
                call UpdateSgnftWaveHeight(frc_U10, m_xfetch(ii), &
                                           h, m_Hwav(ii), Twav)
-               !Twav = max(0.2, Twav)
-               m_Twav(ii) = Twav
                call UpdateWaveNumber(Twav, h, kwav)
+               m_Twav(ii) = Twav
                m_kwav(ii) = kwav
-               m_Uwav(ii) = PI*m_Hwav(ii)/Twav/sinh(kwav*max(0.1,h))
+               m_Uwav(ii) = 2*PI*m_Hwav(ii)/Twav/sinh(kwav*max(0.1,h))
             end if
          end do
       else
@@ -343,7 +342,7 @@ contains
             else
                !m_Hwav(ii) = fctr_wave(ii) * sqrt(8.0*m_Ewav(ii)/G/Roul)
                m_Hwav(ii) = sqrt(8.0*m_Ewav(ii)/G/Roul)
-               m_Uwav(ii) = PI*m_Hwav(ii)/frc_Twav/sinh(kwav*max(0.1,h))
+               m_Uwav(ii) = 2*PI*m_Hwav(ii)/frc_Twav/sinh(kwav*max(0.1,h))
             end if
          end do
          !call UpdateWaveBrkProb(m_uhydro(:,1), m_Hwav, m_Qb)
