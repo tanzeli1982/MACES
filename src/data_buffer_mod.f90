@@ -8,7 +8,6 @@ module data_buffer_mod
    implicit none
    public
 
-   integer, parameter :: Wss = 1, Wsal = 2
    integer, parameter :: EQM_WAVE = 1, TSNT_WAVE = 2
 
    !! allocatable arrays for Hydrodynamic model
@@ -38,7 +37,7 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: m_Swc
    real(kind=8), allocatable, dimension(:)   :: m_Sbrk
    ! sediment and constituents
-   real(kind=8), allocatable, dimension(:,:) :: m_Cs
+   real(kind=8), allocatable, dimension(:)   :: m_Cs
    ! temporary variables
    real(kind=8), allocatable, dimension(:,:) :: tmp_uhydro
    real(kind=8), allocatable, dimension(:,:) :: tmp_uhydroL
@@ -54,8 +53,8 @@ module data_buffer_mod
    real(kind=8), allocatable, dimension(:)   :: tmp_U
    real(kind=8), allocatable, dimension(:)   :: tmp_B
    ! forcing variables
-   real(kind=8), allocatable, dimension(:,:) :: Cs_source
-   real(kind=8), allocatable, dimension(:,:) :: Cs_sink
+   real(kind=8), allocatable, dimension(:)   :: Cs_source
+   real(kind=8), allocatable, dimension(:)   :: Cs_sink
    real(kind=8), allocatable, dimension(:)   :: fctr_wave
    real(kind=8) :: frc_Twav
    real(kind=8) :: frc_U10

@@ -150,10 +150,6 @@ if __name__=='__main__':
             run_date0, run_date1, namelist['U10_TSTEP'], 'minute', sid_range)
         h0 = utils.read_force_data(namelist['FILE_h'], 'h', \
             run_date0, run_date1, namelist['h_TSTEP'], 'minute', sid_range)
-        #U0 = utils.read_force_data(namelist['FILE_U'], 'U', \
-        #    run_date0, run_date1, namelist['U_TSTEP'], 'minute', sid_range)
-        #Hwav0 = utils.read_force_data(namelist['FILE_Wave'], 'Hwav', \
-        #    run_date0, run_date1, namelist['Wave_TSTEP'], 'minute', sid_range)
         Twav = utils.read_force_data(namelist['FILE_Wave'], 'Twav', \
             run_date0, run_date1, namelist['Wave_TSTEP'], 'minute', sid_range)
     else:
@@ -161,15 +157,11 @@ if __name__=='__main__':
         Tair = None
         U10 = None
         h0 = None
-        #U0 = None
-        #Hwav0 = None
         Twav = None
     SLR = comm.bcast(SLR, root=0)
     Tair = comm.bcast(Tair, root=0)
     U10 = comm.bcast(U10, root=0)
     h0 = comm.bcast(h0, root=0)
-    #U0 = comm.bcast(U0, root=0)
-    #Hwav0 = comm.bcast(Hwav0, root=0)
     Twav = comm.bcast(Twav, root=0)
         
     # load ecogeomorphology modules
@@ -253,10 +245,10 @@ if __name__=='__main__':
                          'Bbg': site_Bbg, 'OM': site_OM}
             
             rslr = SLR[:,iid] - site_uplift[iid]
-            Cs0 = np.array([site_TSM[iid], site_sal[iid]], dtype=np.float64, 
-                           order='F')
+            Cs0 = site_TSM[iid]
+            sal = site_sal[iid]
             forcings = {'U10': U10[:,iid], 'Tair': Tair[:,iid], 'h0': h0[:,iid],
-                        'Twav': Twav[:,iid], 'Cs0': Cs0, 'rslr': rslr, 
+                        'Twav': Twav[:,iid], 'Cs0': Cs0, 'sal': sal, 'rslr': rslr, 
                         'trng': site_trng[iid], 'mhws': site_mhws[iid], 
                         'mhwn': site_mhwn[iid]}
             

@@ -552,11 +552,6 @@ def write_hydro_outputs(filename, all_ids, sids, tstep, uhydro_out,
             Css_var.long_name = r'suspended sediment concentration'
             Css_var.units = 'kg/m3'
             Css_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Cj_var = nc.createVariable('sal', 'f4', ('site','time','x',), 
-                                       fill_value=1e20)
-            Cj_var.long_name = r'water salinity'
-            Cj_var.units = 'PSU'
-            Cj_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
             Esed_var = nc.createVariable('Esed', 'f4', ('site','time','x',), 
                                          fill_value=1e20)
             Esed_var.long_name = r'sediment detachment rate'
@@ -587,8 +582,6 @@ def write_hydro_outputs(filename, all_ids, sids, tstep, uhydro_out,
             tau_var[iid] = uhydro_out['tau'][ii]
             Css_var = nc.variables['TSM']
             Css_var[iid] = uhydro_out['Css'][ii]
-            Cj_var = nc.variables['sal']
-            Cj_var[iid] = uhydro_out['Cj'][ii]
             Esed_var = nc.variables['Esed']
             Esed_var[iid] = uhydro_out['Esed'][ii]
             Dsed_var = nc.variables['Dsed']

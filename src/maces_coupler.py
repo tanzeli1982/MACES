@@ -52,15 +52,13 @@ def run_tai_maces(input_data, models, spinup):
     trng = input_data['forcings']['trng']
     mhws = input_data['forcings']['mhws']
     U10 = input_data['forcings']['U10']
-    #Hwav0 = input_data['forcings']['Hwav0']
     Twav = input_data['forcings']['Twav']
     Tair = input_data['forcings']['Tair']
     h0 = input_data['forcings']['h0']
-    #U0 = input_data['forcings']['U0']
     Cs0 = input_data['forcings']['Cs0']
+    sal = input_data['forcings']['sal']
     rslr = input_data['forcings']['rslr']
     nx = len(x)
-    ncs = len(Cs0)
     npool = np.shape(OM)[1]
     xref = utils.get_refshore_coordinate(x, zh)
     
@@ -90,7 +88,6 @@ def run_tai_maces(input_data, models, spinup):
         uhydro_out['Uwav'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['tau'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['Css'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
-        uhydro_out['Cj'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['Esed'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
         uhydro_out['Dsed'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
     ecogeom_out = {}
@@ -113,8 +110,8 @@ def run_tai_maces(input_data, models, spinup):
     Lbed = np.zeros(nx, dtype=np.float64, order='F')
     DepOM = np.zeros(nx, dtype=np.float64, order='F')
     DecayOM = np.zeros((nx,npool), dtype=np.float64, order='F')
-    sources = np.zeros((nx,ncs), dtype=np.float64, order='F')
-    sinks = np.zeros((nx,ncs), dtype=np.float64, order='F')
+    sources = np.zeros(nx, dtype=np.float64, order='F')
+    sinks = np.zeros(nx, dtype=np.float64, order='F')
     tau_old = np.zeros(nx, dtype=np.float64, order='F')
     
     # start simulation
@@ -150,28 +147,21 @@ def run_tai_maces(input_data, models, spinup):
         Tair_inst = Tair[indx]
         indx = utils.get_forcing_index(t, 'minute', namelist['h_TSTEP'])
         h0_inst = h0[indx] - zh[0]
-        #indx = utils.get_forcing_index(t, 'minute', namelist['U_TSTEP'])
-        #U0_inst = U0[indx]
         indx = utils.get_forcing_index(t, 'minute', namelist['Wave_TSTEP'])
-        #Hwav0_inst = Hwav0[indx]
         Twav_inst = Twav[indx]
         indx = int( (year-date0.year)/namelist['SLR_TSTEP'] )
         rslr_inst = rslr[indx]
         
         # simulate hydrodynamics
         if mac_mod.m_update_Css:
-            sources[:,0] = Esed
-            sinks[:,0] = Dsed
+            sources[:] = Esed
+            sinks[:] = Dsed
         else:
-            sources[:,0] = 0.0
-            sinks[:,0] = 0.0
-        sources[:,1] = 0.0
-        sinks[:,1] = 0.0
-        #U0_inst = 0.0
-#        taihydro.modelsetup(sources, sinks, zh, pft, Bag, xref, Twav_inst, 
-#                            h0_inst, U0_inst, U10_inst, Cs0)
-        taihydro.modelsetup(sources, sinks, zh, pft, Bag, xref, Twav_inst, 
-                            h0_inst, U10_inst, Cs0)
+            sources[:] = 0.0
+            sinks[:] = 0.0
+        taihydro.modelsetup(sources, sinks, zh, pft, Bag, xref, Twav_inst,
+                            h0_inst, U10_inst, 0.0)
+                            #h0_inst, U10_inst, Cs0)
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
                                                      dyncheck, curstep)
         assert error==0, "runge-Kutta iteration is more than MAXITER"
@@ -182,7 +172,6 @@ def run_tai_maces(input_data, models, spinup):
         assert np.all(np.isfinite(taihydro.sim_hwav)), "NaN Hwav found"
         assert np.all(np.isfinite(taihydro.sim_tau)), "NaN tau found"
         assert np.all(np.isfinite(taihydro.sim_css)), "NaN Css found"
-        assert np.all(np.isfinite(taihydro.sim_cj)), "NaN Cj found"
         dtau = taihydro.sim_tau - tau_old
         tau_old[:] = taihydro.sim_tau
         
@@ -192,10 +181,10 @@ def run_tai_maces(input_data, models, spinup):
                       'U': taihydro.sim_u, 'h': taihydro.sim_h, 
                       'Uwav': taihydro.sim_uwav, 'Bag': Bag, 'Bbg': Bbg, 
                       'Esed': Esed, 'Dsed': Dsed, 'Lbed': Lbed, 'S': slope, 
-                      'dtau': dtau, 'TR': trng, 'dt': curstep, 'refCss': Cs0[0]}
+                      'dtau': dtau, 'TR': trng, 'dt': curstep, 'refCss': Cs0}
         Esed = mac_mod.mineral_suspension(mac_inputs)
         Dsed = mac_mod.mineral_deposition(mac_inputs)
-        Lbed = mac_mod.bed_loading(mac_inputs)
+        #Lbed = mac_mod.bed_loading(mac_inputs)
         
         # simulate organic matter accretion
         omac_inputs = {'x': x, 'zh': zh, 'S': slope, 'pft': pft, 'OM': OM, 
@@ -218,7 +207,7 @@ def run_tai_maces(input_data, models, spinup):
         x = wavero_mod.wave_erosion(wavero_inputs)
         
         # simulate landward migration
-        lndmgr_inputs = {'pft': pft}
+        lndmgr_inputs = {'pft': pft, 'sal': sal}
         pft = lndmgr_mod.landward_migration(lndmgr_inputs)
         
         # update platform elevation
@@ -238,7 +227,6 @@ def run_tai_maces(input_data, models, spinup):
                 uhydro_out['Uwav'][0,indx] = taihydro.sim_uwav
                 uhydro_out['tau'][0,indx] = taihydro.sim_tau
                 uhydro_out['Css'][0,indx] = taihydro.sim_css
-                uhydro_out['Cj'][0,indx] = taihydro.sim_cj
                 uhydro_out['Esed'][0,indx] = Esed
                 uhydro_out['Dsed'][0,indx] = Dsed
         
