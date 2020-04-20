@@ -6,10 +6,6 @@
    DA07MOD.
    </header>
    <group id="F06MOD">
-      <entry id="d50" value="25e-6" units="m">
-         <type>real</type>
-         <desc>sediment median diameter</desc>
-      </entry>
       <entry id="rhoSed" value="2650.0" units="kg/m3">
          <type>real</type>
          <desc>sediment density</desc>
@@ -18,12 +14,12 @@
          <type>real</type>
          <desc>sediment porosity</desc>
       </entry>
+      <entry id="tauD_cr" value="0.05" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for deposition</desc>
+      </entry>
    </group>
    <group id="T03MOD">
-      <entry id="d50" value="25e-6" units="m">
-         <type>real</type>
-         <desc>sediment median diameter</desc>
-      </entry>
       <entry id="rhoSed" value="2650.0" units="kg/m3">
          <type>real</type>
          <desc>sediment density</desc>
@@ -44,12 +40,12 @@
          <type>real</type>
          <desc>distance factor</desc>
       </entry>
+      <entry id="tauD_cr" value="0.05" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for deposition</desc>
+      </entry>
    </group>
    <group id="KM12MOD">
-      <entry id="d50" value="25e-6" units="m">
-         <type>real</type>
-         <desc>sediment median diameter</desc>
-      </entry>
       <entry id="rhoSed" value="2650.0" units="kg/m3">
          <type>real</type>
          <desc>sediment density</desc>
@@ -57,6 +53,10 @@
       <entry id="porSed" value="0.4" units="none">
          <type>real</type>
          <desc>sediment porosity</desc>
+      </entry>
+      <entry id="tauD_cr" value="0.05" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for deposition</desc>
       </entry>
       <entry id="alphaA" units="none">
          <type>real</type>
@@ -124,10 +124,6 @@
       </entry>
    </group>
    <group id="M12MOD">
-      <entry id="d50" value="25e-6" units="m">
-         <type>real</type>
-         <desc>sediment median diameter</desc>
-      </entry>
       <entry id="rhoSed" value="2650.0" units="kg/m3">
          <type>real</type>
          <desc>sediment density</desc>
@@ -136,23 +132,27 @@
          <type>real</type>
          <desc>sediment porosity</desc>
       </entry>
-      <entry id="E0" value="0.3" units="mm/yr">
+      <entry id="E0" value="5" units="mm/yr">
          <type>real</type>
          <desc>reference erosion rate</desc>
       </entry>
-      <entry id="tauE_cr" value="0.65" units="Pa">
+      <entry id="tauE_cr" value="0.08" units="Pa">
          <type>real</type>
          <desc>critical shear stress for erosion</desc>
+      </entry>
+      <entry id="tauD_cr" value="0.05" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for deposition</desc>
       </entry>
       <entry id="ks" units="m3/s/kg">
          <type>real</type>
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">5.95e-5</value>
-            <value pft="3">5.95e-5</value>
-            <value pft="4">5.95e-5</value>
-            <value pft="5">9.51e-6</value>
+            <value pft="2">5.95e-4</value>
+            <value pft="3">5.95e-4</value>
+            <value pft="4">5.95e-4</value>
+            <value pft="5">9.51e-4</value>
             <value pft="6">9.51e-6</value>
             <value pft="7">9.51e-6</value>
             <value pft="8">9.51e-6</value>
@@ -170,10 +170,6 @@
       </entry>
    </group>
    <group id="F07MOD">
-      <entry id="d50" value="25e-6" units="m">
-         <type>real</type>
-         <desc>sediment median diameter</desc>
-      </entry>
       <entry id="rhoSed" value="2650.0" units="kg/m3">
          <type>real</type>
          <desc>sediment density</desc>
@@ -208,10 +204,6 @@
       </entry>
    </group>
    <group id="VDK05MOD">
-      <entry id="d50" value="25e-6" units="m">
-         <type>real</type>
-         <desc>sediment median diameter</desc>
-      </entry>
       <entry id="rhoSed" value="2650.0" units="kg/m3">
          <type>real</type>
          <desc>sediment density</desc>
@@ -240,12 +232,12 @@
          <type>real</type>
          <desc>sediment wave erosion increase rate by plant</desc>
       </entry>
+      <entry id="tauD_cr" value="0.05" units="Pa">
+         <type>real</type>
+         <desc>critical shear stress for deposition</desc>
+      </entry>
    </group>
    <group id="DA07MOD">
-      <entry id="d50" value="25e-6" units="m">
-         <type>real</type>
-         <desc>sediment median diameter</desc>
-      </entry>
       <entry id="rhoSed" value="2650.0" units="kg/m3">
          <type>real</type>
          <desc>sediment density</desc>

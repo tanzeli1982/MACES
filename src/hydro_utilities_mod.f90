@@ -190,11 +190,13 @@ contains
    ! Purpose: Solve non-linear equation using the Newton Downhill method.
    !
    !------------------------------------------------------------------------------
-   subroutine NonLRNewtonDownhill(NonLREQ, NonLREQDr, coefs, xtol, root, err)
+   subroutine NonLRNewtonDownhill(NonLREQ, NonLREQDr, coefs, xtol, positive, &
+                                  root, err)
       implicit none
       external :: NonLREQ, NonLREQDr
       real(kind=8), intent(in) :: coefs(:)
       real(kind=8), intent(in) :: xtol
+      logical, intent(in) :: positive
       real(kind=8), intent(inout) :: root
       integer, intent(out) :: err
       real(kind=8) :: xk, yk, dyk
@@ -216,11 +218,19 @@ contains
          call NonLREQDr(xk, coefs, dyk)
          xk2 = xk - lamda*yk/dyk
          call NonLREQ(xk2, coefs, yk2)
-         do while (abs(yk2)>=abs(yk))
-            lamda = 0.5 * lamda
-            xk2 = xk - lamda*yk/dyk
-            call NonLREQ(xk2, coefs, yk2)
-         end do
+         if (positive) then
+            do while (abs(yk2)>=abs(yk) .or. xk2<=0)
+               lamda = 0.5 * lamda
+               xk2 = xk - lamda*yk/dyk
+               call NonLREQ(xk2, coefs, yk2)
+            end do
+         else
+            do while (abs(yk2)>=abs(yk))
+               lamda = 0.5 * lamda
+               xk2 = xk - lamda*yk/dyk
+               call NonLREQ(xk2, coefs, yk2)
+            end do
+         end if
          dx = abs(xk2-xk)
          xk = xk2
          iter = iter + 1
@@ -369,7 +379,7 @@ contains
 
    subroutine UpdateShearStress(Twav, h, U, Uwav, tau)
       implicit none
-      real(kind=8), intent(in) :: Twav
+      real(kind=8), intent(in) :: Twav(:)
       real(kind=8), intent(in) :: h(:)
       real(kind=8), intent(in) :: U(:)
       real(kind=8), intent(in) :: Uwav(:)
@@ -382,11 +392,11 @@ contains
       do ii = 1, nx, 1
          if (h(ii)>TOL_REL) then
             ! bottom shear stress by currents
-            fcurr = 0.24/(log(4.8*max(1.,h(ii)/par_d50)))**2
+            fcurr = 0.24/(log(4.8*max(0.1,h(ii))/par_d50))**2
             tau_curr = 0.125*Roul*fcurr*U(ii)**2
             ! bottom shear stress by wave
-            fwave = 1.39*(6.0*Twav/PI/par_d50)**(-0.52)
-            tau_wave = 0.5*fwave*Roul*Uwav(ii)**1.48
+            fwave = 1.39*(6.0*Twav(ii)/PI/par_d50)**(-0.52)
+            tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
             ! combined shear stress
             if (tau_curr<TOL_REL .and. tau_wave<TOL_REL) then
                tau(ii) = 0.0d0
@@ -478,7 +488,7 @@ contains
          coefs = (/Twav, max(0.1,h)/)
          kwav = 1.0d0
          call NonLRNewtonDownhill(WaveNumberEQ, WaveNumberEQDr, coefs, &
-            xtol, kwav, err)
+            xtol, .True., kwav, err)
          if (err==1) then
             write(msg, "(F8.4, F8.4)") Twav, h
             print *, "Wave number isn't available: " // trim(msg)
@@ -507,7 +517,7 @@ contains
             coefs = (/Twav, max(0.1,h(ii))/)
             kwav(ii) = 1.0d0
             call NonLRNewtonDownhill(WaveNumberEQ, WaveNumberEQDr, &
-               coefs, xtol, kwav(ii), err)
+               coefs, xtol, .True., kwav(ii), err)
             if (err==1) then
                write(msg, "(F8.4, F8.4)") Twav, h(ii)
                print *, "Wave number isn't available: " // trim(msg)
@@ -713,25 +723,42 @@ contains
    !------------------------------------------------------------------------------
    subroutine UpdateSgnftWaveHeightEQM(U10, xfetch, h, Hwav, Twav)
       implicit none
-      real(kind=8), intent(in) :: U10
-      real(kind=8), intent(in) :: xfetch
-      real(kind=8), intent(in) :: h
+      real(kind=8), intent(in) :: U10     ! units: m/s
+      real(kind=8), intent(in) :: xfetch  ! units: meter
+      real(kind=8), intent(in) :: h       ! units: meter
       real(kind=8), intent(out) :: Hwav   ! units: meter
       real(kind=8), intent(out) :: Twav   ! units: second
       real(kind=8) :: A1, A2, B1, B2
 
       if (h>TOL_REL) then
-         A1 = 0.493*(h*G/U10**2)**0.75
+         A1 = 0.493*(max(0.1,h)*G/U10**2)**0.75
          B1 = 3.13d-3*(xfetch*G/U10**2)**0.57
-         A2 = 0.331*(h*G/U10**2)**1.01
+         A2 = 0.331*(max(0.1,h)*G/U10**2)**1.01
          B2 = 5.21d-4*(xfetch*G/U10**2)**0.73
          Hwav = 0.17*U10**2/G*(tanh(A1)*tanh(B1/tanh(A1)))**0.87
-         Twav = 7.518*U10/G*(tanh(A2)*tanh(B2/tanh(A2)))**0.37
+         Twav = max(1.0, 7.518*U10/G*(tanh(A2)*tanh(B2/tanh(A2)))**0.37)
       else
          Hwav = 0.0
          Twav = 2.0
       end if
-   end subroutine   
+   end subroutine
+
+   !------------------------------------------------------------------------------
+   !
+   ! Purpose: Calculate wave period (Carniello et al., 2011 ESTUAR COAST SHELF S).
+   !
+   !------------------------------------------------------------------------------
+   subroutine CalcWavePeriod(U10, h, Twav)
+      implicit none
+      real(kind=8), intent(in) :: U10
+      real(kind=8), intent(in) :: h
+      real(kind=8), intent(out) :: Twav
+      real(kind=8) :: Twav_dim, h_dim
+
+      h_dim = G*max(1.,h)/U10**2
+      Twav_dim = 3.5 * h_dim**0.35
+      Twav = Twav_dim * U10 / G
+   end subroutine
 
    !------------------------------------------------------------------------------
    !

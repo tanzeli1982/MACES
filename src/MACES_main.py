@@ -78,28 +78,31 @@ if __name__=='__main__':
     wavero_params = comm.bcast(wavero_params, root=0)
     lndmgr_params = comm.bcast(lndmgr_params, root=0)
     hydro_params = comm.bcast(hydro_params, root=0)
+    mac_params['d50'] = hydro_params['d50']
     
     # read site database excel file
     if master_process:
         df = pd.read_excel(namelist['SITE_FILE'], sheet_name="diva", header=0, 
-                           usecols="A:AU")
+                           usecols="A:AV")
     else:
         df = None
     df = comm.bcast(df, root=0)
     site_ids = np.array(df['DIVA_ID'], dtype=np.int32)
-    site_length = np.array(df['coastline'], dtype=np.float64)   # km
-    site_trng = np.array(df['mtidalrng'], dtype=np.float64)     # m
-    site_mhws = np.array(df['mhws'], dtype=np.float64)          # m
-    site_mhwn = np.array(df['mhwn'], dtype=np.float64)          # m
-    site_uplift = np.array(df['uplift'], dtype=np.float64)      # mm/yr
-    site_TSM = 1e-3 * np.array(df['TSM'], dtype=np.float64)     # kg/m3
-    site_sal = np.array(df['salinity'], dtype=np.float64)       # PSU
+    site_coastline = np.array(df['coastline'], dtype=np.float64)    # km
+    site_fetchagl = np.array(df['fetchagl'], dtype=np.float64)      # degree
+    site_trng = np.array(df['mtidalrng'], dtype=np.float64)         # m
+    site_mhws = np.array(df['mhws'], dtype=np.float64)              # m
+    site_mhwn = np.array(df['mhwn'], dtype=np.float64)              # m
+    site_uplift = np.array(df['uplift'], dtype=np.float64)          # mm/yr
+    site_TSM = 1e-3 * np.array(df['TSM'], dtype=np.float64)         # kg/m3
+    site_sal = np.array(df['salinity'], dtype=np.float64)           # PSU
     nsite = np.size(site_ids)
     site_n = min(namelist['LAST_ID'], nsite)
     site_1 = namelist['FIRST_ID'] - 1
     nrun = site_n - site_1
     site_ids = site_ids[site_1:site_n]
-    site_length = site_length[site_1:site_n]
+    site_coastline = site_coastline[site_1:site_n]
+    site_fetchagl = site_fetchagl[site_1:site_n]
     site_trng = site_trng[site_1:site_n]
     site_mhws = site_mhws[site_1:site_n]
     site_mhwn = site_mhwn[site_1:site_n]
@@ -109,20 +112,26 @@ if __name__=='__main__':
     npft = TAIMODSuper.npft
     npool = TAIMODSuper.npool
     
-    top_segments = []
-    for jj in range(utils.NTOPSEG):
-        code = 'area' + '{:02d}'.format(jj+1)
-        segment = np.array(df[code],dtype=np.float64)[site_1:site_n] / site_length
-        top_segments.append(segment)
+    diva_segments = []
     pft_segments = []
     pft_orders = []
-    for jj in np.arange(npft):
-        code = 'pft' + '{:d}'.format(jj)
-        segment = np.array(df[code],dtype=np.float64)[site_1:site_n]
-        pft_segments.append(segment)
-        code = 'pft' + '{:d}'.format(jj) + '_order'
-        order = np.array(df[code],dtype=np.int32)[site_1:site_n]
-        pft_orders.append(order)
+    for ii, site in enumerate(np.arange(site_1,site_n)):
+        area = np.zeros(utils.NTOPSEG, dtype=np.float64)
+        for jj in range(utils.NTOPSEG):
+            code = 'area' + '{:02d}'.format(jj+1)
+            area[jj] = float(df[code][site])
+        segments = area / site_coastline[ii]
+        diva_segments.append(segments)
+        segments = np.zeros(npft, dtype=np.float64)
+        orders = np.zeros(npft, dtype=np.int32)
+        for jj in range(npft):
+            code = 'pft' + '{:d}'.format(jj)
+            segments[jj] = float(df[code][site])
+            code = 'pft' + '{:d}'.format(jj) + '_order'
+            orders[jj] = int(df[code][site])
+            assert (segments[jj]>0)==(orders[jj]>=0), "inconsistent pft segment found"
+        pft_segments.append(segments)
+        pft_orders.append(orders)
         
     # read driving data
     # units: SLR (mm/yr), Tair (K), U10 (m/s), h0 (m), U0 (m/s), 
@@ -138,13 +147,9 @@ if __name__=='__main__':
         Tair = utils.read_force_data(namelist['FILE_Tair'], 'Tair', \
             run_date0, run_date1, namelist['Tair_TSTEP'], 'hour', sid_range)
         U10 = utils.read_force_data(namelist['FILE_U10'], 'U10', \
-            run_date0, run_date1, namelist['U10_TSTEP'], 'hour', sid_range)
+            run_date0, run_date1, namelist['U10_TSTEP'], 'minute', sid_range)
         h0 = utils.read_force_data(namelist['FILE_h'], 'h', \
             run_date0, run_date1, namelist['h_TSTEP'], 'minute', sid_range)
-        U0 = utils.read_force_data(namelist['FILE_U'], 'U', \
-            run_date0, run_date1, namelist['U_TSTEP'], 'minute', sid_range)
-        Hwav0 = utils.read_force_data(namelist['FILE_Wave'], 'Hwav', \
-            run_date0, run_date1, namelist['Wave_TSTEP'], 'minute', sid_range)
         Twav = utils.read_force_data(namelist['FILE_Wave'], 'Twav', \
             run_date0, run_date1, namelist['Wave_TSTEP'], 'minute', sid_range)
     else:
@@ -152,15 +157,11 @@ if __name__=='__main__':
         Tair = None
         U10 = None
         h0 = None
-        U0 = None
-        Hwav0 = None
         Twav = None
     SLR = comm.bcast(SLR, root=0)
     Tair = comm.bcast(Tair, root=0)
     U10 = comm.bcast(U10, root=0)
     h0 = comm.bcast(h0, root=0)
-    U0 = comm.bcast(U0, root=0)
-    Hwav0 = comm.bcast(Hwav0, root=0)
     Twav = comm.bcast(Twav, root=0)
         
     # load ecogeomorphology modules
@@ -189,11 +190,9 @@ if __name__=='__main__':
             # construct site platform
             xres = namelist['CELL_RES']
             xnum = namelist['CELL_NUM']
-            diva_segments = np.zeros(utils.NTOPSEG, dtype=np.float64)
-            for jj in range(utils.NTOPSEG):
-                diva_segments[jj] = top_segments[jj][iid]
-            site_x, site_zh = utils.construct_tai_platform(diva_segments, 
-                                                           xres, xnum)
+            site_x, site_zh, site_fetch = \
+                utils.construct_tai_platform(diva_segments[iid], site_coastline[iid],
+                                             site_fetchagl[iid], xres, xnum)
             nx = len(site_x)
             site_dx = np.zeros(nx, dtype=np.float64, order='F')
             for jj in range(nx):
@@ -203,27 +202,24 @@ if __name__=='__main__':
                     site_dx[jj] = 0.5*(site_x[jj]-site_x[jj-1])
                 else:
                     site_dx[jj] = 0.5*(site_x[jj+1]-site_x[jj-1])
-            coords = {'x': site_x, 'dx': site_dx, 'xfetch': site_length[iid]}
+            coords = {'x': site_x, 'dx': site_dx}
             
             # construct pft distribution
-            segments = []
-            pfts = []
-            orders = []
-            for jj in range(npft):
-                assert (pft_segments[jj][iid]>0)==(pft_orders[jj][iid]>=0), \
-                    "inconsistent pft segment found"
-                if pft_orders[jj][iid]>=0:
-                    segments.append(pft_segments[jj][iid])
-                    orders.append(pft_orders[jj][iid])
-                    pfts.append(jj)
+            orders = pft_orders[iid]
+            segments = pft_segments[iid]
+            pfts = np.arange(npft)
+            indice = orders>=0
+            orders = orders[indice]
+            segments = segments[indice]
+            pfts = pfts[indice]
             indices = sorted(range(len(orders)), key=lambda k: orders[k])
-            segments = np.array(segments)[indices]
-            pfts = np.array(pfts)[indices]
+            segments = segments[indices]
+            pfts = pfts[indices]
             site_pft = utils.construct_platform_pft(segments, pfts, site_x)
             
             # instantiate hydrodynamics model
             nvar = len(namelist['HYDRO_TOL'])
-            taihydro.inithydromod(site_x, site_zh, nvar, npft)
+            taihydro.inithydromod(site_x, site_zh, site_fetch, nvar, npft)
             taihydro.setmodelparams(hydro_params['d50'], hydro_params['Cz0'], 
                                     hydro_params['Kdf'], hydro_params['cbc'], 
                                     hydro_params['cwc'], hydro_params['fr'], 
@@ -248,13 +244,13 @@ if __name__=='__main__':
             tai_state = {'pft': site_pft, 'zh': site_zh, 'Bag': site_Bag, 
                          'Bbg': site_Bbg, 'OM': site_OM}
             
-            rslr = SLR[iid] - site_uplift[iid]
-            Cs0 = np.array([site_TSM[iid], site_sal[iid]], dtype=np.float64, 
-                           order='F')
-            forcings = {'U10': U10[iid], 'Tair': Tair[iid], 'h0': h0[iid], 
-                        'U0': U0[iid], 'Hwav0': Hwav0[iid], 'Twav': Twav[iid], 
-                        'Cs0': Cs0, 'rslr': rslr, 'trng': site_trng[iid], 
-                        'mhws': site_mhws[iid], 'mhwn': site_mhwn[iid]}
+            rslr = SLR[:,iid] - site_uplift[iid]
+            Cs0 = site_TSM[iid]
+            sal = site_sal[iid]
+            forcings = {'U10': U10[:,iid], 'Tair': Tair[:,iid], 'h0': h0[:,iid],
+                        'Twav': Twav[:,iid], 'Cs0': Cs0, 'sal': sal, 'rslr': rslr, 
+                        'trng': site_trng[iid], 'mhws': site_mhws[iid], 
+                        'mhwn': site_mhwn[iid]}
             
             input_data = {'coord': coords, 'state': tai_state, 
                           'forcings': forcings, 'namelist': namelist}

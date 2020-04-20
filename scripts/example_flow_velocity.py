@@ -17,7 +17,7 @@ from matplotlib.ticker import AutoMinorLocator
 filename = '/Users/tanz151/Python_maces/src/out_ecogeom_2001-01-01_2001-01-06.nc'
 try:
     nc = Dataset(filename,'r')
-    zh = np.array(nc.variables['zh'][:][0][0])
+    zh = np.array(nc.variables['zh'][0][0])
 finally:
     nc.close()
 
@@ -25,8 +25,8 @@ finally:
 filename = '/Users/tanz151/Python_maces/src/out_hydro_2001-01-01_2001-01-06.nc'
 try:
     nc = Dataset(filename,'r')
-    xv = np.array(nc.variables['x'][:][0])
-    Uw = np.array(nc.variables['U'][:][0])
+    xv = np.array(nc.variables['x'][0])
+    Uw = np.array(nc.variables['U'][0])
 finally:
     nc.close()
 xv = xv[100:308]
