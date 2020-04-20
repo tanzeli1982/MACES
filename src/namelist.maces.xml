@@ -16,7 +16,7 @@
          2: Transient.
          </desc>
       </entry>
-      <entry id="MINAC_TYPE" value="M12MOD">
+      <entry id="MINAC_TYPE" value="F07MOD">
          <type>char</type>
          <valid_values>
          F06MOD,T03MOD,KM12MOD,M12MOD,F07MOD,VDK05MOD,DA07MOD

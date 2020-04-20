@@ -24,14 +24,16 @@ module tai_hydro_mod
    real(kind=8), allocatable, dimension(:) :: sim_Css
 
 contains
-   subroutine InitHydroMod(xin, zhin, fetchin, nvar, npft, nx)
+   subroutine InitHydroMod(xin, zhin, fetchin, Cs0, nvar, npft, nx)
       implicit none
       !f2py real(kind=8), intent(in) :: xin, zhin, fetchin
+      !f2py real(kind=8), intent(in) :: Cs0
       !f2py integer, intent(in) :: nvar, npft
       !f2py integer, intent(hide), depend(xin) :: nx = len(xin)
       real(kind=8), dimension(nx) :: xin     ! platform x coordinate (m) 
       real(kind=8), dimension(nx) :: zhin    ! platform surface elevation (msl)
       real(kind=8), dimension(nx) :: fetchin ! platform fetch length (m)
+      real(kind=8) :: Cs0
       integer :: nvar               ! state variable number
       integer :: npft               ! pft number
       integer :: nx                 ! grid cell number
@@ -112,6 +114,7 @@ contains
          end if
          m_uhydro(ii,1) = max(-m_Zh(ii), 0.0)
       end do
+      m_uhydro(:,3) = Cs0
    end subroutine
 
    subroutine FinalizeHydroMod()
