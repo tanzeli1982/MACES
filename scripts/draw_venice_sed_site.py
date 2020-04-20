@@ -86,20 +86,20 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
 
-# 2BF
-ax = axes[1]
-ax.plot(tt_model, sed_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
-ax.plot(tt_obs, sed_obs_2BF, color='C3', linestyle='-', marker='.', markersize=5)
-ax.set_xlim(0, nt_model-1)
-ax.set_ylim(0, 150)
-ax.xaxis.set_ticks(np.arange(0,nt_model,24))
-ax.yaxis.set_ticks(np.linspace(0,150,6))
-ax.set_xticklabels(['12/10','12/11','12/12'])
-ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-labels = ax.get_xticklabels() + ax.get_yticklabels()
-[label.set_fontname('Times New Roman') for label in labels]
-[label.set_fontsize(12) for label in labels]
-[label.set_color('black') for label in labels]
+## 2BF
+#ax = axes[1]
+#ax.plot(tt_model, sed_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
+#ax.plot(tt_obs, sed_obs_2BF, color='C3', linestyle='-', marker='.', markersize=5)
+#ax.set_xlim(0, nt_model-1)
+#ax.set_ylim(0, 150)
+#ax.xaxis.set_ticks(np.arange(0,nt_model,24))
+#ax.yaxis.set_ticks(np.linspace(0,150,6))
+#ax.set_xticklabels(['12/10','12/11','12/12'])
+#ax.xaxis.set_minor_locator(AutoMinorLocator(4))
+#labels = ax.get_xticklabels() + ax.get_yticklabels()
+#[label.set_fontname('Times New Roman') for label in labels]
+#[label.set_fontsize(12) for label in labels]
+#[label.set_color('black') for label in labels]
 
 plt.tight_layout()
 fig.savefig('F5.png', dpi=300)

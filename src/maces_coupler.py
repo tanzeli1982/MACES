@@ -211,8 +211,8 @@ def run_tai_maces(input_data, models, spinup):
         
         # update platform elevation
         if not spinup:
-            #zh = utils.update_platform_elev(zh, Esed, Dsed, Lbed, DepOM, \
-            #          rhoSed, rhoOM, porSed, rslr_inst, curstep)
+            zh = utils.update_platform_elev(zh, Esed, Dsed, Lbed, DepOM, \
+                      rhoSed, rhoOM, porSed, rslr_inst, curstep)
             xref = utils.get_refshore_coordinate(x, zh)
              
         # archive short-term hydrodynamic state variables

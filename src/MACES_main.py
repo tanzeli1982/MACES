@@ -219,7 +219,8 @@ if __name__=='__main__':
             
             # instantiate hydrodynamics model
             nvar = len(namelist['HYDRO_TOL'])
-            taihydro.inithydromod(site_x, site_zh, site_fetch, nvar, npft)
+            taihydro.inithydromod(site_x, site_zh, site_fetch, site_TSM[iid], 
+                                  nvar, npft)
             taihydro.setmodelparams(hydro_params['d50'], hydro_params['Cz0'], 
                                     hydro_params['Kdf'], hydro_params['cbc'], 
                                     hydro_params['cwc'], hydro_params['fr'], 
