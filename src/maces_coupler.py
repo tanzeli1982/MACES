@@ -160,8 +160,7 @@ def run_tai_maces(input_data, models, spinup):
             sources[:] = 0.0
             sinks[:] = 0.0
         taihydro.modelsetup(sources, sinks, zh, pft, Bag, xref, Twav_inst,
-                            h0_inst, U10_inst, 0.0)
-                            #h0_inst, U10_inst, Cs0)
+                            h0_inst, U10_inst, Cs0)
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
                                                      dyncheck, curstep)
         assert error==0, "runge-Kutta iteration is more than MAXITER"
@@ -184,7 +183,7 @@ def run_tai_maces(input_data, models, spinup):
                       'dtau': dtau, 'TR': trng, 'dt': curstep, 'refCss': Cs0}
         Esed = mac_mod.mineral_suspension(mac_inputs)
         Dsed = mac_mod.mineral_deposition(mac_inputs)
-        #Lbed = mac_mod.bed_loading(mac_inputs)
+        Lbed = mac_mod.bed_loading(mac_inputs)
         
         # simulate organic matter accretion
         omac_inputs = {'x': x, 'zh': zh, 'S': slope, 'pft': pft, 'OM': OM, 

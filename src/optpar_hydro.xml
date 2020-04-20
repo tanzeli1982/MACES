@@ -11,7 +11,7 @@
       <type>real</type>
       <desc>the Chézy's friction coefficient</desc>
    </entry>
-   <entry id="Kdf" value="100.0" units="m2/s">
+   <entry id="Kdf" value="5.0" units="m2/s">
       <type>real</type>
       <desc>the dispersion coefficient of constituents</desc>
    </entry>

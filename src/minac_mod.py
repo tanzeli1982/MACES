@@ -25,6 +25,7 @@ class F06MOD(MACMODSuper):
     # constructor
     def __init__(self, params):
         self.m_params = params
+        self.m_update_Css = False
         
     def mineral_suspension(self, inputs):
         """"Calculate mineral suspension rate.
@@ -42,13 +43,11 @@ class F06MOD(MACMODSuper):
             inputs : driving data for mineral deposition calculation
         Returns: mineral deposition rate (kg m-2 s-1)
         """
-        d50 = self.m_params['d50']      # sediment median diameter (m)
-        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
         pft = inputs['pft']     # platform pft
         Css = inputs['Css']     # sediment conc (kg/m3)
         tau = inputs['tau']     # bottom shear stress (Pa)
         Dsed = inputs['Dsed']   # sediment deposition (kg/m2/s)
-        ws = self.settling_velocity(d50, Rous, tau)
+        ws = self.settling_velocity(tau)
         Dsed[:] = ws * Css
         Dsed[np.logical_or(Css<utils.TOL,pft==1)] = 0.0
         return Dsed
@@ -66,6 +65,7 @@ class T03MOD(MACMODSuper):
     # constructor
     def __init__(self, params):
         self.m_params = params
+        self.m_update_Css = False
         
     def mineral_suspension(self, inputs):
         """"Calculate mineral suspension rate.
@@ -109,6 +109,7 @@ class KM12MOD(MACMODSuper):
     # constructor
     def __init__(self, params):
         self.m_params = params
+        self.m_update_Css = False
         
     def mineral_suspension(self, inputs):
         """"Calculate mineral suspension rate.
@@ -126,20 +127,18 @@ class KM12MOD(MACMODSuper):
             inputs : driving data for mineral deposition calculation
         Returns: mineral deposition rate (kg m-2 s-1)
         """
-        d50 = self.m_params['d50']      # sediment median diameter (m)
-        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
         Dsed = inputs['Dsed']   # sediment deposition (kg/m2/s)
         pft = inputs['pft']     # platform pft
         Css = inputs['Css']     # sediment conc (kg/m3)
         tau = inputs['tau']     # bottom shear stress (Pa)
         Bag = inputs['Bag']     # aboveground biomass (kg/m2)
         U = inputs['U']         # flow velocity (m/s)
-        ws = self.settling_velocity(d50, Rous, pft, tau, Bag, U)
+        ws = self.settling_velocity(pft, tau, Bag, U)
         Dsed[:] = ws * Css
         Dsed[np.logical_or(Css<utils.TOL,pft==1)] = 0.0
         return Dsed
     
-    def settling_velocity(self, d50, Rous, pft, tau, Bag, U):
+    def settling_velocity(self, pft, tau, Bag, U):
         """"Calculate effective sediment settling velocity (Morris et al., 2012).
         Arguments:
             d50 : sediment median diameter (m)
@@ -150,6 +149,8 @@ class KM12MOD(MACMODSuper):
             U : tide flow velocity (m/s)
         Returns: sediment settling velocity (m s-1)
         """
+        d50 = self.m_params['d50']      # sediment median diameter (m)
+        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
         alphaA = self.m_params['alphaA']
         betaA = self.m_params['betaA']
         alphaD = self.m_params['alphaD']
@@ -198,6 +199,7 @@ class M12MOD(MACMODSuper):
     # constructor
     def __init__(self, params):
         self.m_params = params
+        self.m_update_Css = True
         
     def mineral_suspension(self, inputs):
         """"Calculate mineral suspension rate.
@@ -213,7 +215,7 @@ class M12MOD(MACMODSuper):
         Esed = inputs['Esed']       # sediment erosion (kg/m2/s)
         Esed[:] = 0.0
         indice = np.logical_and( tau>tauE_cr, pft==1 )
-        Esed[indice] = 1e-3 * E0 * Rous * (tau[indice]/tauE_cr-1.0) / 3.1536e7
+        Esed[indice] = 1e-3 * E0 * Rous * ((tau[indice]-tauE_cr)/0.25) / 3.1536e7
         return Esed
     
     def mineral_deposition(self, inputs):
@@ -223,53 +225,45 @@ class M12MOD(MACMODSuper):
         Returns: mineral deposition rate (kg m-2 s-1)
         """
         ks = self.m_params['ks']        # vegetation trapping efficiency (m3/s/kg)
-        d50 = self.m_params['d50']      # sediment median diameter (m)
-        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
         Dsed = inputs['Dsed']   # sediment deposition (kg/m2/s)
         Css = inputs['Css']     # sediment conc (kg/m3)
         tau = inputs['tau']     # bottom shear stress (Pa)
         Bag = inputs['Bag']     # aboveground biomass (kg/m2)
         pft = inputs['pft']     # platform pft
-        Css = inputs['Css']     # sediment conc (kg/m3)
-        zh = inputs['zh']       # platform surface elevation (msl)
-        TR = inputs['TR']       # tidal range (m)
-        MHT = 0.5*TR            # mean high tide (msl)
-        ws = self.settling_velocity(d50, Rous, tau)
+        Css0 = inputs['refCss'] # reference sediment conc (kg/m3)
+        ws = self.settling_velocity(tau)
         Dsed[:] = 0.0
-        indice = np.logical_and(np.logical_and(zh>=0,zh<=MHT), 
-                                np.logical_and(pft>=2,pft<=5))
-        indice = np.logical_and(indice, Css>utils.TOL)
-        DMHT = MHT - zh[indice]
-        Dsed[indice] = np.maximum( Rous*Css[indice]*(ws[indice]+ \
-            ks[pft[indice]]*Bag[indice])*(DMHT**2)/TR, 0.0 )
+        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), Css>Css0)
+        Dsed[indice] = np.maximum( Css[indice]*(ws[indice]+ks[pft[indice]]* \
+            Bag[indice]), 0.0 )
         return Dsed
     
-    def bed_loading(self, inputs):
-        """"Calculate sand bed loading rate.
-        Arguments:
-            inputs : driving data for bed loading calculation
-        Returns: bed loading rate (kg m-2 s-1)
-        """
-        alphaSG = self.m_params['alphaSG']  # m2/yr
-        betaSG = self.m_params['betaSG']    # m4/yr
-        Rous = self.m_params['rhoSed']      # sediment density (kg/m3)
-        Lbed = inputs['Lbed']   # sediment bed load (kg/m2/s)
-        pft = inputs['pft']     # platform pft
-        Bbg = inputs['Bbg']     # belowground biomass (kg/m2)
-        S = inputs['S']         # platform slope (m/m)
-        Lbed[:] = 0.0
-        Nx = len(pft)
-        for ii in range(Nx):
-            if pft[ii]>=1 and pft[ii]<=5:
-                Lbed[ii] = -Rous*max(alphaSG-betaSG*Bbg[ii],0.0)/3.1536e7*S[ii]
-                if ii<Nx-1:
-                    Sup = S[ii+1]
-                else:
-                    Sup = 0.0
-                if pft[ii+1]>=1 and pft[ii+1]<=5:
-                    Lbed[ii] = Lbed[ii] + Rous*max(alphaSG-betaSG*Bbg[ii],0.0)/ \
-                        3.1536e7*Sup
-        return Lbed
+#    def bed_loading(self, inputs):
+#        """"Calculate sand bed loading rate.
+#        Arguments:
+#            inputs : driving data for bed loading calculation
+#        Returns: bed loading rate (kg m-2 s-1)
+#        """
+#        alphaSG = self.m_params['alphaSG']  # m2/yr
+#        betaSG = self.m_params['betaSG']    # m4/yr
+#        Rous = self.m_params['rhoSed']      # sediment density (kg/m3)
+#        Lbed = inputs['Lbed']   # sediment bed load (kg/m2/s)
+#        pft = inputs['pft']     # platform pft
+#        Bbg = inputs['Bbg']     # belowground biomass (kg/m2)
+#        S = inputs['S']         # platform slope (m/m)
+#        Lbed[:] = 0.0
+#        Nx = len(pft)
+#        for ii in range(Nx):
+#            if pft[ii]>=1 and pft[ii]<=5:
+#                Lbed[ii] = -Rous*max(alphaSG-betaSG*Bbg[ii],0.0)/3.1536e7*S[ii]
+#                if ii<Nx-1:
+#                    Sup = S[ii+1]
+#                else:
+#                    Sup = 0.0
+#                if pft[ii+1]>=1 and pft[ii+1]<=5:
+#                    Lbed[ii] = Lbed[ii] + Rous*max(alphaSG-betaSG*Bbg[ii],0.0)/ \
+#                        3.1536e7*Sup
+#        return Lbed
     
 ###############################################################################
 class F07MOD(MACMODSuper):
@@ -284,6 +278,7 @@ class F07MOD(MACMODSuper):
     # constructor
     def __init__(self, params):
         self.m_params = params
+        self.m_update_Css = True
         
     def mineral_suspension(self, inputs):
         """"Calculate mineral suspension rate.
@@ -323,12 +318,10 @@ class F07MOD(MACMODSuper):
         """
         E0 = self.m_params['E0']    # reference erosion rate (kg/m2/s)
         tauE_cr = self.m_params['tauE_cr']  # critical shear stress (Pa)
-        d50 = self.m_params['d50sand']  # sediment median diameter (m)
-        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
         Lbed = inputs['Lbed']   # sediment bed load (kg/m2/s)
         Css = inputs['Css']     # sediment conc (kg/m3)
         tau = inputs['tau']     # bottom shear stress (Pa)
-        ws = self.settling_velocity(d50, Rous, tau)
+        ws = self.settling_velocity(tau)
         # assume 50% of cohesive sediment
         Lbed[:] = 0.5*Css*ws
         indice = tau>tauE_cr
@@ -348,6 +341,7 @@ class VDK05MOD(MACMODSuper):
     # constructor
     def __init__(self, params):
         self.m_params = params
+        self.m_update_Css = True
         
     def mineral_suspension(self, inputs):
         """"Calculate mineral suspension rate.
@@ -408,6 +402,7 @@ class DA07MOD(MACMODSuper):
     # constructor
     def __init__(self, params):
         self.m_params = params
+        self.m_update_Css = True
         
     def mineral_suspension(self, inputs):
         """"Calculate mineral suspension rate.
@@ -450,7 +445,6 @@ class DA07MOD(MACMODSuper):
         betaE = self.m_params['betaE']      # coef for trapping efficiency
         gammaE = self.m_params['gammaE']    # coef for trapping efficiency
         d50 = self.m_params['d50']          # sediment median diameter (m)
-        Rous = self.m_params['rhoSed']      # sediment density (kg/m3)
         Dsed = inputs['Dsed']       # sediment deposition (kg/m2/s)
         Css = inputs['Css']         # sediment conc (kg/m3)
         U = inputs['U']             # water flow velocity (m/s)
@@ -460,9 +454,9 @@ class DA07MOD(MACMODSuper):
         pft = inputs['pft']         # platform pft
         nv = utils.visc
         # direct deposition
-        ws = self.settling_velocity(d50, Rous, tau)
+        ws = self.settling_velocity(tau)
         Dsed[:] = np.maximum( 2.0*ws*Css*(1.0-tau/tauD_cr), 0.0 )
-        Dsed[:10] = 0.0   # avoid weird deposition at the seaward node
+        #Dsed[:10] = 0.0   # avoid weird deposition at the seaward node
         # plant trapping
         for ii, Bag_ii in enumerate(Bag):
             if Bag_ii>utils.TOL and Css[ii]>utils.TOL:

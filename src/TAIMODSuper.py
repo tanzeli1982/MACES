@@ -89,14 +89,15 @@ class MACMODSuper(object):
         Lbed[:] = 0.0
         return Lbed
     
-    def settling_velocity(self, d50, Rous, tau):
+    def settling_velocity(self, tau):
         """"Calculate effective sediment settling velocity (Mudd et al., 2010).
         Arguments:
             tau : bottom shear stress (Pa)
-            d50 : sediment median diameter (m)
-            Rous : sediment density (kg/m3)
         Returns: sediment settling velocity (m s-1)
         """
+        d50 = self.m_params['d50']      # sediment median diameter (m)
+        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
+        tauD_cr = self.m_params['tauD_cr']  # critical shear stress (Pa)
         # parameters for cohesive sediment (clay and silt)
         A = 38.0
         F = 3.55
@@ -105,10 +106,8 @@ class MACMODSuper(object):
         nv = utils.visc
         G = utils.G
         ws = (( np.sqrt(0.25*(A/F)**(2/m)+(4./3.*d50**3*G*(S-1)/F/nv**2)**(1/m)) \
-              - 0.5*(A/F)**(1/m))**m) * nv / d50
-        ustar = np.sqrt(tau/utils.Roul)
-        wup = utils.Karman * ustar
-        return np.maximum(ws - wup, 0.0)
+              - 0.5*(A/F)**(1/m))**m) * nv / d50 * (1.0 - tau/tauD_cr)
+        return np.maximum(ws, 0.0)
 
 ###############################################################################    
 class OMACMODSuper(object):
