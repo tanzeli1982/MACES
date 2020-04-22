@@ -158,6 +158,7 @@ class OMACMODSuper(object):
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         Bbg = inputs['Bbg']         # belowground biomass (kg/m2)
         pft = inputs['pft']         # platform pft
+        
         Bbg[:] = phi[pft] * Bag
         return Bbg
     

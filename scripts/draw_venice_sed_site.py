@@ -20,11 +20,11 @@ day0 = 9
 day1 = 11
 
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/out_ecogeom_2002-12-01_2002-12-13.nc'
+filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2002-12-01_2002-12-13_466.nc'
 try:
     nc = Dataset(filename,'r')
-    x = np.array(nc.variables['x'][0])
-    zh = np.array(nc.variables['zh'][0,0,:])
+    x = np.array(nc.variables['x'][:])
+    zh = np.array(nc.variables['zh'][0,:])
 finally:
     nc.close()
     
@@ -32,11 +32,11 @@ finally:
 index1 = np.argmin(np.abs(zh - z_1BF))
 index2 = np.argmin(np.abs(zh - z_2BF))
 
-filename = '/Users/tanz151/Python_maces/src/out_hydro_2002-12-01_2002-12-13.nc'
+filename = '/Users/tanz151/Python_maces/src/maces_hydro_2002-12-01_2002-12-13_466.nc'
 try:
     nc = Dataset(filename,'r')
-    sed_1BF = np.array(nc.variables['TSM'][0,day0*24:day1*24+1,index1])
-    sed_2BF = np.array(nc.variables['TSM'][0,day0*24:day1*24+1,index2])
+    sed_1BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index1])
+    sed_2BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index2])
 finally:
     nc.close()
 sed_1BF = 1e3 * np.reshape(sed_1BF,(24*(day1-day0)+1))    # mg/L

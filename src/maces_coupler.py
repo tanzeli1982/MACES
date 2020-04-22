@@ -80,29 +80,29 @@ def run_tai_maces(input_data, models, spinup):
     nt_hydro = utils.get_shr_output_num(date0, date1, namelist['HYDRO_TSTEP'])
     nt_ecogeom = utils.get_lng_output_num(date0, date1, namelist['ECOGEOM_TSTEP'])
     uhydro_out = {}
-    if (not spinup) and (nt_hydro>0):
-        uhydro_out['x'] = np.reshape(np.float32(x),(1,nx))
-        uhydro_out['h'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
-        uhydro_out['U'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
-        uhydro_out['Hwav'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
-        uhydro_out['Uwav'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
-        uhydro_out['tau'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
-        uhydro_out['Css'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
-        uhydro_out['Esed'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
-        uhydro_out['Dsed'] = 1e20 * np.ones((1,nt_hydro,nx), dtype=np.float32)
+    if (not spinup) and (nt_hydro>0) and namelist['OUTPUT_HYDRO']:
+        uhydro_out['x'] = np.float32(x)
+        uhydro_out['h'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
+        uhydro_out['U'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
+        uhydro_out['Hwav'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
+        uhydro_out['Uwav'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
+        uhydro_out['tau'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
+        uhydro_out['Css'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
+        uhydro_out['Esed'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
+        uhydro_out['Dsed'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
     ecogeom_out = {}
     ecogeom_tot = np.zeros(nt_ecogeom, dtype=np.float32)
     if (not spinup) and (nt_ecogeom>0):
-        ecogeom_out['x'] = np.reshape(np.float32(x),(1,nx))
-        ecogeom_out['pft'] = -1 * np.ones((1,nt_ecogeom,nx), dtype=np.int8)
-        ecogeom_out['zh'] = 1e20 * np.ones((1,nt_ecogeom,nx), dtype=np.float32)
-        ecogeom_out['Esed'] = np.zeros((1,nt_ecogeom,nx), dtype=np.float32)
-        ecogeom_out['Dsed'] = np.zeros((1,nt_ecogeom,nx), dtype=np.float32)
-        ecogeom_out['Lbed'] = np.zeros((1,nt_ecogeom,nx), dtype=np.float32)
-        ecogeom_out['DepOM'] = np.zeros((1,nt_ecogeom,nx), dtype=np.float32)
-        ecogeom_out['Bag'] = np.zeros((1,nt_ecogeom,nx), dtype=np.float32)
-        ecogeom_out['Bbg'] = np.zeros((1,nt_ecogeom,nx), dtype=np.float32)
-        ecogeom_out['OM'] = 1e20 * np.ones((1,nt_ecogeom,nx,npool), dtype=np.float32)
+        ecogeom_out['x'] = np.float32(x)
+        ecogeom_out['pft'] = -1 * np.ones((nt_ecogeom,nx), dtype=np.int8)
+        ecogeom_out['zh'] = 1e20 * np.ones((nt_ecogeom,nx), dtype=np.float32)
+        ecogeom_out['Esed'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
+        ecogeom_out['Dsed'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
+        ecogeom_out['Lbed'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
+        ecogeom_out['DepOM'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
+        ecogeom_out['Bag'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
+        ecogeom_out['Bbg'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
+        ecogeom_out['OM'] = 1e20 * np.ones((nt_ecogeom,nx,npool), dtype=np.float32)
         
     # temporal variables
     Esed = np.zeros(nx, dtype=np.float64, order='F')
@@ -159,6 +159,7 @@ def run_tai_maces(input_data, models, spinup):
         else:
             sources[:] = 0.0
             sinks[:] = 0.0
+            
         taihydro.modelsetup(sources, sinks, zh, pft, Bag, xref, Twav_inst,
                             h0_inst, U10_inst, Cs0)
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
@@ -178,9 +179,9 @@ def run_tai_maces(input_data, models, spinup):
         mac_inputs = {'x': x, 'xref': xref, 'pft': pft, 'zh': zh, 
                       'Css': taihydro.sim_css, 'tau': taihydro.sim_tau, 
                       'U': taihydro.sim_u, 'h': taihydro.sim_h, 
-                      'Uwav': taihydro.sim_uwav, 'Bag': Bag, 'Bbg': Bbg, 
-                      'Esed': Esed, 'Dsed': Dsed, 'Lbed': Lbed, 'S': slope, 
-                      'dtau': dtau, 'TR': trng, 'dt': curstep, 'refCss': Cs0}
+                      'Bag': Bag, 'Esed': Esed, 'Dsed': Dsed, 'Lbed': Lbed, 
+                      'S': slope, 'dtau': dtau, 'TR': trng, 'dt': curstep, 
+                      'refCss': Cs0}
         Esed = mac_mod.mineral_suspension(mac_inputs)
         Dsed = mac_mod.mineral_deposition(mac_inputs)
         Lbed = mac_mod.bed_loading(mac_inputs)
@@ -205,9 +206,10 @@ def run_tai_maces(input_data, models, spinup):
         wavero_inputs = {'x': x}
         x = wavero_mod.wave_erosion(wavero_inputs)
         
-        # simulate landward migration
-        lndmgr_inputs = {'pft': pft, 'sal': sal}
-        pft = lndmgr_mod.landward_migration(lndmgr_inputs)
+        # simulate landward migration on the 1st day of each year
+        if doy==1:
+            lndmgr_inputs = {'pft': pft, 'sal': sal}
+            pft = lndmgr_mod.landward_migration(lndmgr_inputs)
         
         # update platform elevation
         if not spinup:
@@ -216,41 +218,41 @@ def run_tai_maces(input_data, models, spinup):
             xref = utils.get_refshore_coordinate(x, zh)
              
         # archive short-term hydrodynamic state variables
-        if (not spinup) and (nt_hydro>0):
+        if (not spinup) and (nt_hydro>0) and namelist['OUTPUT_HYDRO']:
             indx = utils.get_shr_output_index(t, namelist['HYDRO_TSTEP'])
             if indx>hydro_indx:
                 hydro_indx = indx
-                uhydro_out['h'][0,indx] = taihydro.sim_h
-                uhydro_out['U'][0,indx] = taihydro.sim_u
-                uhydro_out['Hwav'][0,indx] = taihydro.sim_hwav
-                uhydro_out['Uwav'][0,indx] = taihydro.sim_uwav
-                uhydro_out['tau'][0,indx] = taihydro.sim_tau
-                uhydro_out['Css'][0,indx] = taihydro.sim_css
-                uhydro_out['Esed'][0,indx] = Esed
-                uhydro_out['Dsed'][0,indx] = Dsed
+                uhydro_out['h'][indx] = taihydro.sim_h
+                uhydro_out['U'][indx] = taihydro.sim_u
+                uhydro_out['Hwav'][indx] = taihydro.sim_hwav
+                uhydro_out['Uwav'][indx] = taihydro.sim_uwav
+                uhydro_out['tau'][indx] = taihydro.sim_tau
+                uhydro_out['Css'][indx] = taihydro.sim_css
+                uhydro_out['Esed'][indx] = Esed
+                uhydro_out['Dsed'][indx] = Dsed
         
         # archive long-term mean eco-geomorphology variables
         if (not spinup) and (nt_ecogeom>0):
             indx = utils.get_lng_output_index(date0, date_cur, \
                 namelist['ECOGEOM_TSTEP'])
             ecogeom_tot[indx] = ecogeom_tot[indx] + curstep
-            ecogeom_out['Esed'][0,indx] = ecogeom_out['Esed'][0,indx] + \
+            ecogeom_out['Esed'][indx] = ecogeom_out['Esed'][indx] + \
                 Esed * curstep
-            ecogeom_out['Dsed'][0,indx] = ecogeom_out['Dsed'][0,indx] + \
+            ecogeom_out['Dsed'][indx] = ecogeom_out['Dsed'][indx] + \
                 Dsed * curstep
-            ecogeom_out['Lbed'][0,indx] = ecogeom_out['Lbed'][0,indx] + \
+            ecogeom_out['Lbed'][indx] = ecogeom_out['Lbed'][indx] + \
                 Lbed * curstep
-            ecogeom_out['DepOM'][0,indx] = ecogeom_out['DepOM'][0,indx] + \
+            ecogeom_out['DepOM'][indx] = ecogeom_out['DepOM'][indx] + \
                 DepOM * curstep
-            ecogeom_out['Bag'][0,indx] = ecogeom_out['Bag'][0,indx] + \
+            ecogeom_out['Bag'][indx] = ecogeom_out['Bag'][indx] + \
                 Bag * curstep
-            ecogeom_out['Bbg'][0,indx] = ecogeom_out['Bbg'][0,indx] + \
+            ecogeom_out['Bbg'][indx] = ecogeom_out['Bbg'][indx] + \
                 Bbg * curstep
             if indx>ecogeom_indx:
                 ecogeom_indx = indx
-                ecogeom_out['zh'][0,indx] = zh
-                ecogeom_out['OM'][0,indx] = OM
-                ecogeom_out['pft'][0,indx] = pft
+                ecogeom_out['zh'][indx] = zh
+                ecogeom_out['OM'][indx] = OM
+                ecogeom_out['pft'][indx] = pft
             
         # check small time step
         if curstep<0.1:
@@ -267,11 +269,11 @@ def run_tai_maces(input_data, models, spinup):
     # returns
     if (not spinup) and (nt_ecogeom>0):
         for jj in range(nx):
-            ecogeom_out['Esed'][:,:,jj] = ecogeom_out['Esed'][:,:,jj]/ecogeom_tot
-            ecogeom_out['Dsed'][:,:,jj] = ecogeom_out['Dsed'][:,:,jj]/ecogeom_tot
-            ecogeom_out['Lbed'][:,:,jj] = ecogeom_out['Lbed'][:,:,jj]/ecogeom_tot
-            ecogeom_out['DepOM'][:,:,jj] = ecogeom_out['DepOM'][:,:,jj]/ecogeom_tot
-            ecogeom_out['Bag'][:,:,jj] = ecogeom_out['Bag'][:,:,jj]/ecogeom_tot
-            ecogeom_out['Bbg'][:,:,jj] = ecogeom_out['Bbg'][:,:,jj]/ecogeom_tot
+            ecogeom_out['Esed'][:,jj] = ecogeom_out['Esed'][:,jj]/ecogeom_tot
+            ecogeom_out['Dsed'][:,jj] = ecogeom_out['Dsed'][:,jj]/ecogeom_tot
+            ecogeom_out['Lbed'][:,jj] = ecogeom_out['Lbed'][:,jj]/ecogeom_tot
+            ecogeom_out['DepOM'][:,jj] = ecogeom_out['DepOM'][:,jj]/ecogeom_tot
+            ecogeom_out['Bag'][:,jj] = ecogeom_out['Bag'][:,jj]/ecogeom_tot
+            ecogeom_out['Bbg'][:,jj] = ecogeom_out['Bbg'][:,jj]/ecogeom_tot
     tai_state = {'pft': pft, 'zh': zh, 'Bag': Bag, 'Bbg': Bbg, 'OM': OM}
     return tai_state, uhydro_out, ecogeom_out
