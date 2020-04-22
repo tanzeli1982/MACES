@@ -114,6 +114,9 @@ def run_tai_maces(input_data, models, spinup):
     sinks = np.zeros(nx, dtype=np.float64, order='F')
     tau_old = np.zeros(nx, dtype=np.float64, order='F')
     
+    # temporal variables for landward migration
+    inund = -1 * np.ones((8760,nx), dtype=np.int8)
+    
     # start simulation
     t = 0.0
     tf = 8.64e4 * nday
@@ -124,6 +127,7 @@ def run_tai_maces(input_data, models, spinup):
     nextstep = MAX_OF_STEP
     hydro_indx = -1
     ecogeom_indx = -1
+    lndmgr_indx = -1
     while t <= tf:
         if t>=3.6e3*(hindx+1) and hindx+1<=nhour:
             hindx = hindx + 1
@@ -135,6 +139,7 @@ def run_tai_maces(input_data, models, spinup):
                 sys.stdout.flush()
             if np.mod(hindx,24)==0:
                 dindx = dindx + 1
+                lndmgr_indx = dindx
                 year, month, day = utils.get_date_from_julian(jdn+dindx)
                 date_cur = date(year, month, day)
                 doy = min(date_cur.timetuple().tm_yday, 365)
@@ -207,9 +212,15 @@ def run_tai_maces(input_data, models, spinup):
         x = wavero_mod.wave_erosion(wavero_inputs)
         
         # simulate landward migration on the 1st day of each year
-        if doy==1:
-            lndmgr_inputs = {'pft': pft, 'sal': sal}
-            pft = lndmgr_mod.landward_migration(lndmgr_inputs)
+        if not spinup:
+            indx = 24*(doy-1) + np.mod(hindx,24)
+            inund[indx] = np.int8(1) * (taihydro.sim_h>1e-3)
+            if doy==1 and lndmgr_indx==dindx:
+                lndmgr_inputs = {'pft': pft, 'Bag': Bag, 'sal': sal, 
+                                 'inund': inund}
+                pft = lndmgr_mod.landward_migration(lndmgr_inputs)
+                inund[:] = np.int8(-1)
+                lndmgr_indx = lndmgr_indx + 1
         
         # update platform elevation
         if not spinup:

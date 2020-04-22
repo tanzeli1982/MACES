@@ -33,6 +33,15 @@ class NULLMOD(LNDMGMODSuper):
         Returns: the new pft on the coastal platform
         """
         pft = inputs['pft']
+        Bag = inputs['Bag']
+        
+        wtlnd_indice = np.logical_and(pft>=2,pft<=5) 
+        if np.size(pft[wtlnd_indice])>0:
+            ref_pft = pft[wtlnd_indice][0]
+            indice = np.logical_and(pft==1, Bag>utils.TOL)
+            pft[indice] = ref_pft
+            indice = np.logical_and(wtlnd_indice, Bag<utils.TOL)
+            pft[indice] = 1
         return pft
 
 ###############################################################################    

@@ -229,6 +229,7 @@ if __name__=='__main__':
                                     hydro_params['cD0'], hydro_params['ScD'])
         
             # instantiate ecogeomorphology models
+            omac_params['nx'] = nx
             mac_mod = mac_class(mac_params)
             omac_mod = omac_class(omac_params)
             wavero_mod = wavero_class(wavero_params)
