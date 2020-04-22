@@ -20,11 +20,11 @@ day0 = 9
 day1 = 11
 
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/out_ecogeom_2002-12-01_2002-12-13.nc'
+filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2002-12-01_2002-12-13_466.nc'
 try:
     nc = Dataset(filename,'r')
-    x = np.array(nc.variables['x'][0])
-    zh = np.array(nc.variables['zh'][0,0,:])
+    x = np.array(nc.variables['x'][:])
+    zh = np.array(nc.variables['zh'][0,:])
 finally:
     nc.close()
     
@@ -32,15 +32,15 @@ finally:
 index1 = np.argmin(np.abs(zh - z_1BF))
 index2 = np.argmin(np.abs(zh - z_2BF))
 
-filename = '/Users/tanz151/Python_maces/src/out_hydro_2002-12-01_2002-12-13.nc'
+filename = '/Users/tanz151/Python_maces/src/maces_hydro_2002-12-01_2002-12-13_466.nc'
 try:
     nc = Dataset(filename,'r')
-    h1_1BF = np.array(nc.variables['h'][0,day0*24:day1*24+1,index1])
-    Hwav1_1BF = np.array(nc.variables['Hwav'][0,day0*24:day1*24+1,index1])
-    tau1_1BF = np.array(nc.variables['tau'][0,day0*24:day1*24+1,index1])
-    h1_2BF = np.array(nc.variables['h'][0,day0*24:day1*24+1,index2])
-    Hwav1_2BF = np.array(nc.variables['Hwav'][0,day0*24:day1*24+1,index2])
-    tau1_2BF = np.array(nc.variables['tau'][0,day0*24:day1*24+1,index2])
+    h1_1BF = np.array(nc.variables['h'][day0*24:day1*24+1,index1])
+    Hwav1_1BF = np.array(nc.variables['Hwav'][day0*24:day1*24+1,index1])
+    tau1_1BF = np.array(nc.variables['tau'][day0*24:day1*24+1,index1])
+    h1_2BF = np.array(nc.variables['h'][day0*24:day1*24+1,index2])
+    Hwav1_2BF = np.array(nc.variables['Hwav'][day0*24:day1*24+1,index2])
+    tau1_2BF = np.array(nc.variables['tau'][day0*24:day1*24+1,index2])
 finally:
     nc.close()
 h1_1BF = 100 * np.reshape(h1_1BF,(24*(day1-day0)+1))    # cm
@@ -56,11 +56,11 @@ tt1_model = np.arange(nt1_model)
 day0 = 12
 day1 = 15
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/out_ecogeom_2003-03-21_2003-04-06.nc'
+filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2003-03-21_2003-04-06_466.nc'
 try:
     nc = Dataset(filename,'r')
-    x = np.array(nc.variables['x'][0])
-    zh = np.array(nc.variables['zh'][0,0,:])
+    x = np.array(nc.variables['x'][:])
+    zh = np.array(nc.variables['zh'][0,:])
 finally:
     nc.close()
     
@@ -68,15 +68,15 @@ finally:
 index1 = np.argmin(np.abs(zh - z_1BF))
 index2 = np.argmin(np.abs(zh - z_2BF))
 
-filename = '/Users/tanz151/Python_maces/src/out_hydro_2003-03-21_2003-04-06.nc'
+filename = '/Users/tanz151/Python_maces/src/maces_hydro_2003-03-21_2003-04-06_466.nc'
 try:
     nc = Dataset(filename,'r')
-    h2_1BF = np.array(nc.variables['h'][0,day0*24:day1*24+1,index1])
-    Hwav2_1BF = np.array(nc.variables['Hwav'][0,day0*24:day1*24+1,index1])
-    tau2_1BF = np.array(nc.variables['tau'][0,day0*24:day1*24+1,index1])
-    h2_2BF = np.array(nc.variables['h'][0,day0*24:day1*24+1,index2])
-    Hwav2_2BF = np.array(nc.variables['Hwav'][0,day0*24:day1*24+1,index2])
-    tau2_2BF = np.array(nc.variables['tau'][0,day0*24:day1*24+1,index2])
+    h2_1BF = np.array(nc.variables['h'][day0*24:day1*24+1,index1])
+    Hwav2_1BF = np.array(nc.variables['Hwav'][day0*24:day1*24+1,index1])
+    tau2_1BF = np.array(nc.variables['tau'][day0*24:day1*24+1,index1])
+    h2_2BF = np.array(nc.variables['h'][day0*24:day1*24+1,index2])
+    Hwav2_2BF = np.array(nc.variables['Hwav'][day0*24:day1*24+1,index2])
+    tau2_2BF = np.array(nc.variables['tau'][day0*24:day1*24+1,index2])
 finally:
     nc.close()
 h2_1BF = 100 * np.reshape(h2_1BF,(24*(day1-day0)+1))    # cm

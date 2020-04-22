@@ -229,6 +229,7 @@ if __name__=='__main__':
                                     hydro_params['cD0'], hydro_params['ScD'])
         
             # instantiate ecogeomorphology models
+            omac_params['nx'] = nx
             mac_mod = mac_class(mac_params)
             omac_mod = omac_class(omac_params)
             wavero_mod = wavero_class(wavero_params)
@@ -271,63 +272,16 @@ if __name__=='__main__':
             
         # deallocate
         taihydro.finalizehydromod()
-        
-        # gather data to master
-        uhydro_out_gather = {}
-        ecogeom_out_gather = {}
-        if master_process:
-            sids = np.zeros(numprocs, dtype=np.int32)
-            for okey in uhydro_out:
-                oshape = list(np.shape(uhydro_out[okey]))
-                oshape[0] = numprocs
-                oshape = tuple(oshape)
-                dtype = uhydro_out[okey].dtype
-                uhydro_out_gather[okey] = np.zeros(oshape,dtype=dtype)
-            for okey in ecogeom_out:
-                oshape = list(np.shape(ecogeom_out[okey]))
-                oshape[0] = numprocs
-                oshape = tuple(oshape)
-                dtype = ecogeom_out[okey].dtype
-                ecogeom_out_gather[okey] = np.zeros(oshape,dtype=dtype)
-        else:
-            sids = None
-            for okey in uhydro_out:
-                uhydro_out_gather[okey] = None
-            for okey in ecogeom_out:
-                ecogeom_out_gather[okey] = None
-        comm.Gather(np.array([iid],dtype=np.int32), sids, root=0)
-        for okey in uhydro_out:
-            counts = ()
-            dspls = ()
-            nsize = np.size(uhydro_out[okey])
-            for jj in range(numprocs):
-                counts = counts + (nsize,)
-                dspls = dspls + (jj*nsize,)
-            mpi_dtype = utils.get_mpi_dtype(uhydro_out[okey].dtype)
-            sendbuf = [uhydro_out[okey], nsize]
-            recvbuf = [uhydro_out_gather[okey], counts, dspls, mpi_dtype]
-            comm.Gatherv(sendbuf, recvbuf, root=0)
-        for okey in ecogeom_out:
-            counts = ()
-            dspls = ()
-            nsize = np.size(ecogeom_out[okey])
-            for jj in range(numprocs):
-                counts = counts + (nsize,)
-                dspls = dspls + (jj*nsize,)
-            mpi_dtype = utils.get_mpi_dtype(ecogeom_out[okey].dtype)
-            sendbuf = [ecogeom_out[okey], nsize]
-            recvbuf = [ecogeom_out_gather[okey], counts, dspls, mpi_dtype]
-            comm.Gatherv(sendbuf, recvbuf, root=0)
             
         # archive outputs
-        if master_process:
-            if ii==0:
-                to_create = True
-            else:
-                to_create = False
-            utils.write_hydro_outputs(namelist['FILE_HYDRO'], site_ids, 
-                                      sids, namelist['HYDRO_TSTEP'], 
-                                      uhydro_out_gather, to_create)
-            utils.write_ecogeom_outputs(namelist['FILE_ECOGEOM'], site_ids, 
-                                        sids, namelist['ECOGEOM_TSTEP'], 
-                                        ecogeom_out_gather, to_create)
+        if namelist['OUTPUT_HYDRO']:
+            filename_hydro = namelist['DOUT_ROOT'] + '/maces_hydro_' + \
+                namelist['RUN_STARTDATE'] + '_' + namelist['RUN_STOPDATE'] + \
+                '_' + '{:d}'.format(site_id) + '.nc'
+            utils.write_hydro_outputs(filename_hydro, namelist['HYDRO_TSTEP'], 
+                                      uhydro_out)
+        filename_ecogeom = namelist['DOUT_ROOT'] + '/maces_ecogeom_' + \
+            namelist['RUN_STARTDATE'] + '_' + namelist['RUN_STOPDATE'] + \
+            '_' + '{:d}'.format(site_id) + '.nc'
+        utils.write_ecogeom_outputs(filename_ecogeom, namelist['ECOGEOM_TSTEP'], 
+                                    ecogeom_out)

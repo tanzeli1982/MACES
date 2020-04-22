@@ -8,10 +8,10 @@ Utility functions for the MACES
 @author: Zeli Tan
 """
 
-import netCDF4
 import numpy as np
 import xml.etree.ElementTree as ET
 from scipy import constants
+from netCDF4 import Dataset
 from datetime import date
 from mpi4py import MPI
 
@@ -368,7 +368,7 @@ def read_force_data(filename, varname, date0, date1, ntstep,
     Returns : forcing data array
     """
     try:
-        nc = netCDF4.Dataset(filename, 'r')
+        nc = Dataset(filename, 'r')
         dateint = int(nc.variables['date'][:])
         year = int(dateint/1e4)
         month = int((dateint-1e4*year)/1e2)
@@ -467,10 +467,6 @@ def get_lng_output_num(date0, date1, tstep):
         ntime = nmonth
     elif tstep=='year':
         ntime = nyear
-    elif tstep=='decade':
-        ntime = int(nyear/10)
-    elif tstep=='century':
-        ntime = int(nyear/100)
     else:
         ntime = -1
     return ntime
@@ -490,209 +486,139 @@ def get_mpi_dtype(dtype):
     elif dtype==np.dtype('int8'):
         return MPI.BYTE
 
-def write_hydro_outputs(filename, all_ids, sids, tstep, uhydro_out, 
-                        to_create):
+def write_hydro_outputs(filename, tstep, uhydro_out):
     """Write model hydrodynamics outputs into a nc file.
     Arguments:
         filename : output file name
-        all_ids : all site ids
-        sids : site index range of the current iteration
         tstep : time step type string
         uhydro_out  : hydrodynamic model outputs
-        to_create : True if create the new file otherwise False
     Returns : 
     """
-    nid = len(all_ids)
-    nt = np.shape(uhydro_out['h'])[1]
-    nx = np.shape(uhydro_out['h'])[2]
+    #nt = np.shape(uhydro_out['h'])[0]
+    nx = np.shape(uhydro_out['h'])[1]
     # create output file if needed
-    if to_create:
-        try:
-            nc = netCDF4.Dataset(filename, 'w', format='NETCDF4_CLASSIC')
-            nc.history = 'MACES simulated ' + tstep + ' hydrodynamics'
-            nc.contact = r'Please contact zeli.tan@pnnl.gov for more information'
-            nc.createDimension('site', None)
-            nc.createDimension('time', nt)
-            nc.createDimension('x', nx)
-            # create and write variables
-            site_var = nc.createVariable('site', 'i4', ('site',))
-            site_var.long_name = r'site DIVA id'
-            site_var[:] = all_ids
-            x_var = nc.createVariable('x', 'f4', ('site','x',))
-            x_var.long_name = r'platform transect coordinate'
-            x_var.units = 'm'
-            x_var[:] = 1e20*np.ones((nid,nx),dtype=np.float32)
-            h_var = nc.createVariable('h', 'f4', ('site','time','x',), 
-                                      fill_value=1e20)
-            h_var.long_name = r'water depth'
-            h_var.units = 'm'
-            h_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            U_var = nc.createVariable('U', 'f4', ('site','time','x',), 
-                                      fill_value=1e20)
-            U_var.long_name = r'tide signed flow velocity'
-            U_var.units = 'm/s'
-            U_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Hwav_var = nc.createVariable('Hwav', 'f4', ('site','time','x',), 
-                                         fill_value=1e20)
-            Hwav_var.long_name = r'significant wave height'
-            Hwav_var.units = 'm'
-            Hwav_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Uwav_var = nc.createVariable('Uwav', 'f4', ('site','time','x',), 
-                                         fill_value=1e20)
-            Uwav_var.long_name = r'wave velocity'
-            Uwav_var.units = 'm/s'
-            Uwav_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)            
-            tau_var = nc.createVariable('tau', 'f4', ('site','time','x',), 
-                                        fill_value=1e20)
-            tau_var.long_name = r'bottom shear stress'
-            tau_var.units = 'Pa'
-            tau_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Css_var = nc.createVariable('TSM', 'f4', ('site','time','x',), 
-                                        fill_value=1e20)
-            Css_var.long_name = r'suspended sediment concentration'
-            Css_var.units = 'kg/m3'
-            Css_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Esed_var = nc.createVariable('Esed', 'f4', ('site','time','x',), 
-                                         fill_value=1e20)
-            Esed_var.long_name = r'sediment detachment rate'
-            Esed_var.units = 'kg m-2 s-1'
-            Esed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Dsed_var = nc.createVariable('Dsed', 'f4', ('site','time','x',), 
-                                         fill_value=1e20)
-            Dsed_var.long_name = r'sediment deposition rate'
-            Dsed_var.units = 'kg m-2 s-1'
-            Dsed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-        finally:
-            nc.close()
-    # write data only
     try:
-        nc = netCDF4.Dataset(filename, 'r+')
-        for ii, iid in enumerate(sids):
-            x_var = nc.variables['x']
-            x_var[iid] = uhydro_out['x'][ii]
-            h_var = nc.variables['h']
-            h_var[iid] = uhydro_out['h'][ii]
-            U_var = nc.variables['U']
-            U_var[iid] = uhydro_out['U'][ii]
-            Hwav_var = nc.variables['Hwav']
-            Hwav_var[iid] = uhydro_out['Hwav'][ii]
-            Uwav_var = nc.variables['Uwav']
-            Uwav_var[iid] = uhydro_out['Uwav'][ii]
-            tau_var = nc.variables['tau']
-            tau_var[iid] = uhydro_out['tau'][ii]
-            Css_var = nc.variables['TSM']
-            Css_var[iid] = uhydro_out['Css'][ii]
-            Esed_var = nc.variables['Esed']
-            Esed_var[iid] = uhydro_out['Esed'][ii]
-            Dsed_var = nc.variables['Dsed']
-            Dsed_var[iid] = uhydro_out['Dsed'][ii]
+        nc = Dataset(filename, 'w', format='NETCDF4_CLASSIC')
+        nc.history = 'MACES simulated ' + tstep + ' hydrodynamics'
+        nc.contact = r'Please contact zeli.tan@pnnl.gov for more information'
+        nc.createDimension('time', None)
+        nc.createDimension('x', nx)
+        # create and write variables
+        x_var = nc.createVariable('x', 'f4', ('x',))
+        x_var.long_name = r'platform transect coordinate'
+        x_var.units = 'm'
+        x_var[:] = uhydro_out['x']
+        h_var = nc.createVariable('h', 'f4', ('time','x',), 
+                                  fill_value=1e20)
+        h_var.long_name = r'water depth'
+        h_var.units = 'm'
+        h_var[:] = uhydro_out['h']
+        U_var = nc.createVariable('U', 'f4', ('time','x',), 
+                                  fill_value=1e20)
+        U_var.long_name = r'tide signed flow velocity'
+        U_var.units = 'm/s'
+        U_var[:] = uhydro_out['U']
+        Hwav_var = nc.createVariable('Hwav', 'f4', ('time','x',), 
+                                     fill_value=1e20)
+        Hwav_var.long_name = r'significant wave height'
+        Hwav_var.units = 'm'
+        Hwav_var[:] = uhydro_out['Hwav']
+        Uwav_var = nc.createVariable('Uwav', 'f4', ('time','x',), 
+                                     fill_value=1e20)
+        Uwav_var.long_name = r'wave velocity'
+        Uwav_var.units = 'm/s'
+        Uwav_var[:] = uhydro_out['Uwav']           
+        tau_var = nc.createVariable('tau', 'f4', ('time','x',), 
+                                    fill_value=1e20)
+        tau_var.long_name = r'bottom shear stress'
+        tau_var.units = 'Pa'
+        tau_var[:] = uhydro_out['tau']
+        Css_var = nc.createVariable('TSM', 'f4', ('time','x',), 
+                                    fill_value=1e20)
+        Css_var.long_name = r'suspended sediment concentration'
+        Css_var.units = 'kg/m3'
+        Css_var[:] = uhydro_out['Css']
+        Esed_var = nc.createVariable('Esed', 'f4', ('time','x',), 
+                                     fill_value=1e20)
+        Esed_var.long_name = r'sediment detachment rate'
+        Esed_var.units = 'kg m-2 s-1'
+        Esed_var[:] = uhydro_out['Esed']
+        Dsed_var = nc.createVariable('Dsed', 'f4', ('time','x',), 
+                                     fill_value=1e20)
+        Dsed_var.long_name = r'sediment deposition rate'
+        Dsed_var.units = 'kg m-2 s-1'
+        Dsed_var[:] = uhydro_out['Dsed']
     finally:
         nc.close()
         
-def write_ecogeom_outputs(filename, all_ids, sids, tstep, ecogeom_out, 
-                          to_create):
+def write_ecogeom_outputs(filename, tstep, ecogeom_out):
     """Write model outputs into a nc file.
     Arguments:
         filename : output file name
-        all_ids : all site ids
-        sids : site index range of the current iteration
         tstep : time step type string
         ecogeom_out  : ecogeomorphology model outputs
-        to_create : True if create the new file otherwise False
     Returns : 
     """
-    nid = len(all_ids)
-    nt = np.shape(ecogeom_out['OM'])[1]
-    nx = np.shape(ecogeom_out['OM'])[2]
-    npool = np.shape(ecogeom_out['OM'])[3]
+    #nt = np.shape(ecogeom_out['OM'])[0]
+    nx = np.shape(ecogeom_out['OM'])[1]
+    npool = np.shape(ecogeom_out['OM'])[2]
     # create output file if needed
-    if to_create:
-        try:
-            nc = netCDF4.Dataset(filename, 'w', format='NETCDF4_CLASSIC')
-            nc.history = 'MACES simulated ' + tstep + ' eco-geomorphology'
-            nc.contact = r'Please contact zeli.tan@pnnl.gov for more information'
-            nc.createDimension('site', None)
-            nc.createDimension('time', nt)
-            nc.createDimension('x', nx)
-            nc.createDimension('pool',npool)
-            # create and write variables
-            site_var = nc.createVariable('site', 'i4', ('site',))
-            site_var.long_name = r'site DIVA id'
-            site_var[:] = all_ids
-            x_var = nc.createVariable('x', 'f4', ('site','x',))
-            x_var.long_name = r'platform transect coordinate'
-            x_var.units = 'm'
-            x_var[:] = 1e20*np.ones((nid,nx),dtype=np.float32)
-            pft_var = nc.createVariable('pft', 'i1', ('site','time','x',), 
-                                        fill_value=-1)
-            pft_var.long_name = r'platform plant function type'
-            pft_var.units = '0 to 8'
-            pft_var[:] = -1*np.ones((nid,nt,nx),dtype=np.int8)
-            zh_var = nc.createVariable('zh', 'f4', ('site','time','x',), 
-                                       fill_value=1e20)
-            zh_var.long_name = r'platform surface elevation'
-            zh_var.units = 'msl'
-            zh_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Esed_var = nc.createVariable('Esed', 'f4', ('site','time','x',), 
-                                         fill_value=1e20)
-            Esed_var.long_name = r'sediment erosion rate'
-            Esed_var.units = 'kg/m2/s'
-            Esed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Dsed_var = nc.createVariable('Dsed', 'f4', ('site','time','x',), 
-                                         fill_value=1e20)
-            Dsed_var.long_name = r'suspended sediment deposition rate'
-            Dsed_var.units = 'kg/m2/s'
-            Dsed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Lbed_var = nc.createVariable('Lbed', 'f4', ('site','time','x',), 
-                                         fill_value=1e20)
-            Lbed_var.long_name = r'sand bed load rate'
-            Lbed_var.units = 'kg/m2/s'
-            Lbed_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            DepOM_var = nc.createVariable('DepOM', 'f4', ('site','time','x',), 
-                                          fill_value=1e20)
-            DepOM_var.long_name = r'Organic matter deposition rate'
-            DepOM_var.units = 'kg/m2/s'
-            DepOM_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Bag_var = nc.createVariable('Bag', 'f4', ('site','time','x',), 
-                                        fill_value=1e20)
-            Bag_var.long_name = r'platform aboveground biomass'
-            Bag_var.units = 'kg/m2'
-            Bag_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            Bbg_var = nc.createVariable('Bbg', 'f4', ('site','time','x',), 
-                                        fill_value=1e20)
-            Bbg_var.long_name = r'platform belowground biomass'
-            Bbg_var.units = 'kg/m2'
-            Bbg_var[:] = 1e20*np.ones((nid,nt,nx),dtype=np.float32)
-            OM_var = nc.createVariable('OM', 'f4', ('site','time','x','pool',), 
-                                       fill_value=1e20)
-            OM_var.long_name = r'platform column-integrated soil organic matter'
-            OM_var.units = 'kg/m2'
-            OM_var[:] = 1e20*np.ones((nid,nt,nx,npool),dtype=np.float32)
-        finally:
-            nc.close()
-    # write data only
     try:
-        nc = netCDF4.Dataset(filename, 'r+')
-        for ii, iid in enumerate(sids):
-            x_var = nc.variables['x']
-            x_var[iid] = ecogeom_out['x'][ii]
-            pft_var = nc.variables['pft']
-            pft_var[iid] = ecogeom_out['pft'][ii]
-            zh_var = nc.variables['zh']
-            zh_var[iid] = ecogeom_out['zh'][ii]
-            Esed_var = nc.variables['Esed']
-            Esed_var[iid] = ecogeom_out['Esed'][ii]
-            Dsed_var = nc.variables['Dsed']
-            Dsed_var[iid] = ecogeom_out['Dsed'][ii]
-            Lbed_var = nc.variables['Lbed']
-            Lbed_var[iid] = ecogeom_out['Lbed'][ii]
-            DepOM_var = nc.variables['DepOM']
-            DepOM_var[iid] = ecogeom_out['DepOM'][ii]
-            Bag_var = nc.variables['Bag']
-            Bag_var[iid] = ecogeom_out['Bag'][ii]
-            Bbg_var = nc.variables['Bbg']
-            Bbg_var[iid] = ecogeom_out['Bbg'][ii]
-            OM_var = nc.variables['OM']
-            OM_var[iid] = ecogeom_out['OM'][ii]
+        nc = Dataset(filename, 'w', format='NETCDF4_CLASSIC')
+        nc.history = 'MACES simulated ' + tstep + ' eco-geomorphology'
+        nc.contact = r'Please contact zeli.tan@pnnl.gov for more information'
+        nc.createDimension('time', None)
+        nc.createDimension('x', nx)
+        nc.createDimension('pool',npool)
+        # create and write variables
+        x_var = nc.createVariable('x', 'f4', ('x',))
+        x_var.long_name = r'platform transect coordinate'
+        x_var.units = 'm'
+        x_var[:] = ecogeom_out['x']
+        pft_var = nc.createVariable('pft', 'i1', ('time','x',), 
+                                    fill_value=-1)
+        pft_var.long_name = r'platform plant function type'
+        pft_var.units = '0 to 8'
+        pft_var[:] = ecogeom_out['pft']
+        zh_var = nc.createVariable('zh', 'f4', ('time','x',), 
+                                   fill_value=1e20)
+        zh_var.long_name = r'platform surface elevation'
+        zh_var.units = 'msl'
+        zh_var[:] = ecogeom_out['zh']
+        Esed_var = nc.createVariable('Esed', 'f4', ('time','x',), 
+                                     fill_value=1e20)
+        Esed_var.long_name = r'sediment erosion rate'
+        Esed_var.units = 'kg/m2/s'
+        Esed_var[:] = ecogeom_out['Esed']
+        Dsed_var = nc.createVariable('Dsed', 'f4', ('time','x',), 
+                                     fill_value=1e20)
+        Dsed_var.long_name = r'suspended sediment deposition rate'
+        Dsed_var.units = 'kg/m2/s'
+        Dsed_var[:] = ecogeom_out['Dsed']
+        Lbed_var = nc.createVariable('Lbed', 'f4', ('time','x',), 
+                                     fill_value=1e20)
+        Lbed_var.long_name = r'sand bed load rate'
+        Lbed_var.units = 'kg/m2/s'
+        Lbed_var[:] = ecogeom_out['Lbed']
+        DepOM_var = nc.createVariable('DepOM', 'f4', ('time','x',), 
+                                      fill_value=1e20)
+        DepOM_var.long_name = r'Organic matter deposition rate'
+        DepOM_var.units = 'kg/m2/s'
+        DepOM_var[:] = ecogeom_out['DepOM']
+        Bag_var = nc.createVariable('Bag', 'f4', ('time','x',), 
+                                    fill_value=1e20)
+        Bag_var.long_name = r'platform aboveground biomass'
+        Bag_var.units = 'kg/m2'
+        Bag_var[:] = ecogeom_out['Bag']
+        Bbg_var = nc.createVariable('Bbg', 'f4', ('time','x',), 
+                                    fill_value=1e20)
+        Bbg_var.long_name = r'platform belowground biomass'
+        Bbg_var.units = 'kg/m2'
+        Bbg_var[:] = ecogeom_out['Bbg']
+        OM_var = nc.createVariable('OM', 'f4', ('time','x','pool',), 
+                                   fill_value=1e20)
+        OM_var.long_name = r'platform column-integrated soil organic matter'
+        OM_var.units = 'kg/m2'
+        OM_var[:] = ecogeom_out['OM']
     finally:
         nc.close()

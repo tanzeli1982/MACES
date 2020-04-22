@@ -20,11 +20,11 @@ day0 = 9
 day1 = 11
 
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/out_ecogeom_2002-12-01_2002-12-13.nc'
+filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2002-12-01_2002-12-13_466.nc'
 try:
     nc = Dataset(filename,'r')
-    x = np.array(nc.variables['x'][0])
-    zh = np.array(nc.variables['zh'][0,0,:])
+    x = np.array(nc.variables['x'][:])
+    zh = np.array(nc.variables['zh'][0,:])
 finally:
     nc.close()
     
@@ -32,11 +32,11 @@ finally:
 index1 = np.argmin(np.abs(zh - z_1BF))
 index2 = np.argmin(np.abs(zh - z_2BF))
 
-filename = '/Users/tanz151/Python_maces/src/out_hydro_2002-12-01_2002-12-13.nc'
+filename = '/Users/tanz151/Python_maces/src/maces_hydro_2002-12-01_2002-12-13_466.nc'
 try:
     nc = Dataset(filename,'r')
-    sed_1BF = np.array(nc.variables['TSM'][0,day0*24:day1*24+1,index1])
-    sed_2BF = np.array(nc.variables['TSM'][0,day0*24:day1*24+1,index2])
+    sed_1BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index1])
+    sed_2BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index2])
 finally:
     nc.close()
 sed_1BF = 1e3 * np.reshape(sed_1BF,(24*(day1-day0)+1))    # mg/L
@@ -86,20 +86,20 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
 
-## 2BF
-#ax = axes[1]
-#ax.plot(tt_model, sed_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
-#ax.plot(tt_obs, sed_obs_2BF, color='C3', linestyle='-', marker='.', markersize=5)
-#ax.set_xlim(0, nt_model-1)
-#ax.set_ylim(0, 150)
-#ax.xaxis.set_ticks(np.arange(0,nt_model,24))
-#ax.yaxis.set_ticks(np.linspace(0,150,6))
-#ax.set_xticklabels(['12/10','12/11','12/12'])
-#ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-#labels = ax.get_xticklabels() + ax.get_yticklabels()
-#[label.set_fontname('Times New Roman') for label in labels]
-#[label.set_fontsize(12) for label in labels]
-#[label.set_color('black') for label in labels]
+# 2BF
+ax = axes[1]
+ax.plot(tt_model, sed_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
+ax.plot(tt_obs, sed_obs_2BF, color='C3', linestyle='-', marker='.', markersize=5)
+ax.set_xlim(0, nt_model-1)
+ax.set_ylim(0, 150)
+ax.xaxis.set_ticks(np.arange(0,nt_model,24))
+ax.yaxis.set_ticks(np.linspace(0,150,6))
+ax.set_xticklabels(['12/10','12/11','12/12'])
+ax.xaxis.set_minor_locator(AutoMinorLocator(4))
+labels = ax.get_xticklabels() + ax.get_yticklabels()
+[label.set_fontname('Times New Roman') for label in labels]
+[label.set_fontsize(12) for label in labels]
+[label.set_color('black') for label in labels]
 
 plt.tight_layout()
 fig.savefig('F5.png', dpi=300)

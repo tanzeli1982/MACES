@@ -16,7 +16,7 @@
          2: Transient.
          </desc>
       </entry>
-      <entry id="MINAC_TYPE" value="F07MOD">
+      <entry id="MINAC_TYPE" value="M12MOD">
          <type>char</type>
          <valid_values>
          F06MOD,T03MOD,KM12MOD,M12MOD,F07MOD,VDK05MOD,DA07MOD
@@ -206,25 +206,19 @@
          <type>char</type>
          <desc>Run archive root directory</desc>
       </entry>
-      <entry id="FILE_HYDRO" value="$DOUT_ROOT/out_hydro_$RUN_STARTDATE_$RUN_STOPDATE.nc">
-         <type>char</type>
-         <desc>Path of hydrodynamic output file</desc>
+      <entry id="OUTPUT_HYDRO" value="TRUE">
+         <type>logical</type>
+         <valid_values>TRUE,FALSE</valid_values>
+         <desc>Set whether archive hydrodynamic outputs</desc>
       </entry>
       <entry id="HYDRO_TSTEP" value="hour">
          <type>char</type>
-         <valid_values>null,hour,minute</valid_values>
-         <desc>
-         Time step of hydrodynamic outputs.
-         Defaults: null. null disables hydrodynamic outputs.
-         </desc>
-      </entry>
-      <entry id="FILE_ECOGEOM" value="$DOUT_ROOT/out_ecogeom_$RUN_STARTDATE_$RUN_STOPDATE.nc">
-         <type>char</type>
-         <desc>Path of ecogeomorphology output file</desc>
+         <valid_values>hour,minute</valid_values>
+         <desc>Time step of hydrodynamic outputs</desc>
       </entry>
       <entry id="ECOGEOM_TSTEP" value="day">
          <type>char</type>
-         <valid_values>day,month,year,decade,century</valid_values>
+         <valid_values>day,month,year</valid_values>
          <desc>Time step of ecogeomorphology outputs</desc>
       </entry>
    </group>
