@@ -98,17 +98,14 @@ class VDK05MOD(OMACMODSuper):
         S = inputs['S']         # platform surface slope (m/m)
         Bag = inputs['Bag']     # aboveground biomass (kg/m2)
         pft = inputs['pft']     # platform pft
-        dt = inputs['dt']       # time step (s)
         MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
         
         Bag[:] = 0.0
         indice = np.logical_and(np.logical_and(pft>=2,pft<=5), 
                                 np.logical_and(zh>=0,zh<=MHT))
-        A = rB0[pft[indice]]*(1-Bag[indice]/Bmax[pft[indice]])* \
-            (np.maximum(zh[indice],0.0)/(np.maximum(zh[indice],0.0)+ \
-            czh[pft[indice]])) - dP[pft[indice]] - dB[pft[indice]]*S[indice]
-        Bag[indice] = np.maximum(1e-3, \
-           Bag[indice]*(1.0+A*dt/3.1536e7)/(1.0-A*dt/3.1536e7))
+        Bag[indice] = np.maximum(Bmax[pft[indice]] * (1.0 - (dP[pft[indice]]+ \
+           dB[pft[indice]]*S[indice])*(1.0+czh[pft[indice]]/(0.1+zh[indice])) / \
+           rB0[pft[indice]]), 1e-3)
         indice = np.logical_and(np.logical_and(zh>=0,zh<=MHT), pft==1)
         Bag[indice] = 1e-3
         return Bag
@@ -366,9 +363,15 @@ class K16MOD(OMACMODSuper):
     # constructor
     def __init__(self, params):
         self.m_params = params
-        nx = params['nx']
-        self.Md = np.zeros(nx, dtype=np.float64, order='F')
-        self.Mh = np.zeros(nx, dtype=np.float64, order='F')
+        # solve Md and Mh
+        b2mgv = self.m_params['b2mgv']  # coef for Md vs Mh equation (dimensionless)
+        b3mgv = self.m_params['b3mgv']  # coef for Md vs Mh equation (cm-1)
+        Mhmax = self.m_params['Mhmax']  # mangrove maximum height (cm)
+        Mdmax = self.m_params['Mdmax']  # mangrove maximum diameter (cm)
+        coefs = [b3mgv, b2mgv, 137, -Mhmax*Mdmax]
+        roots = np.roots(coefs)
+        self.Md = roots[roots>0][0]
+        self.Mh = 137 + b2mgv*self.Md + b3mgv*(self.Md)**2
         
     def organic_deposition(self, inputs):
         """"Calculate organic matter deposition rate.
@@ -392,16 +395,12 @@ class K16MOD(OMACMODSuper):
         Returns: aboveground biomass (kg m-2)
         """
         Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
-        Gmgv = self.m_params['Gmgv']    # stem diameter growth rate (cm s-1)
         b2mgv = self.m_params['b2mgv']  # coef for Md vs Mh equation (dimensionless)
         b3mgv = self.m_params['b3mgv']  # coef for Md vs Mh equation (cm-1)
-        Mhmax = self.m_params['Mhmax']  # mangrove maximum height (cm)
-        Mdmax = self.m_params['Mdmax']  # mangrove maximum diameter (cm)
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         zh = inputs['zh']           # platform surface elevation (msl)
         pft = inputs['pft']         # platform pft
         MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
-        dt = inputs['dt']           # time step (s)
         
         Bag[:] = 0.0
         indice_zh = np.logical_and(zh>=0, zh<=MHT)
@@ -410,27 +409,26 @@ class K16MOD(OMACMODSuper):
         Bag[indice] = 1e-3
         # Spartina alterniflora dominated marshes
         indice = np.logical_and(indice_zh, pft==2)
-        rz = (1-0.5*zh[indice]/MHT)/3.1536e7   # Bag production rate (s-1)
-        mz = 0.5*zh[indice]/MHT/3.1536e7       # Bag mortality rate (s-1)
-        Bag[indice] = np.maximum( (1+0.5*(rz*(1-Bag[indice]/Bmax[pft[indice]])-mz)*dt)* \
-           Bag[indice]/(1-0.5*(rz*(1-Bag[indice]/Bmax[pft[indice]])-mz)*dt), 0.0 )
+        rz = (1-0.5*zh[indice]/MHT)   # Bag production rate
+        mz = 0.5*zh[indice]/MHT       # Bag mortality rate
+        Bag[indice] = np.maximum( Bmax[pft[indice]]*(1.0-mz/rz), 1e-3 )
         # multi-species marshes
-        indice = np.logical_and(np.logical_or(pft==3,pft==4), 
-                                indice_zh)
+        indice = np.logical_and(np.logical_or(pft==3,pft==4), indice_zh)
         rz = 0.5*(1+zh[indice]/MHT)
         mz = 0.5*(1-zh[indice]/MHT)
-        Bag[indice] = np.maximum( (1+0.5*(rz*(1-Bag[indice]/Bmax[pft[indice]])-mz)*dt)* \
-           Bag[indice]/(1-0.5*(rz*(1-Bag[indice]/Bmax[pft[indice]])-mz)*dt), 0.0 )
+        Bag[indice] = np.maximum( Bmax[pft[indice]]*(1.0-mz/rz), 1e-3 )
         # mangroves
         indice = np.logical_and(indice_zh, pft==5)
+        Md = np.zeros_like(zh[indice])
+        Mh = np.zeros_like(zh[indice])
         P = 1 - zh[indice]/MHT
-        I = np.maximum(4*P-8*P**2+0.5, 0.0)
-        self.Md[indice] = self.Md[indice] + dt*I*Gmgv/Mdmax/Mhmax* \
-            self.Md[indice]*(1-self.Md[indice]*self.Mh[indice])/ \
-            (274+3*b2mgv*self.Md[indice]-4*b3mgv*self.Md[indice]**2)
-        self.Mh[indice] = 137 + b2mgv*self.Md[indice] + b3mgv*self.Md[indice]**2
-        rout = 0.5/self.Md[indice]   # tree density (tree/m2)
-        Bag[indice] = rout * 0.308*self.Md[indice]**2.11    # kg/m2
+        I = 4*P - 8*P**2 + 0.5
+        Md[I<=0] = self.Md
+        Mh[I<=0] = self.Mh
+        Md[I>0] = self.Md * (1-0.5*zh[indice][I>0]/MHT)
+        Mh[I>0] = 137 + b2mgv*Md[I>0] + b3mgv*(Md[I>0])**2
+        #rout = 0.5/Md   # tree density (tree/m2)
+        Bag[indice] = 0.154 * Md**1.11    # kg/m2
         return Bag
         
     def belowground_biomass(self, inputs):
@@ -453,7 +451,6 @@ class K16MOD(OMACMODSuper):
         Bbg[indice] = phi[pft[indice]]*Bag[indice]
         # mangroves
         indice = np.logical_and(indice_zh, pft==5)
-        rout = 0.5/self.Md[indice]  # tree density (tree/m2)
-        Bbg[indice] = rout * 1.28*self.Md[indice]**1.17
+        Bbg[indice] = 0.64 * (Bag[indice]/0.154)**(0.17/1.11)
         return Bbg
          

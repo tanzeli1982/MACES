@@ -195,8 +195,7 @@ def run_tai_maces(input_data, models, spinup):
         omac_inputs = {'x': x, 'zh': zh, 'S': slope, 'pft': pft, 'OM': OM, 
                        'Bag': Bag, 'Bbg': Bbg, 'DepOM': DepOM, 
                        'DecayOM': DecayOM, 'TR': trng, 'MHHW': mhws, 
-                       'month': month, 'doy': doy, 'Tair': Tair_inst, 
-                       'dt': curstep}
+                       'month': month, 'doy': doy, 'Tair': Tair_inst}
         Bag = omac_mod.aboveground_biomass(omac_inputs)
         Bbg = omac_mod.belowground_biomass(omac_inputs)
         DepOM = omac_mod.organic_deposition(omac_inputs)

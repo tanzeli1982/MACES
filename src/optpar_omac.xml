@@ -117,10 +117,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">0.6</value>
-            <value pft="3">0.6</value>
-            <value pft="4">0.6</value>
-            <value pft="5">0.6</value>
+            <value pft="2">0.3</value>
+            <value pft="3">0.3</value>
+            <value pft="4">0.3</value>
+            <value pft="5">0.3</value>
             <value pft="6">0.6</value>
             <value pft="7">0.6</value>
             <value pft="8">0.6</value>
@@ -133,14 +133,14 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">30.0</value>
-            <value pft="3">30.0</value>
-            <value pft="4">30.0</value>
-            <value pft="5">30.0</value>
-            <value pft="6">30.0</value>
-            <value pft="7">30.0</value>
-            <value pft="8">30.0</value>
-            <value pft="9">30.0</value>
+            <value pft="2">3.0</value>
+            <value pft="3">3.0</value>
+            <value pft="4">3.0</value>
+            <value pft="5">3.0</value>
+            <value pft="6">3.0</value>
+            <value pft="7">3.0</value>
+            <value pft="8">3.0</value>
+            <value pft="9">3.0</value>
          </values>
          <desc>plant mortality due to wave damage</desc>
       </entry>
@@ -149,14 +149,14 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">1.0</value>
-            <value pft="3">1.0</value>
-            <value pft="4">1.0</value>
-            <value pft="5">1.0</value>
-            <value pft="6">1.0</value>
-            <value pft="7">1.0</value>
-            <value pft="8">1.0</value>
-            <value pft="9">1.0</value>
+            <value pft="2">2.0</value>
+            <value pft="3">2.0</value>
+            <value pft="4">2.0</value>
+            <value pft="5">2.0</value>
+            <value pft="6">2.0</value>
+            <value pft="7">2.0</value>
+            <value pft="8">2.0</value>
+            <value pft="9">2.0</value>
          </values>
          <desc>maximum standing biomass</desc>
       </entry>
@@ -489,10 +489,6 @@
             <value pft="9">1.0</value>
          </values>
          <desc>maximum standing biomass</desc>
-      </entry>
-      <entry id="Gmgv" value="152.17" units="cm/s">
-         <type>real</type>
-         <desc>stem diameter growth rate</desc>
       </entry>
       <entry id="b2mgv" value="42.0" units="none">
          <type>real</type>
