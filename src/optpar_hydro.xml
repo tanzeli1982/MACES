@@ -1,29 +1,24 @@
-<?xml version="1.0"?>
 <file id="optpar_hydro.xml" version="2.0">
    <header>
    Parameters of the hydrodynamics model. 
    </header>
-   <entry id="d50" value="25e-6" units="m">
+   <entry id="Cz0" units="m^0.5/s" value="65.0">
       <type>real</type>
-      <desc>sediment median diameter</desc>
+      <desc>the Chezy's friction coefficient</desc>
    </entry>
-   <entry id="Cz0" value="65.0" units="m^0.5/s">
-      <type>real</type>
-      <desc>the Chézy's friction coefficient</desc>
-   </entry>
-   <entry id="Kdf" value="5.0" units="m2/s">
+   <entry id="Kdf" units="m2/s" value="5.0">
       <type>real</type>
       <desc>the dispersion coefficient of constituents</desc>
    </entry>
-   <entry id="cbc" value="1.5e-6" units="none">
+   <entry id="cbc" units="none" value="1.5e-6">
       <type>real</type>
       <desc>wave bottom friction coefficient</desc>
    </entry>
-   <entry id="fr" value="0.78" units="none">
+   <entry id="fr" units="none" value="0.78">
       <type>real</type>
       <desc>the ratio of the maximum wave height to water depth</desc>
    </entry>
-   <entry id="cwc" value="3.33e-9" units="none">
+   <entry id="cwc" units="none" value="3.33e-9">
       <type>real</type>
       <desc>wave white capping coefficient</desc>
    </entry>
@@ -39,6 +34,7 @@
         	<value pft="6">8.0</value>
         	<value pft="7">8.0</value>
         	<value pft="8">8.0</value>
+         <value pft="9">8.0</value>
     	</values>
     	<desc>multiplier coef for projected plant area per unit volume</desc>
  	</entry>
@@ -54,6 +50,7 @@
        	<value pft="6">0.5</value>
         	<value pft="7">0.5</value>
         	<value pft="8">0.5</value>
+         <value pft="9">0.5</value>
     	</values>
     	<desc>exponent coef for projected plant area per unit volume</desc>
  	</entry>
@@ -69,6 +66,7 @@
          <value pft="6">0.005</value>
          <value pft="7">0.005</value>
          <value pft="8">0.005</value>
+         <value pft="9">0.005</value>
       </values>
       <desc>multiplier coef for the stem diameter</desc>
    </entry>
@@ -84,6 +82,7 @@
          <value pft="6">0.3</value>
          <value pft="7">0.3</value>
          <value pft="8">0.3</value>
+         <value pft="9">0.3</value>
       </values>
       <desc>exponent coef for the stem diameter</desc>
    </entry>
@@ -99,6 +98,7 @@
          <value pft="6">1.1</value>
          <value pft="7">1.1</value>
          <value pft="8">1.1</value>
+         <value pft="9">1.1</value>
       </values>
       <desc>intercept of the plant drag coefficient and standing biomass equation</desc>
    </entry>
@@ -114,6 +114,7 @@
          <value pft="6">-0.3</value>
          <value pft="7">-0.3</value>
          <value pft="8">-0.3</value>
+         <value pft="9">-0.3</value>
       </values>
       <desc>slope of the plant drag coefficient and standing biomass equation</desc>
    </entry>
