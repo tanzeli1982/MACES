@@ -37,8 +37,8 @@ rhoSed = 2650 # this value from optpar_minac.xml
 porSed = 0.4 # this value from optpar_minac.xml
 # mineral accretion rate (mm/yr)
 wtlnd_x_avg = np.sum(dx[pft==2])/nt
-mineral_accretion = 0.5e3 * (8.64e4*np.sum(Esed[pft==2]*dx[pft==2])/wtlnd_x_avg - \
-    8.64e4*np.sum(Dsed[pft==2]*dx[pft==2])/wtlnd_x_avg) / rhoSed / (1.0-porSed)
+mineral_accretion = 0.5e3 * (8.64e4*np.sum(Dsed[pft==2]*dx[pft==2])/wtlnd_x_avg - \
+    8.64e4*np.sum(Esed[pft==2]*dx[pft==2])/wtlnd_x_avg) / rhoSed / (1.0-porSed)
 
 # OM accretion rate (gC/m2/yr)
 om_accretion = 0.5e3 * 8.64e4 * np.sum(DepOM[pft==2]*dx[pft==2])/wtlnd_x_avg
