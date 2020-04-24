@@ -78,7 +78,16 @@ if __name__=='__main__':
     wavero_params = comm.bcast(wavero_params, root=0)
     lndmgr_params = comm.bcast(lndmgr_params, root=0)
     hydro_params = comm.bcast(hydro_params, root=0)
-    mac_params['d50'] = hydro_params['d50']
+    # make parameters of different components consistent
+    hydro_params['d50'] = mac_params['d50']
+    if 'alphaA' in mac_params:
+        hydro_params['alphaA'] = mac_params['alphaA']
+    if 'betaA' in mac_params:
+        hydro_params['betaA'] = mac_params['betaA']
+    if 'alphaD' in mac_params:
+        hydro_params['alphaD'] = mac_params['alphaD']
+    if 'betaD' in mac_params:
+        hydro_params['betaD'] = mac_params['betaD']
     
     # read site database excel file
     if master_process:

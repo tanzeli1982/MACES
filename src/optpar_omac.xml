@@ -1,4 +1,3 @@
-<?xml version="1.0"?>
 <file id="optpar_omac.xml" version="2.0">
    <header>
    Parameters of organic matter accretion models of  
@@ -6,7 +5,7 @@
    K16MOD.
    </header>
    <group id="NULLMOD">
-      <entry id="rhoOM" value="1200.0" units="kg/m3">
+      <entry id="rhoOM" units="kg/m3" value="1200.0">
          <type>real</type>
          <desc>organic matter density</desc>
       </entry>
@@ -76,7 +75,7 @@
       </entry>
    </group>
    <group id="VDK05MOD">
-      <entry id="rhoOM" value="1200.0" units="kg/m3">
+      <entry id="rhoOM" units="kg/m3" value="1200.0">
          <type>real</type>
          <desc>organic matter density</desc>
       </entry>
@@ -178,7 +177,7 @@
       </entry>
    </group>
    <group id="M12MOD">
-      <entry id="rhoOM" value="1200.0" units="kg/m3">
+      <entry id="rhoOM" units="kg/m3" value="1200.0">
          <type>real</type>
          <desc>organic matter density</desc>
       </entry>
@@ -280,7 +279,7 @@
       </entry>
    </group>
    <group id="DA07MOD">
-      <entry id="rhoOM" value="1200.0" units="kg/m3">
+      <entry id="rhoOM" units="kg/m3" value="1200.0">
          <type>real</type>
          <desc>organic matter density</desc>
       </entry>
@@ -300,7 +299,7 @@
          </values>
          <desc>the root:shoot quotient</desc>
       </entry>
-      <entry id="Qom0" value="0.01" units="m/yr">
+      <entry id="Qom0" units="m/yr" value="0.01">
          <type>real</type>
          <desc>a typical OM deposition rate</desc>
       </entry>
@@ -320,18 +319,18 @@
          </values>
          <desc>maximum standing biomass</desc>
       </entry>
-      <entry id="omega" value="0.1" units="none">
+      <entry id="omega" units="none" value="0.1">
          <type>real</type>
          <desc>the ratio of winter biomass to peak biomass</desc>
       </entry>
-      <entry id="mps" value="7" units="month">
+      <entry id="mps" units="month" value="7">
          <type>integer</type>
          <valid_values>1,2,3,4,5,6,7,8,9,10,11,12</valid_values>
          <desc>month of aboveground biomass at its peak</desc>
       </entry>
    </group>
    <group id="KM12MOD">
-      <entry id="rhoOM" value="1200.0" units="kg/m3">
+      <entry id="rhoOM" units="kg/m3" value="1200.0">
          <type>real</type>
          <desc>organic matter density</desc>
       </entry>
@@ -383,11 +382,11 @@
          </values>
          <desc>biomass increase due to temperature</desc>
       </entry>
-      <entry id="rBmin" value="0.1" units="none">
+      <entry id="rBmin" units="none" value="0.1">
          <type>real</type>
          <desc>the ratio of winter biomass to peak biomass</desc>
       </entry>
-      <entry id="jdps" value="182" units="day">
+      <entry id="jdps" units="day" value="182">
          <type>integer</type>
 			<valid_values>1...365</valid_values>
          <desc>the day of year when aboveground biomass is at its peak</desc>
@@ -424,33 +423,33 @@
          </values>
          <desc>intercept of the root:shoot quotient equation</desc>
       </entry>
-      <entry id="rGmin" value="0.00138" units="day-1">
+      <entry id="rGmin" units="day-1" value="0.00138">
          <type>real</type>
          <desc>the ratio of winter growth rate to peak biomass</desc>
       </entry>
-      <entry id="rGps" value="0.0138" units="day-1">
+      <entry id="rGps" units="day-1" value="0.0138">
          <type>real</type>
          <desc>the ratio of peak growth rate to peak biomass</desc>
       </entry>
-      <entry id="sigmaOM" value="0.25" units="K-1">
+      <entry id="sigmaOM" units="K-1" value="0.25">
          <type>real</type>
          <desc>OM decay increase due to temperature</desc>
       </entry>
-      <entry id="TrefOM" value="293.15" units="K">
+      <entry id="TrefOM" units="K" value="293.15">
          <type>real</type>
          <desc>OM decay reference temperature</desc>
       </entry>
-      <entry id="kl0" value="1.0" units="yr-1">
+      <entry id="kl0" units="yr-1" value="1.0">
          <type>real</type>
          <desc>column-integrated decay rate of labile OM pool</desc>
       </entry>
-      <entry id="kr0" value="0.0015" units="yr-1">
+      <entry id="kr0" units="yr-1" value="0.0015">
          <type>real</type>
          <desc>column-integrated decay rate of refractory OM pool</desc>
       </entry>
    </group>
    <group id="K16MOD">
-      <entry id="rhoOM" value="1200.0" units="kg/m3">
+      <entry id="rhoOM" units="kg/m3" value="1200.0">
          <type>real</type>
          <desc>organic matter density</desc>
       </entry>
@@ -470,7 +469,7 @@
          </values>
          <desc>the root:shoot quotient</desc>
       </entry>
-      <entry id="gammaB" value="2.0e-3" units="yr-1">
+      <entry id="gammaB" units="yr-1" value="2.0e-3">
          <type>real</type>
          <desc>column-integrated decay rate of refractory OM pool</desc>
       </entry>
@@ -490,19 +489,19 @@
          </values>
          <desc>maximum standing biomass</desc>
       </entry>
-      <entry id="b2mgv" value="42.0" units="none">
+      <entry id="b2mgv" units="none" value="42.0">
          <type>real</type>
          <desc>coef for mangrove stem diameter vs tree height equation</desc>
       </entry>
-      <entry id="b3mgv" value="0.46" units="cm-1">
+      <entry id="b3mgv" units="cm-1" value="0.46">
          <type>real</type>
          <desc>coef for mangrove stem diameter vs tree height equation</desc>
       </entry>
-      <entry id="Mdmax" value="40.0" units="cm">
+      <entry id="Mdmax" units="cm" value="40.0">
          <type>real</type>
          <desc>mangrove maximum stem diameter</desc>
       </entry>
-      <entry id="Mhmax" value="1000.0" units="cm">
+      <entry id="Mhmax" units="cm" value="1000.0">
          <type>real</type>
          <desc>mangrove maximum tree height</desc>
       </entry>
