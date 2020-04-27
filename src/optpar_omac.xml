@@ -391,7 +391,7 @@
 			<valid_values>1...365</valid_values>
          <desc>the day of year when aboveground biomass is at its peak</desc>
       </entry>
-      <entry id="thetaBG" units="none">
+      <entry id="thetaBG" units="m-1">
          <type>real</type>
          <values>
             <value pft="0">0.0</value>

@@ -88,6 +88,8 @@ if __name__=='__main__':
         hydro_params['alphaD'] = mac_params['alphaD']
     if 'betaD' in mac_params:
         hydro_params['betaD'] = mac_params['betaD']
+    if 'Bmax' in omac_params:
+        mac_params['Bmax'] = omac_params['Bmax']
     
     # read site database excel file
     if master_process:
