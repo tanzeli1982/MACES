@@ -237,11 +237,11 @@
       </entry>
       <entry id="aNv" units="kg/m2" value="5e-2">
          <type>real</type>
-         <desc>sediment tide erosion increase rate by plant</desc>
+         <desc>sediment tide erosion half-saturation coef of plant biomass</desc>
       </entry>
       <entry id="bNv" units="kg/m2" value="2e-2">
          <type>real</type>
-         <desc>sediment wave erosion increase rate by plant</desc>
+         <desc>sediment wave erosion half-saturation coef of plant biomass</desc>
       </entry>
       <entry id="tauD_cr" units="Pa" value="0.05">
          <type>real</type>
