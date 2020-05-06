@@ -350,22 +350,6 @@
          </values>
          <desc>maximum standing biomass</desc>
       </entry>
-      <entry id="Tref" units="K">
-         <type>real</type>
-         <values>
-            <value pft="0">0.0</value>
-            <value pft="1">0.0</value>
-            <value pft="2">293.15</value>
-            <value pft="3">293.15</value>
-            <value pft="4">293.15</value>
-            <value pft="5">293.15</value>
-            <value pft="6">293.15</value>
-            <value pft="7">293.15</value>
-            <value pft="8">293.15</value>
-            <value pft="9">293.15</value>
-         </values>
-         <desc>reference temperature for veg growth</desc>
-      </entry>
       <entry id="sigmaB" units="K-1">
          <type>real</type>
          <values>
@@ -434,10 +418,6 @@
       <entry id="sigmaOM" units="K-1" value="0.25">
          <type>real</type>
          <desc>OM decay increase due to temperature</desc>
-      </entry>
-      <entry id="TrefOM" units="K" value="293.15">
-         <type>real</type>
-         <desc>OM decay reference temperature</desc>
       </entry>
       <entry id="kl0" units="yr-1" value="1.0">
          <type>real</type>

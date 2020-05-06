@@ -227,8 +227,8 @@ class KM12MOD(OMACMODSuper):
     """Realization of the Kirwan & Mudd (2012) organic matter accretion model.
 
     Attributes:
-        parameters : Bmax, Tref, sigmaB, rBmin, jdps, thetaBG, Dmbm, 
-                     rGmin, rGps, sigmaOM, TrefOM, kl0, kr0
+        parameters : Bmax, sigmaB, rBmin, jdps, thetaBG, Dmbm, 
+                     rGmin, rGps, sigmaOM, kl0, kr0
     Constants:
         
     """
@@ -247,7 +247,6 @@ class KM12MOD(OMACMODSuper):
         Dmbm = self.m_params['Dmbm']        # coef for the root:shoot quotient 
         Bmax = self.m_params['Bmax']        # maximum Bag (kg/m2)
         rBmin = self.m_params['rBmin']      # the ratio of winter Bag to Bps
-        Tref = self.m_params['Tref']        # reference temperature for veg growth (K)
         sigmaB = self.m_params['sigmaB']    # biomass increase due to temperature (K-1)
         rGmin = self.m_params['rGmin']      # the ratio of winter growth rate to Bps (day-1)
         rGps = self.m_params['rGps']        # the ratio of peak growth rate to Bps (day-1)
@@ -265,8 +264,9 @@ class KM12MOD(OMACMODSuper):
         # the root:shoot quotient
         phi = thetaBG[pft[indice]]*(MHHW-zh[indice]) + Dmbm[pft[indice]]
         # peak season Bag
+        Tref = 293.15   # K
         Bps = Bmax[pft[indice]]*(MHHW-zh[indice])/MHHW* \
-            (1+(Tair-Tref[pft[indice]])*sigmaB[pft[indice]])
+            (1+(Tair-Tref)*sigmaB[pft[indice]])
         Bmin = rBmin * Bps          # winter Bag
         Gmin = rGmin/8.64e4 * Bps   # winter growth rate (kg/m2/s)
         Gps = rGps/8.64e4 * Bps     # peak growth rate (kg/m2/s)
@@ -284,7 +284,6 @@ class KM12MOD(OMACMODSuper):
         """
         Bmax = self.m_params['Bmax']        # maximum Bag (kg/m2)
         rBmin = self.m_params['rBmin']      # the ratio of winter Bag to Bps
-        Tref = self.m_params['Tref']        # reference temperature for veg growth (K)
         sigmaB = self.m_params['sigmaB']    # biomass increase due to temperature (K-1)
         jdps = self.m_params['jdps']        # the DOY when Bag is at its peak
         Tair = inputs['Tair']       # soil temperature (K)
@@ -295,10 +294,11 @@ class KM12MOD(OMACMODSuper):
         jd = inputs['doy']          # day (1 to 365)
         
         Bag[:] = 0.0
+        Tref = 293.15   # K
         indice = np.logical_and(np.logical_and(pft>=2,pft<=5), 
                                 np.logical_and(zh>=0,zh<=MHHW))
         Bps = Bmax[pft[indice]]*(MHHW-zh[indice])/MHHW* \
-            (1+(Tair-Tref[pft[indice]])*sigmaB[pft[indice]])
+            (1+(Tair-Tref)*sigmaB[pft[indice]])
         Bmin = rBmin * Bps          # winter Bag
         Bag[indice] = np.maximum(0.5*(Bmin+Bps+(Bps-Bmin)* \
            np.cos(2*np.pi*(jd-jdps)/365)), 1e-3)
@@ -334,7 +334,6 @@ class KM12MOD(OMACMODSuper):
         """
         kl0 = self.m_params['kl0']  # column-integrated decay rate of labile pool (yr-1)
         kr0 = self.m_params['kr0']  # column-integrated decay rate of refractory pool (yr-1)
-        TrefOM = self.m_params['TrefOM']    # reference temperature for decay (K)
         sigmaOM = self.m_params['sigmaOM']  # decay increase due to temperature (K-1)
         DecayOM = inputs['DecayOM']     # OM decay rate (kg/m2/s)
         SOM = inputs['OM']              # soil organic matter pools (kg/m2)
@@ -343,6 +342,7 @@ class KM12MOD(OMACMODSuper):
         Cl = SOM[:,0]                   # labile belowground SOM pool
         Cr = SOM[:,1]                   # refractory belowground SOM pool
         DecayOM[:] = 0.0
+        TrefOM = 273.15     # K
         DecayOM[:,0] = ((1.0+(Tsoi-TrefOM)*sigmaOM)*kl0/3.1536e7) * Cl
         DecayOM[:,1] = ((1.0+(Tsoi-TrefOM)*sigmaOM)*kr0/3.1536e7) * Cr
         return DecayOM
