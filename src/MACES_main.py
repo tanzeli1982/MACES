@@ -276,7 +276,7 @@ if __name__=='__main__':
             
         except AssertionError as errstr:
             # print error message and exit the program
-            print("Model spinup stops due to that", errstr)
+            print("Model stops due to that", errstr)
             taihydro.finalizehydromod()
             sys.exit()
             
