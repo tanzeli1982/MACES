@@ -40,10 +40,10 @@ index4 = np.argmin(np.abs(zh - z_shad_m))
 filename = '/Users/tanz151/Python_maces/src/maces_hydro_2017-07-17_2017-08-01_4097.nc'
 try:
     nc = Dataset(filename, 'r')
-    h1_nelson_c = 100*np.array(nc.variables['h'][day0*24:day1*24,index1])
-    h1_nelson_m = 100*np.array(nc.variables['h'][day0*24:day1*24,index2])
-    h1_shad_c = 100*np.array(nc.variables['h'][day0*24:day1*24,index3])
-    h1_shad_m = 100*np.array(nc.variables['h'][day0*24:day1*24,index4])
+    h1_nelson_c = 100*np.array(nc.variables['h'][day0*24-1:day1*24-1,index1])
+    h1_nelson_m = 100*np.array(nc.variables['h'][day0*24-1:day1*24-1,index2])
+    h1_shad_c = 100*np.array(nc.variables['h'][day0*24-1:day1*24-1,index3])
+    h1_shad_m = 100*np.array(nc.variables['h'][day0*24-1:day1*24-1,index4])
 finally:
     nc.close()
 nt1_model = np.size(h1_nelson_c)
@@ -54,10 +54,10 @@ day1 = (date(2017,10,11) - date(2017,10,4)).days
 filename = '/Users/tanz151/Python_maces/src/maces_hydro_2017-10-04_2017-10-21_4097.nc'
 try:
     nc = Dataset(filename, 'r')
-    h2_nelson_c = 100*np.array(nc.variables['h'][day0*24:day1*24,index1])
-    h2_nelson_m = 100*np.array(nc.variables['h'][day0*24:day1*24,index2])
-    h2_shad_c = 100*np.array(nc.variables['h'][day0*24:day1*24,index3])
-    h2_shad_m = 100*np.array(nc.variables['h'][day0*24:day1*24,index4])
+    h2_nelson_c = 100*np.array(nc.variables['h'][day0*24-1:day1*24-1,index1])
+    h2_nelson_m = 100*np.array(nc.variables['h'][day0*24-1:day1*24-1,index2])
+    h2_shad_c = 100*np.array(nc.variables['h'][day0*24-1:day1*24-1,index3])
+    h2_shad_m = 100*np.array(nc.variables['h'][day0*24-1:day1*24-1,index4])
 finally:
     nc.close()
 nt2_model = np.size(h2_nelson_c)
