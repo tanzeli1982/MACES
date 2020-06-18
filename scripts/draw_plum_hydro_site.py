@@ -102,6 +102,8 @@ h2_shad_s102[h2_shad_s102<0] = 0
 plt.clf()
 fig, axes = plt.subplots(2, 2, figsize=(8,6))
 
+plt.style.use('default')
+
 # nelson island channel
 ax = axes[0][0]
 ax.plot(tt1_model, h1_nelson_c, color='black', linestyle='-', linewidth=2, alpha=0.9)
