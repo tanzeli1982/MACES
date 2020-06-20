@@ -9,6 +9,10 @@ module data_buffer_mod
    public
 
    integer, parameter :: EQM_WAVE = 1, TSNT_WAVE = 2
+   integer, parameter :: pft_barrier = 0, pft_water = 1, pft_saltmarsh = 2, &
+                         pft_brackishmarsh = 3, pft_freshmarsh = 4, &
+                         pft_mangrove = 5, pft_NETree = 6, pft_NDTree = 7, &
+                         pft_BETree = 8, pft_BDTree = 9
 
    !! allocatable arrays for Hydrodynamic model
    ! hydrodynamic state variables [h, U*h, Css, Cj]

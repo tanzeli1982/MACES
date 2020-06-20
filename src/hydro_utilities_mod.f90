@@ -11,6 +11,7 @@ module hydro_utilities_mod
    use data_buffer_mod,    only : rk4_K1, rk4_K2, rk4_K3, rk4_K4, rk4_K5
    use data_buffer_mod,    only : rk4_K6, rk4_nxt4th, rk4_nxt5th
    use data_buffer_mod,    only : rk4_interim, rk4_rerr
+   use data_buffer_mod,    only : pft_mangrove
 
    implicit none
    public
@@ -356,6 +357,7 @@ contains
       real(kind=8), intent(in) :: h(:)
       real(kind=8), intent(out) :: Cz(:)     ! inverse of square of Cz
       real(kind=8), parameter :: Cb = 2.5d-3    ! bed drag coefficient (unitless)
+      real(kind=8), parameter :: n_mangrove = 0.5  ! manning's coef for mangroves
       real(kind=8) :: cD0, ScD, alphaA, alphaD
       real(kind=8) :: betaA, betaD
       real(kind=8) :: asb, dsb, cD
@@ -363,17 +365,21 @@ contains
 
       nx = size(h)
       do ii = 1, nx, 1
-         cD0 = par_cD0(pft(ii)+1)
-         ScD = par_ScD(pft(ii)+1)
-         alphaA = par_alphaA(pft(ii)+1)
-         betaA = par_betaA(pft(ii)+1)
-         alphaD = par_alphaD(pft(ii)+1)
-         betaD = par_betaD(pft(ii)+1)
-         asb = alphaA * Bag(ii)**betaA
-         dsb = alphaD * Bag(ii)**betaD
-         cD = cD0 + ScD * Bag(ii)
-         !Cz(ii) = par_Cz0*sqrt(2.0/(cD*asb*h(ii)+2.0*(1.0-asb*dsb)*Cb))
-         Cz(ii) = (0.5*cD*asb*h(ii)+(1.0-asb*dsb)*Cb)/par_Cz0**2
+         if (pft(ii)==pft_mangrove) then
+            Cz(ii) = n_mangrove**2 / max(0.1,h(ii))**(1./3.)
+         else
+            cD0 = par_cD0(pft(ii)+1)
+            ScD = par_ScD(pft(ii)+1)
+            alphaA = par_alphaA(pft(ii)+1)
+            betaA = par_betaA(pft(ii)+1)
+            alphaD = par_alphaD(pft(ii)+1)
+            betaD = par_betaD(pft(ii)+1)
+            asb = alphaA * Bag(ii)**betaA
+            dsb = alphaD * Bag(ii)**betaD
+            cD = cD0 + ScD * Bag(ii)
+            !Cz(ii) = par_Cz0*sqrt(2.0/(cD*asb*h(ii)+2.0*(1.0-asb*dsb)*Cb))
+            Cz(ii) = (0.5*cD*asb*h(ii)+(1.0-asb*dsb)*Cb)/par_Cz0**2
+         end if
       end do
    end subroutine
 

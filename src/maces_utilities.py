@@ -96,9 +96,9 @@ def construct_tai_platform(diva_segments, coastline, fetchagl, xRes, nmax):
     assert len(zhs)-1 == len(diva_segments), \
         "DIVA segments do not match with elevation nodes"
     Nx = 0
-    for length in diva_segments:
-        nnode = int( 1e3 * length / xRes )
-        if nnode>0:
+    for ii, length in enumerate(diva_segments):
+        if length>TOL:
+            nnode = int( 1e3 * length / xRes )
             Nx = Nx + min( max(nnode,2), nmax )
     Nx = Nx + 1     # the end node
     x_tai = np.zeros(Nx, dtype=np.float64, order='F')
@@ -107,9 +107,9 @@ def construct_tai_platform(diva_segments, coastline, fetchagl, xRes, nmax):
     indx = 0
     x0 = 0.0
     for ii, length in enumerate(diva_segments):
-        nnode = int( 1e3 * length / xRes )
-        if nnode>0:
-            nnode = min( max( nnode, 2 ), nmax )
+        if length>TOL:
+            nnode = int( 1e3 * length / xRes )
+            nnode = min( max(nnode,2), nmax )
             x_tai[indx:indx+nnode] = x0 + 1e3*length*np.arange(nnode)/nnode
             zh_tai[indx:indx+nnode] = zhs[ii] + (zhs[ii+1]-zhs[ii])* \
                 np.arange(nnode)/nnode

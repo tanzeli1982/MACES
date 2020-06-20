@@ -449,9 +449,9 @@
          </values>
          <desc>the root:shoot quotient</desc>
       </entry>
-      <entry id="gammaB" units="yr-1" value="2.0e-3">
+      <entry id="gammaB" units="m yr-1 m2 kg-1" value="2.0e-3">
          <type>real</type>
-         <desc>column-integrated decay rate of refractory OM pool</desc>
+         <desc>the conversion rate of aboveground biomass to OM accretion</desc>
       </entry>
       <entry id="Bmax" units="kg/m2">
          <type>real</type>
