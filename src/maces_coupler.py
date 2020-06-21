@@ -88,8 +88,6 @@ def run_tai_maces(input_data, models, spinup):
         uhydro_out['Uwav'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
         uhydro_out['tau'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
         uhydro_out['Css'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
-        uhydro_out['Esed'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
-        uhydro_out['Dsed'] = 1e20 * np.ones((nt_hydro,nx), dtype=np.float32)
     ecogeom_out = {}
     ecogeom_tot = np.zeros(nt_ecogeom, dtype=np.float32)
     if (not spinup) and (nt_ecogeom>0):
@@ -238,8 +236,6 @@ def run_tai_maces(input_data, models, spinup):
                 uhydro_out['Uwav'][indx] = taihydro.sim_uwav
                 uhydro_out['tau'][indx] = taihydro.sim_tau
                 uhydro_out['Css'][indx] = taihydro.sim_css
-                uhydro_out['Esed'][indx] = Esed
-                uhydro_out['Dsed'][indx] = Dsed
         
         # archive long-term mean eco-geomorphology variables
         if (not spinup) and (nt_ecogeom>0):

@@ -538,16 +538,6 @@ def write_hydro_outputs(filename, tstep, uhydro_out):
         Css_var.long_name = r'suspended sediment concentration'
         Css_var.units = 'kg/m3'
         Css_var[:] = uhydro_out['Css']
-        Esed_var = nc.createVariable('Esed', 'f4', ('time','x',), 
-                                     fill_value=1e20)
-        Esed_var.long_name = r'sediment detachment rate'
-        Esed_var.units = 'kg m-2 s-1'
-        Esed_var[:] = uhydro_out['Esed']
-        Dsed_var = nc.createVariable('Dsed', 'f4', ('time','x',), 
-                                     fill_value=1e20)
-        Dsed_var.long_name = r'sediment deposition rate'
-        Dsed_var.units = 'kg m-2 s-1'
-        Dsed_var[:] = uhydro_out['Dsed']
     finally:
         nc.close()
         
