@@ -7,13 +7,24 @@ Created on Wed Apr  1 18:20:59 2020
 """
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
+from matplotlib.ticker import AutoMinorLocator
+from datetime import date
 
-day0 = 9
-day1 = 11
+z_1BF = -1.1    # 1BF is -1.1 m and 2BF is -2.1 m
+z_2BF = -2.1
+day0 = (date(2002,12,10) - date(2002,12,1)).days
+day1 = (date(2002,12,12) - date(2002,12,1)).days
+
+models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+min_accr_sim = {}
+sed_sim = {}
+
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2002-12-01_2002-12-13_466.nc'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/Outputs/'
+filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_466.F06.nc'
 try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:])
@@ -21,41 +32,125 @@ try:
 finally:
     nc.close()
     
-filename = '/Users/tanz151/Python_maces/src/maces_hydro_2002-12-01_2002-12-13_466.nc'
-try:
-    nc = Dataset(filename,'r')
-    Esed = 3.6e6*np.array(nc.variables['Esed'][day0*24:day1*24,:])
-    Dsed = 3.6e6*np.array(nc.variables['Dsed'][day0*24:day1*24,:])
-finally:
-    nc.close()
+index0 = np.argmin(np.abs(zh))
+x = x - x[index0]
+# find the site index
+index1 = np.argmin(np.abs(zh - z_1BF))
+index2 = np.argmin(np.abs(zh - z_2BF))
 
-t0 = 0
+for model in models:
+    # hydrodynamics
+    filename = rdir + 'maces_hydro_2002-12-01_2002-12-13_466.' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        sed_1BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index1])
+        sed_2BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index2])
+    finally:
+        nc.close()
+    sed_1BF = 1e3 * np.reshape(sed_1BF,(24*(day1-day0)+1))    # mg/L
+    sed_2BF = 1e3 * np.reshape(sed_2BF,(24*(day1-day0)+1))    # mg/L
+    sed_sim[model] = sed_1BF
+    # eco-geomorphology
+    filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_466.' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
+            8.64e7*np.mean(np.array(nc.variables['Esed'][day0:day1,:]),axis=0)   # g/m2/day
+    finally:
+        nc.close()
+    min_accr_sim[model] = min_accr
 
+nt_model = np.size(sed_sim['M12'])
+tt_model = np.arange(nt_model)
+
+# read data
+filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
+    'VeniceLagoon/1BF_OBS.xls'
+df = pd.read_excel(filename, sheet_name='1BF', header=None, skiprows=range(3), 
+                   usecols='A,B,F,O,Q')
+df.columns = ['Time','Hmo','Hmax','hw','Turbidity']
+sed_obs_1BF = np.array(df['Turbidity'])[5334:5526]  # mg/l
+
+filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
+    'VeniceLagoon/2BF_OBS.xls'
+df = pd.read_excel(filename, sheet_name='2BF', header=None, skiprows=range(3), 
+                   usecols='A,B,O,Q')
+df.columns = ['Time','Hmo','hw','Turbidity']
+sed_obs_2BF = np.array(df['Turbidity'])[5319:5511]
+
+nt_obs = np.size(sed_obs_1BF)
+tt_obs = np.arange(nt_obs)/4
+
+# plotting
 plt.clf()
-fig, axes = plt.subplots(4, 3, figsize=(8,10))
+fig, axes = plt.subplots(2, 1, figsize=(6,8))
 
 plt.style.use('default')
 
-for ii in range(4):
-    for jj in range(3):
-        ax = axes[ii][jj]
-        ax.plot(1e-3*x, Esed[t0], color='black', linestyle='-', linewidth=2, alpha=0.9)
-        ax.plot(1e-3*x, Dsed[t0], color='C3', linestyle='-', marker='.', markersize=5)
-        ax.set_xlim(10, 20)
-        ax.set_ylim(0,200)
-        ax.xaxis.set_ticks(np.linspace(10,20,5))
-        ax.yaxis.set_ticks(np.linspace(0,200,5))
-        if jj>0:
-            ax.set_yticklabels([])
-        if ii<3:
-            ax.set_xticklabels([])
-        labels = ax.get_xticklabels() + ax.get_yticklabels()
-        [label.set_fontname('Times New Roman') for label in labels]
-        [label.set_fontsize(12) for label in labels]
-        [label.set_color('black') for label in labels]
-        t0 = t0 + 1
+#colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
+#          "#b3e61c"]
+colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
+          '#e9d043', '#ad5b50', '#e377c2']
+linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
+
+# comparison of observed and simulated suspended sediment
+ax = axes[0]
+ax.plot(tt_obs, sed_obs_1BF, color='black', linestyle='-', linewidth=2, 
+        marker='.', markersize=8)
+handles = []
+for key in sed_sim:
+    indx = len(handles)
+    h, = ax.plot(tt_model, sed_sim[key], color=colors[indx], 
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
+    handles.append(h)
+legend = ax.legend(handles, list(sed_sim.keys()), numpoints=1, loc=1, 
+                   prop={'family':'Times New Roman', 'size':'large'}, 
+                   framealpha=0.0)
+ax.set_xlim(0, nt_model)
+ax.set_ylim(0, 150)
+ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
+ax.yaxis.set_ticks(np.linspace(0,150,6))
+ax.set_xticklabels(['12/10','12/11','12/12'])
+ax.xaxis.set_minor_locator(AutoMinorLocator(4))
+ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black')
+ylabel = 'Suspended sediment ($\mathregular{mg}$ $\mathregular{l^{-1}}$)'
+ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+labels = ax.get_xticklabels() + ax.get_yticklabels()
+[label.set_fontname('Times New Roman') for label in labels]
+[label.set_fontsize(12) for label in labels]
+[label.set_color('black') for label in labels]
+ax.text(0.05, 0.93, 'a', transform=ax.transAxes, fontsize=20,
+        fontname='Times New Roman', fontweight='bold')
+ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
+ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+# comparison of simulated sedimentation
+ax = axes[1]
+handles = []
+for key in min_accr_sim:
+    indx = len(handles)
+    h, = ax.plot(1e-3*x, min_accr_sim[key], color=colors[indx], 
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
+    handles.append(h)
+ax.set_xlim(-1, 2)
+#ax.set_ylim(0, 150)
+ax.xaxis.set_ticks(np.linspace(-1,2,7))
+#ax.yaxis.set_ticks(np.linspace(0,150,6))
+ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
+              fontname='Times New Roman', color='black')
+ylabel = 'Net sedimentation ($\mathregular{g}$ $\mathregular{m^{-2}}$ $\mathregular{day^{-1}}$)'
+ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+labels = ax.get_xticklabels() + ax.get_yticklabels()
+[label.set_fontname('Times New Roman') for label in labels]
+[label.set_fontsize(12) for label in labels]
+[label.set_color('black') for label in labels]
+ax.text(0.05, 0.93, 'b', transform=ax.transAxes, fontsize=20,
+        fontname='Times New Roman', fontweight='bold')
+ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
+ax.tick_params(which='minor', direction='in', colors='xkcd:black')
     
 plt.tight_layout()
-fig.savefig('venice_Esed_Dsed.png', dpi=300)
-#fig.savefig('venice_Esed_Dsed.pdf', dpi=600)
+fig.savefig('F5.png', dpi=300)
+fig.savefig('F5.pdf', dpi=600)
 plt.show()

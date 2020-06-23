@@ -375,7 +375,7 @@ def read_force_data(filename, varname, date0, date1, ntstep,
         day = int(dateint - 1e4*year - 1e2*month)
         refdate = date(year, month, day)
         id0 = id_range[0]
-        id1 = id_range[1] + 1
+        id1 = id_range[1]
         nday = (date1 - date0).days
         day0 = (date0 - refdate).days
         nyear = date1.year - date0.year + 1
@@ -538,16 +538,6 @@ def write_hydro_outputs(filename, tstep, uhydro_out):
         Css_var.long_name = r'suspended sediment concentration'
         Css_var.units = 'kg/m3'
         Css_var[:] = uhydro_out['Css']
-        Esed_var = nc.createVariable('Esed', 'f4', ('time','x',), 
-                                     fill_value=1e20)
-        Esed_var.long_name = r'sediment detachment rate'
-        Esed_var.units = 'kg m-2 s-1'
-        Esed_var[:] = uhydro_out['Esed']
-        Dsed_var = nc.createVariable('Dsed', 'f4', ('time','x',), 
-                                     fill_value=1e20)
-        Dsed_var.long_name = r'sediment deposition rate'
-        Dsed_var.units = 'kg m-2 s-1'
-        Dsed_var[:] = uhydro_out['Dsed']
     finally:
         nc.close()
         

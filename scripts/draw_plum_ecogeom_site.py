@@ -16,14 +16,14 @@ from netCDF4 import Dataset
 from datetime import date
 
 # read sediment density and porosity of different mineral accretion models
-models = ['F06MOD', 'T03MOD', 'KM12MOD', 'F07MOD', 'VDK05MOD', 'DA07MOD', 'M12MOD']
+models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
 xmlfile = '/Users/tanz151/Python_maces/src/optpar_minac.xml'
 tree = ET.parse(xmlfile)
 root = tree.getroot()
 rhoSed = {}
 porSed = {}
 for key in models:
-    findstr = "./group/[@id='" + key + "']/entry"
+    findstr = "./group/[@id='" + key + 'MOD' + "']/entry"
     for entry in root.findall(findstr):
         if entry.get('id')=='rhoSed':
             rhoSed[key] = float(entry.get('value'))
@@ -69,14 +69,14 @@ index_LAC = np.argmin(np.abs(zh - z_LAC))
 index_LPC = np.argmin(np.abs(zh - z_LPC))
 index_MRS = np.argmin(np.abs(zh - z_MRS))
 
-minac_sim_LAC = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_LAC]) - \
-    np.sum(8.64e4*Esed[:,index_LAC])) / rhoSed['M12MOD'] / (1.0-porSed['M12MOD']) # mm/yr
-minac_sim_LPC = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_LPC]) - \
-    np.sum(8.64e4*Esed[:,index_LPC])) / rhoSed['M12MOD'] / (1.0-porSed['M12MOD']) # mm/yr
-minac_sim_MRS = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_MRS]) - \
-    np.sum(8.64e4*Esed[:,index_MRS])) / rhoSed['M12MOD'] / (1.0-porSed['M12MOD']) # mm/yr
+minac_sim_LAC = 0.5 * (np.sum(8.64e7*Dsed[:,index_LAC]) - \
+    np.sum(8.64e4*Esed[:,index_LAC])) / rhoSed['M12'] / (1.0-porSed['M12']) # mm/yr
+minac_sim_LPC = 0.5 * (np.sum(8.64e7*Dsed[:,index_LPC]) - \
+    np.sum(8.64e4*Esed[:,index_LPC])) / rhoSed['M12'] / (1.0-porSed['M12']) # mm/yr
+minac_sim_MRS = 0.5 * (np.sum(8.64e7*Dsed[:,index_MRS]) - \
+    np.sum(8.64e4*Esed[:,index_MRS])) / rhoSed['M12'] / (1.0-porSed['M12']) # mm/yr
 minac_mean_sim = {}
-minac_mean_sim['M12MOD'] = np.array([minac_sim_MRS, minac_sim_LAC, minac_sim_LPC])
+minac_mean_sim['M12'] = np.array([minac_sim_MRS, minac_sim_LAC, minac_sim_LPC])
 
 # read Law's Point marsh biomass and mineral accretion
 filename = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
@@ -95,7 +95,7 @@ for ii, year in enumerate(Year_LAC):
     day1 = (date(year,month+1,1) - date(2017,1,1)).days
     Bag_sim_LAC[ii] = 1e3 * np.mean(Bag[day0:day1,index_LAC])
 Bag_sim_mean_LAC = {}
-Bag_sim_mean_LAC['NULLMOD'] = Bag_sim_LAC
+Bag_sim_mean_LAC['M12'] = Bag_sim_LAC
 
 # read 2018/07 biomass in three elevation bands: 0-0.5, 0.5-1.0 and 1.0-1.5
 filename = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
@@ -133,7 +133,7 @@ for key in z_MAR:
         x_tot = x_tot + frac*dx[index]
     Bag_sim_MAR[key] = Bag_tot / x_tot
 Bag_mean_sim = {}
-Bag_mean_sim['NULLMOD'] = np.array([Bag_sim_MAR['A'], Bag_sim_MAR['B'], Bag_sim_MAR['C']])
+Bag_mean_sim['M12'] = np.array([Bag_sim_MAR['A'], Bag_sim_MAR['B'], Bag_sim_MAR['C']])
     
 # from LTE-MP-LAC-elevationmeans_1.xls
 minac_mean_obs_LAC = 5.3    # mm/yr
