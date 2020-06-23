@@ -261,7 +261,7 @@
          <type>real</type>
          <desc>sediment porosity</desc>
       </entry>
-      <entry id="E0" units="mm/yr" value="5">
+      <entry id="E0" units="mm/yr" value="4">
          <type>real</type>
          <desc>reference erosion rate</desc>
       </entry>

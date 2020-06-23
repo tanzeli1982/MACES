@@ -163,17 +163,28 @@ if __name__=='__main__':
             run_date0, run_date1, namelist['h_TSTEP'], 'minute', sid_range)
         Twav = utils.read_force_data(namelist['FILE_Wave'], 'Twav', \
             run_date0, run_date1, namelist['Wave_TSTEP'], 'minute', sid_range)
+        if len(namelist['FILE_SSC'])>0:
+            SSC = 1e-3 * utils.read_force_data(namelist['FILE_SSC'], 'TSM', \
+                run_date0, run_date1, namelist['SSC_TSTEP'], 'minute', sid_range)
+        else:
+            nt_ssc = np.shape(h0)[0] * int(namelist['SSC_TSTEP']/namelist['h_TSTEP'])
+            nsite_ssc = np.shape(h0)[1]
+            SSC = np.zeros((nt_ssc,nsite_ssc))
+            for ii, site in enumerate(np.arange(site_1,site_n)):
+                SSC[:,ii] = site_TSM[ii]
     else:
         SLR = None
         Tair = None
         U10 = None
         h0 = None
         Twav = None
+        SSC = None
     SLR = comm.bcast(SLR, root=0)
     Tair = comm.bcast(Tair, root=0)
     U10 = comm.bcast(U10, root=0)
     h0 = comm.bcast(h0, root=0)
     Twav = comm.bcast(Twav, root=0)
+    SSC = comm.bcast(SSC, root=0)
         
     # load ecogeomorphology modules
     mac_module = importlib.import_module('minac_mod')
@@ -257,12 +268,11 @@ if __name__=='__main__':
                          'Bbg': site_Bbg, 'OM': site_OM}
             
             rslr = SLR[:,iid] - site_uplift[iid]
-            Cs0 = site_TSM[iid]
             sal = site_sal[iid]
             forcings = {'U10': U10[:,iid], 'Tair': Tair[:,iid], 'h0': h0[:,iid],
-                        'Twav': Twav[:,iid], 'Cs0': Cs0, 'sal': sal, 'rslr': rslr, 
-                        'trng': site_trng[iid], 'mhws': site_mhws[iid], 
-                        'mhwn': site_mhwn[iid]}
+                        'Twav': Twav[:,iid], 'Cs0': SSC[:,iid], 'sal': sal, 
+                        'rslr': rslr, 'trng': site_trng[iid], 'mhws': site_mhws[iid], 
+                        'mhwn': site_mhwn[iid], 'refCss': site_TSM[iid]}
             
             input_data = {'coord': coords, 'state': tai_state, 
                           'forcings': forcings, 'namelist': namelist}

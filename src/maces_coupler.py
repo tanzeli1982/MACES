@@ -56,6 +56,7 @@ def run_tai_maces(input_data, models, spinup):
     Tair = input_data['forcings']['Tair']
     h0 = input_data['forcings']['h0']
     Cs0 = input_data['forcings']['Cs0']
+    refCss = input_data['forcings']['refCss']
     sal = input_data['forcings']['sal']
     rslr = input_data['forcings']['rslr']
     nx = len(x)
@@ -152,6 +153,8 @@ def run_tai_maces(input_data, models, spinup):
         h0_inst = h0[indx] - zh[0]
         indx = utils.get_forcing_index(t, 'minute', namelist['Wave_TSTEP'])
         Twav_inst = Twav[indx]
+        indx = utils.get_forcing_index(t, 'minute', namelist['SSC_TSTEP'])
+        Cs0_inst = Cs0[indx]
         indx = int( (year-date0.year)/namelist['SLR_TSTEP'] )
         rslr_inst = rslr[indx]
         
@@ -162,9 +165,9 @@ def run_tai_maces(input_data, models, spinup):
         else:
             sources[:] = 0.0
             sinks[:] = 0.0
-            
+          
         taihydro.modelsetup(sources, sinks, zh, pft, Bag, xref, Twav_inst,
-                            h0_inst, U10_inst, Cs0)
+                            h0_inst, U10_inst, Cs0_inst)
         curstep, nextstep, error = taihydro.modelrun(rk4_mode, uhydro_tol, 
                                                      dyncheck, curstep)
         assert error==0, "runge-Kutta iteration is more than MAXITER"
@@ -184,7 +187,7 @@ def run_tai_maces(input_data, models, spinup):
                       'U': taihydro.sim_u, 'h': taihydro.sim_h, 
                       'Bag': Bag, 'Esed': Esed, 'Dsed': Dsed, 'Lbed': Lbed, 
                       'S': slope, 'dtau': dtau, 'TR': trng, 'dt': curstep, 
-                      'refCss': Cs0}
+                      'refCss': refCss}
         Esed = mac_mod.mineral_suspension(mac_inputs)
         Dsed = mac_mod.mineral_deposition(mac_inputs)
         Lbed = mac_mod.bed_loading(mac_inputs)

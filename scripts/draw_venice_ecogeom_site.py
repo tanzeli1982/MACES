@@ -21,14 +21,13 @@ bg_sim = {}
 day0 = (date(2002,7,1) - date(2002,1,1)).days
 day1 = (date(2002,8,1) - date(2002,1,1)).days
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2002-01-01_2004-01-01_466.nc'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/Outputs/'
+filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_466.M12M12.nc'
 try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:])
     zh = np.array(nc.variables['zh'][0,:])
     pft = np.array(nc.variables['pft'][0,:], dtype=np.int8)
-    Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
-    om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
 finally:
     nc.close()
 index0 = np.argmin(np.abs(zh))
@@ -36,8 +35,17 @@ x = x - x[index0]
 # extract salt marsh zone
 indices_marsh = pft==2
 x = 1e-3*x[indices_marsh]   # km
-bg_sim['M12'] = Bag[indices_marsh]
-om_accr_sim['M12'] = om_accr[indices_marsh]
+
+for model in models:
+    filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_466.M12' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
+        om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+    finally:
+        nc.close()
+    bg_sim[model] = Bag[indices_marsh]
+    om_accr_sim[model] = om_accr[indices_marsh]
 
 # plotting
 plt.clf()
@@ -55,7 +63,7 @@ handles = []
 for key in bg_sim:
     indx = len(handles)
     h, = ax.plot(x, bg_sim[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=3, alpha=1)
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 legend = ax.legend(handles, list(bg_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
@@ -84,7 +92,7 @@ handles = []
 for key in om_accr_sim:
     indx = len(handles)
     h, = ax.plot(x, om_accr_sim[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=3, alpha=1)
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 #ax.set_xlim(-1, 2)
 #ax.set_ylim(0, 150)

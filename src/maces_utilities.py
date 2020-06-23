@@ -375,7 +375,7 @@ def read_force_data(filename, varname, date0, date1, ntstep,
         day = int(dateint - 1e4*year - 1e2*month)
         refdate = date(year, month, day)
         id0 = id_range[0]
-        id1 = id_range[1] + 1
+        id1 = id_range[1]
         nday = (date1 - date0).days
         day0 = (date0 - refdate).days
         nyear = date1.year - date0.year + 1

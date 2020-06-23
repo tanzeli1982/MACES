@@ -23,16 +23,14 @@ min_accr_sim = {}
 sed_sim = {}
 
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2002-12-01_2002-12-13_466.nc'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/Outputs/'
+filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_466.F06.nc'
 try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:])
     zh = np.array(nc.variables['zh'][0,:])
-    min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
-        8.64e7*np.mean(np.array(nc.variables['Esed'][day0:day1,:]),axis=0)   # g/m2/day
 finally:
     nc.close()
-min_accr_sim['M12'] = min_accr
     
 index0 = np.argmin(np.abs(zh))
 x = x - x[index0]
@@ -40,18 +38,29 @@ x = x - x[index0]
 index1 = np.argmin(np.abs(zh - z_1BF))
 index2 = np.argmin(np.abs(zh - z_2BF))
 
-filename = '/Users/tanz151/Python_maces/src/maces_hydro_2002-12-01_2002-12-13_466.nc'
-try:
-    nc = Dataset(filename,'r')
-    sed_1BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index1])
-    sed_2BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index2])
-finally:
-    nc.close()
-sed_1BF = 1e3 * np.reshape(sed_1BF,(24*(day1-day0)+1))    # mg/L
-sed_2BF = 1e3 * np.reshape(sed_2BF,(24*(day1-day0)+1))    # mg/L
-sed_sim['M12'] = sed_1BF
+for model in models:
+    # hydrodynamics
+    filename = rdir + 'maces_hydro_2002-12-01_2002-12-13_466.' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        sed_1BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index1])
+        sed_2BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index2])
+    finally:
+        nc.close()
+    sed_1BF = 1e3 * np.reshape(sed_1BF,(24*(day1-day0)+1))    # mg/L
+    sed_2BF = 1e3 * np.reshape(sed_2BF,(24*(day1-day0)+1))    # mg/L
+    sed_sim[model] = sed_1BF
+    # eco-geomorphology
+    filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_466.' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
+            8.64e7*np.mean(np.array(nc.variables['Esed'][day0:day1,:]),axis=0)   # g/m2/day
+    finally:
+        nc.close()
+    min_accr_sim[model] = min_accr
 
-nt_model = np.size(sed_1BF)
+nt_model = np.size(sed_sim['M12'])
 tt_model = np.arange(nt_model)
 
 # read data
@@ -78,18 +87,21 @@ fig, axes = plt.subplots(2, 1, figsize=(6,8))
 
 plt.style.use('default')
 
-colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
-          "#b3e61c"]
+#colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
+#          "#b3e61c"]
+colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
+          '#e9d043', '#ad5b50', '#e377c2']
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # comparison of observed and simulated suspended sediment
 ax = axes[0]
-ax.plot(tt_obs, sed_obs_1BF, color='black', linestyle='-', marker='.', markersize=5)
+ax.plot(tt_obs, sed_obs_1BF, color='black', linestyle='-', linewidth=2, 
+        marker='.', markersize=8)
 handles = []
 for key in sed_sim:
     indx = len(handles)
     h, = ax.plot(tt_model, sed_sim[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=3, alpha=1)
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 legend = ax.legend(handles, list(sed_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
@@ -118,7 +130,7 @@ handles = []
 for key in min_accr_sim:
     indx = len(handles)
     h, = ax.plot(1e-3*x, min_accr_sim[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=3, alpha=1)
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 ax.set_xlim(-1, 2)
 #ax.set_ylim(0, 150)
