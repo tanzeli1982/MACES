@@ -138,7 +138,7 @@ class M12MOD(OMACMODSuper):
         DepOM = inputs['DepOM']     # OM deposition (kg/m2/s)
         
         DepOM[:] = 0.0
-        indice = Bag>0
+        indice = np.logical_and(Bag>0, Tr[pft]>0)
         DepOM[indice] = Kr[pft[indice]]*(phi[pft[indice]]*Bag[indice])/ \
             (Tr[pft[indice]]*3.1536e7)
         return DepOM
@@ -193,7 +193,7 @@ class DA07MOD(OMACMODSuper):
         DepOM = inputs['DepOM']         # OM deposition (kg/m2/s)
         
         DepOM[:] = 0.0
-        indice = Bag>utils.TOL
+        indice = np.logical_and(Bag>utils.TOL, Bmax[pft]>0)
         DepOM[indice] = Qom0/3.1536e7 * rhoOM * Bag[indice] / Bmax[pft[indice]]
         return DepOM
         
