@@ -16,19 +16,17 @@ from netCDF4 import Dataset
 from datetime import date
 
 # read sediment density and porosity of different mineral accretion models
-models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+min_models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+om_models = ['M12', 'DA07', 'KM12', 'K16']
 xmlfile = '/Users/tanz151/Python_maces/src/optpar_minac.xml'
 tree = ET.parse(xmlfile)
 root = tree.getroot()
-rhoSed = {}
-porSed = {}
-for key in models:
-    findstr = "./group/[@id='" + key + 'MOD' + "']/entry"
-    for entry in root.findall(findstr):
-        if entry.get('id')=='rhoSed':
-            rhoSed[key] = float(entry.get('value'))
-        elif entry.get('id')=='porSed':
-            porSed[key] = float(entry.get('value'))
+findstr = "./group/[@id='" + 'M12MOD' + "']/entry"
+for entry in root.findall(findstr):
+    if entry.get('id')=='rhoSed':
+        rhoSed = float(entry.get('value'))
+    elif entry.get('id')=='porSed':
+        porSed = float(entry.get('value'))
 
 # site elevation
 z_LAC = 1.1     # Spartina alterniflora-dominated high salt marsh
@@ -36,15 +34,21 @@ z_LPC = 1.4     # Spartina patens-dominated high salt marsh
 z_MRS = 0.89    # tall Spartina alterniflora low salt marsh
 z_MAR = {'A': [0,0.5], 'B': [0.5,1.0], 'C': [1.0,1.5]}
 
+x_LAC = 8.8
+x_LPC = 40.9
+x_MRS = 2.0
+
+minac_mean_sim = {}
+Bag_sim_mean_LAC = {}
+Bag_mean_sim = {}
+
 # read simulation
-filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2017-01-01_2019-01-01_4097.nc'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/PlumIsland/Outputs/'
+filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.M12M12.nc'
 try:
     nc = Dataset(filename, 'r')
     x = np.array(nc.variables['x'][:])
     zh = np.array(nc.variables['zh'][0,:])
-    Esed = np.array(nc.variables['Esed'][:])
-    Dsed = np.array(nc.variables['Dsed'][:])
-    Bag = np.array(nc.variables['Bag'][:])
 finally:
     nc.close()
 nx = np.size(x)
@@ -69,14 +73,25 @@ index_LAC = np.argmin(np.abs(zh - z_LAC))
 index_LPC = np.argmin(np.abs(zh - z_LPC))
 index_MRS = np.argmin(np.abs(zh - z_MRS))
 
-minac_sim_LAC = 0.5 * (np.sum(8.64e7*Dsed[:,index_LAC]) - \
-    np.sum(8.64e4*Esed[:,index_LAC])) / rhoSed['M12'] / (1.0-porSed['M12']) # mm/yr
-minac_sim_LPC = 0.5 * (np.sum(8.64e7*Dsed[:,index_LPC]) - \
-    np.sum(8.64e4*Esed[:,index_LPC])) / rhoSed['M12'] / (1.0-porSed['M12']) # mm/yr
-minac_sim_MRS = 0.5 * (np.sum(8.64e7*Dsed[:,index_MRS]) - \
-    np.sum(8.64e4*Esed[:,index_MRS])) / rhoSed['M12'] / (1.0-porSed['M12']) # mm/yr
-minac_mean_sim = {}
-minac_mean_sim['M12'] = np.array([minac_sim_MRS, minac_sim_LAC, minac_sim_LPC])
+index_LACx = np.argmin(np.abs(x - x_LAC))
+index_LPCx = np.argmin(np.abs(x - x_LPC))
+index_MRSx = np.argmin(np.abs(x - x_MRS))
+
+for model in min_models:
+    filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.' + model + 'DA07.nc'
+    try:
+        nc = Dataset(filename,'r')
+        Esed = np.array(nc.variables['Esed'][:])
+        Dsed = np.array(nc.variables['Dsed'][:])
+    finally:
+        nc.close()
+    minac_sim_LAC = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_LACx]) - \
+        np.sum(8.64e4*Esed[:,index_LACx])) / rhoSed / (1.0-porSed) # mm/yr
+    minac_sim_LPC = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_LPCx]) - \
+        np.sum(8.64e4*Esed[:,index_LPCx])) / rhoSed / (1.0-porSed) # mm/yr
+    minac_sim_MRS = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_MRSx]) - \
+        np.sum(8.64e4*Esed[:,index_MRSx])) / rhoSed / (1.0-porSed) # mm/yr
+    minac_mean_sim[model] = np.array([minac_sim_MRS, minac_sim_LAC, minac_sim_LPC])
 
 # read Law's Point marsh biomass and mineral accretion
 filename = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
@@ -88,14 +103,20 @@ Bag_mean_obs_LAC = np.array(df['Bag'])[96:106]      # g/m2
 Bag_std_obs_LAC = np.array(df['Bag_std'])[96:106]   # g/m2
 Year_LAC = np.array(df['Year'],dtype=np.int32)[96:106]
 Month_LAC = np.array(df['Month'],dtype=np.int32)[96:106]
-Bag_sim_LAC = np.NaN * np.ones_like(Bag_mean_obs_LAC)
-for ii, year in enumerate(Year_LAC):
-    month = Month_LAC[ii]
-    day0 = (date(year,month,1) - date(2017,1,1)).days
-    day1 = (date(year,month+1,1) - date(2017,1,1)).days
-    Bag_sim_LAC[ii] = 1e3 * np.mean(Bag[day0:day1,index_LAC])
-Bag_sim_mean_LAC = {}
-Bag_sim_mean_LAC['M12'] = Bag_sim_LAC
+for model in om_models:
+    filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.M12' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        Bag = 1e3 * np.array(nc.variables['Bag'][:])    # gC/m2
+    finally:
+        nc.close()
+    Bag_sim_LAC = np.NaN * np.ones_like(Bag_mean_obs_LAC)
+    for ii, year in enumerate(Year_LAC):
+        month = Month_LAC[ii]
+        day0 = (date(year,month,1) - date(2017,1,1)).days
+        day1 = (date(year,month+1,1) - date(2017,1,1)).days
+        Bag_sim_LAC[ii] = np.mean(Bag[day0:day1,index_LAC])
+    Bag_sim_mean_LAC[model] = Bag_sim_LAC
 
 # read 2018/07 biomass in three elevation bands: 0-0.5, 0.5-1.0 and 1.0-1.5
 filename = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
@@ -116,24 +137,30 @@ for key in z_MAR_corr:
     Bag_std_obs_MAR[key] = np.std(Bag_tmp[indices])
 Bag_mean_obs = np.array([Bag_mean_obs_MAR['A'], Bag_mean_obs_MAR['B'], Bag_mean_obs_MAR['C']])
 Bag_std_obs = np.array([Bag_std_obs_MAR['A'], Bag_std_obs_MAR['B'], Bag_std_obs_MAR['C']])
-Bag_sim_MAR = {}
 day0 = (date(2018,7,1) - date(2017,1,1)).days
 day1 = (date(2018,8,1) - date(2017,1,1)).days
-for key in z_MAR:
-    elev0 = z_MAR[key][0]
-    elev1 = z_MAR[key][1]
-    index0 = np.argmin(np.abs(zh - elev0))
-    index1 = np.argmin(np.abs(zh - elev1))
-    Bag_tot = 0.0
-    x_tot = 0.0
-    for index in np.arange(index0,index1+1):
-        frac = (min(zh1[index],elev1) - max(zh0[index],elev0)) / \
-            (zh1[index] - zh0[index])
-        Bag_tot = Bag_tot + np.mean(Bag[day0:day1,index])*frac*dx[index]
-        x_tot = x_tot + frac*dx[index]
-    Bag_sim_MAR[key] = Bag_tot / x_tot
-Bag_mean_sim = {}
-Bag_mean_sim['M12'] = np.array([Bag_sim_MAR['A'], Bag_sim_MAR['B'], Bag_sim_MAR['C']])
+for model in om_models:
+    filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.M12' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        Bag = 1e3 * np.array(nc.variables['Bag'][:])    # gC/m2
+    finally:
+        nc.close()
+    Bag_sim_MAR = {}
+    for key in z_MAR:
+        elev0 = z_MAR[key][0]
+        elev1 = z_MAR[key][1]
+        index0 = np.argmin(np.abs(zh - elev0))
+        index1 = np.argmin(np.abs(zh - elev1))
+        Bag_tot = 0.0
+        x_tot = 0.0
+        for index in np.arange(index0,index1+1):
+            frac = (min(zh1[index],elev1) - max(zh0[index],elev0)) / \
+                (zh1[index] - zh0[index])
+            Bag_tot = Bag_tot + np.mean(Bag[day0:day1,index])*frac*dx[index]
+            x_tot = x_tot + frac*dx[index]
+        Bag_sim_MAR[key] = Bag_tot / x_tot
+    Bag_mean_sim[model] = np.array([Bag_sim_MAR['A'], Bag_sim_MAR['B'], Bag_sim_MAR['C']])
     
 # from LTE-MP-LAC-elevationmeans_1.xls
 minac_mean_obs_LAC = 5.3    # mm/yr
@@ -156,8 +183,10 @@ fig = plt.figure(figsize=(8,8))
 
 plt.style.use('default')
 
-colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
-          "#b3e61c"]
+colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
+          '#e9d043', '#ad5b50', '#e377c2']
+#colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
+#          "#b3e61c"]
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # mineral accretion vs elevation
@@ -177,10 +206,10 @@ legend = plt.legend(handles, list(minac_mean_sim.keys()), numpoints=1, loc=1,
                     framealpha=0.0,
                     prop={'family':'Times New Roman', 'size':'medium'})
 ax.set_xlim(0, 4)
-#ax.set_ylim(0, 300)
+ax.set_ylim(0, 10)
 ax.xaxis.set_ticks(np.arange(1,4,1))
-#ax.yaxis.set_ticks(np.linspace(0,300,6))
-ax.set_xticklabels(['LAC','LPC','MRS'])
+ax.yaxis.set_ticks(np.linspace(0,10,6))
+ax.set_xticklabels(['MRS','LAC','LPC'])
 #ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
 ylabel = 'Mineral accretion ($\mathregular{mm}$ $\mathregular{{yr}^{-1}}$)'
 ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
@@ -203,12 +232,9 @@ handles = []
 for key in Bag_mean_sim:
     indx = len(handles)
     h, = ax.plot(xpos, Bag_mean_sim[key], color=colors[indx], marker='.',
-                 ms=10, mfc='black', mec='black', linestyle=linestyles[indx], 
+                 ms=10, mfc=colors[indx], mec=colors[indx], linestyle=linestyles[indx], 
                  linewidth=2, alpha=1)
     handles.append(h)
-legend = plt.legend(handles, list(Bag_mean_sim.keys()), numpoints=1, loc=1, 
-                    prop={'family':'Times New Roman', 'size':'medium'}, 
-                    framealpha=0.0)
 ax.set_xlim(0, 4)
 #ax.set_ylim(0, 300)
 ax.xaxis.set_ticks(np.arange(1,4,1))
@@ -236,12 +262,9 @@ handles = []
 for key in Bag_sim_mean_LAC:
     indx = len(handles)
     h, = ax.plot(xpos, Bag_sim_mean_LAC[key], color=colors[indx], marker='.', 
-                 ms=10, mfc='black', mec='black', linestyle=linestyles[indx], 
+                 ms=10, mfc=colors[indx], mec=colors[indx], linestyle=linestyles[indx], 
                  linewidth=2, alpha=1)
     handles.append(h)
-legend = plt.legend(handles, list(Bag_sim_mean_LAC.keys()), numpoints=1, loc=1, 
-                    prop={'family':'Times New Roman', 'size':'medium'}, 
-                    framealpha=0.0)
 ax.set_xlim(0, 11)
 #ax.set_ylim(0, 300)
 ax.xaxis.set_ticks(np.arange(1,11,1))
@@ -262,5 +285,5 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 plt.tight_layout()
 fig.savefig('F10.png', dpi=300)
-#fig.savefig('F10.pdf', dpi=600)
+fig.savefig('F10.pdf', dpi=600)
 plt.show()

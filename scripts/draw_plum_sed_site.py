@@ -23,39 +23,47 @@ day1 = (date(2017,7,23) - date(2017,7,17)).days
 
 models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
 min_accr_sim = {}
+sed_sim_c = {}
+sed_sim_m = {}
+
 # read simulation outputs
-filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2017-07-17_2017-08-01_4097.nc'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/PlumIsland/Outputs/'
+filename = rdir + 'maces_ecogeom_2017-07-17_2017-08-01_4097.F06.nc'
 try:
     nc = Dataset(filename,'r')
     x = 1e-3 * np.array(nc.variables['x'][:])
     zh = np.array(nc.variables['zh'][0,:])
-    min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
-        8.64e7*np.mean(np.array(nc.variables['Esed'][day0:day1,:]),axis=0)   # g/m2/day
 finally:
     nc.close()
 index0 = np.argmin(np.abs(zh))
 x = x - x[index0]
-min_accr_sim['M12'] = min_accr
+
+for model in models:
+    filename = rdir + 'maces_ecogeom_2017-07-17_2017-08-01_4097.' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
+            8.64e7*np.mean(np.array(nc.variables['Esed'][day0:day1,:]),axis=0)   # g/m2/day
+    finally:
+        nc.close()
+    min_accr_sim[model] = min_accr
     
 # find the site index
 index1 = np.argmin(np.abs(zh - z_channel))
 index2 = np.argmin(np.abs(zh - z_marsh))
 
-sed_sim_c = {}
-sed_sim_m = {}
+for model in models:
+    filename = rdir + 'maces_hydro_2017-07-17_2017-08-01_4097.' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        sed_c = np.array(nc.variables['TSM'][day0*24:day1*24,index1])
+        sed_m = np.array(nc.variables['TSM'][day0*24:day1*24,index2])
+    finally:
+        nc.close()
+    sed_sim_c[model] = 1e3 * np.reshape(sed_c,(24*(day1-day0)))    # mg/L
+    sed_sim_m[model] = 1e3 * np.reshape(sed_m,(24*(day1-day0)))    # mg/L
 
-filename = '/Users/tanz151/Python_maces/src/maces_hydro_2017-07-17_2017-08-01_4097.nc'
-try:
-    nc = Dataset(filename,'r')
-    sed_c = np.array(nc.variables['TSM'][day0*24-1:day1*24-1,index1])
-    sed_m = np.array(nc.variables['TSM'][day0*24-1:day1*24-1,index2])
-    tau_sim_c = np.array(nc.variables['tau'][day0*24-1:day1*24-1,index1])
-finally:
-    nc.close()
-sed_sim_c['M12'] = 1e3 * np.reshape(sed_c,(24*(day1-day0)))    # mg/L
-sed_sim_m['M12'] = 1e3 * np.reshape(sed_m,(24*(day1-day0)))    # mg/L
-
-nt_model = np.size(sed_c)
+nt_model = np.size(sed_sim_c['F06'])
 tt_model = np.arange(nt_model)
 
 warnings.filterwarnings('ignore')
@@ -84,22 +92,22 @@ fig = plt.figure(figsize=(8,7.5))
 
 plt.style.use('default')
 
-colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
-          "#b3e61c"]
+#colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
+#          "#b3e61c"]
+colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
+          '#e9d043', '#ad5b50', '#e377c2']
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # channel
 ax = plt.subplot2grid((2,2),(0,0))
-ax.plot(tt_obs, sed_obs_c, color='black', linestyle='-', marker='.', markersize=5)
+ax.plot(tt_obs, sed_obs_c, color='black', linestyle='-', linewidth=2, marker='.', 
+        markersize=8)
 handles = []
 for key in sed_sim_c:
     indx = len(handles)
     h, = ax.plot(tt_model, sed_sim_c[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=3, alpha=1)
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
-legend = ax.legend(handles, list(sed_sim_c.keys()), numpoints=1, loc=1, 
-                   prop={'family':'Times New Roman', 'size':'large'}, 
-                   framealpha=0.0)
 ax.set_xlim(0, nt_model)
 ax.set_ylim(0, 50)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
@@ -120,17 +128,21 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 # marsh
 ax = plt.subplot2grid((2,2),(0,1))
-ax.plot(tt_obs, sed_obs_m, color='black', linestyle='-', marker='.', markersize=5)
+ax.plot(tt_obs, sed_obs_m, color='black', linestyle='-', linewidth=2, marker='.', 
+        markersize=8)
 handles = []
 for key in sed_sim_m:
     indx = len(handles)
     h, = ax.plot(tt_model, sed_sim_m[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=3, alpha=1)
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
+legend = ax.legend(handles, list(sed_sim_c.keys()), numpoints=1, loc=1, 
+                   prop={'family':'Times New Roman', 'size':'large'}, 
+                   framealpha=0.0)
 ax.set_xlim(0, nt_model)
-ax.set_ylim(0, 10)
+ax.set_ylim(0, 20)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-ax.yaxis.set_ticks(np.linspace(0,10,6))
+ax.yaxis.set_ticks(np.linspace(0,20,6))
 ax.set_xticklabels(['7/19','7/20','7/21','7/22','7/23'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black')
@@ -151,7 +163,7 @@ handles = []
 for key in min_accr_sim:
     indx = len(handles)
     h, = ax.plot(x, min_accr_sim[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=3, alpha=1)
+                 linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 ax.set_xlim(-0.2, 0.2)
 #ax.set_ylim(0, 150)
@@ -166,12 +178,12 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
-ax.text(0.05, 0.93, 'c', transform=ax.transAxes, fontsize=20,
+ax.text(0.03, 0.93, 'c', transform=ax.transAxes, fontsize=20,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 plt.tight_layout()
 fig.savefig('F9.png', dpi=300)
-#fig.savefig('F9.pdf', dpi=600)
+fig.savefig('F9.pdf', dpi=600)
 plt.show()
