@@ -202,9 +202,9 @@ for key in minac_mean_sim:
                  ms=10, mfc='black', mec='black', linestyle=linestyles[indx], 
                  linewidth=2, alpha=1)
     handles.append(h)
-legend = plt.legend(handles, list(minac_mean_sim.keys()), numpoints=1, loc=1, 
-                    framealpha=0.0,
-                    prop={'family':'Times New Roman', 'size':'medium'})
+legend = ax.legend(handles, list(minac_mean_sim.keys()), numpoints=1, loc=1, 
+                   prop={'family':'Times New Roman', 'size':'large'}, 
+                   framealpha=0.0)
 ax.set_xlim(0, 4)
 ax.set_ylim(0, 10)
 ax.xaxis.set_ticks(np.arange(1,4,1))
@@ -235,6 +235,9 @@ for key in Bag_mean_sim:
                  ms=10, mfc=colors[indx], mec=colors[indx], linestyle=linestyles[indx], 
                  linewidth=2, alpha=1)
     handles.append(h)
+legend = ax.legend(handles, list(Bag_mean_sim.keys()), numpoints=1, loc=1, 
+                   prop={'family':'Times New Roman', 'size':'large'}, 
+                   framealpha=0.0)
 ax.set_xlim(0, 4)
 #ax.set_ylim(0, 300)
 ax.xaxis.set_ticks(np.arange(1,4,1))

@@ -15,7 +15,7 @@
          2: Transient.
          </desc>
       </entry>
-      <entry id="MINAC_TYPE" value="M12MOD">
+      <entry id="MINAC_TYPE" value="F07MOD">
          <type>char</type>
          <valid_values>
          F06MOD,T03MOD,KM12MOD,M12MOD,F07MOD,VDK05MOD,DA07MOD
@@ -25,7 +25,7 @@
          Default: F06MOD.
          </desc>
       </entry>
-      <entry id="OMAC_TYPE" value="NULLMOD">
+      <entry id="OMAC_TYPE" value="DA07MOD">
          <type>char</type>
          <valid_values>
          NULLMOD,VDK05MOD,M12MOD,DA07MOD,KM12MOD,K16MOD
@@ -66,11 +66,11 @@
          <valid_values>regular,calibration,sensitivity</valid_values>
          <desc>Simulation type</desc>
       </entry>
-      <entry id="RUN_STARTDATE" value="2002-12-01">
+      <entry id="RUN_STARTDATE" value="2004-09-25">
          <type>char</type>
          <desc>Run start date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
-      <entry id="RUN_STOPDATE" value="2002-12-13">
+      <entry id="RUN_STOPDATE" value="2004-10-06">
          <type>char</type>
          <desc>Run stop date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
@@ -109,7 +109,7 @@
          <type>char</type>
          <desc>Path of the landward migration model parameter file</desc>
       </entry>
-      <entry id="SITE_FILE" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/DIVA_maces.xlsx">
+      <entry id="SITE_FILE" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/DIVA_maces.xlsx">
          <type>char</type>
          <desc>Path of the site information file</desc>
       </entry>
@@ -121,7 +121,7 @@
          <type>integer</type>
          <desc>Last site index of the run</desc>
       </entry>
-      <entry id="CELL_RES" units="meter" value="50.0">
+      <entry id="CELL_RES" units="meter" value="5.0">
          <type>real</type>
          <desc>Reference node cell resolution</desc>
       </entry>
@@ -155,7 +155,7 @@
       </entry>
    </group>
    <group id="run_inputs">
-      <entry id="DIN_ROOT" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon">
+      <entry id="DIN_ROOT" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary">
          <type>char</type>
          <desc>Input data root directory</desc>
       </entry>
@@ -179,7 +179,7 @@
          <type>char</type>
          <desc>Path of boundary water level file</desc>
       </entry>
-      <entry id="h_TSTEP" value="10">
+      <entry id="h_TSTEP" value="15">
          <type>integer</type>
          <desc>Time step in minutes of the h data</desc>
       </entry>
@@ -199,9 +199,17 @@
          <type>integer</type>
          <desc>Time step in minutes of the wave data</desc>
       </entry>
+      <entry id="FILE_SSC" value="$DIN_ROOT/force_SSC.nc">
+         <type>char</type>
+         <desc>Path of boundary wave period file</desc>
+      </entry>
+      <entry id="SSC_TSTEP" value="15">
+         <type>integer</type>
+         <desc>Time step in minutes of the wave data</desc>
+      </entry>
    </group>
    <group id="run_archive">
-      <entry id="DOUT_ROOT" value="$RUNROOT">
+      <entry id="DOUT_ROOT" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs">
          <type>char</type>
          <desc>Run archive root directory</desc>
       </entry>
