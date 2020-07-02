@@ -29,27 +29,37 @@ for key in models:
         elif entry.get('id')=='porSed':
             porSed[key] = float(entry.get('value'))
             
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs/'
+            
 min_accr_sim = {}
-om_accr_sim = {}            
+om_accr_sim = {}
+site_dem = 0.56
 # read simulation
-filename = '/Users/tanz151/Python_maces/src/maces_ecogeom_2004-01-01_2005-01-01_11099.nc'
-try:
-    nc = Dataset(filename, 'r')
-    x = np.array(nc.variables['x'][:])
-    zh = np.array(nc.variables['zh'][0,:])
-    pft = np.array(nc.variables['pft'][0,:], dtype=np.int8)
-    min_accr = (np.sum(8.64e7*np.array(nc.variables['Dsed'][:]),axis=0) - \
-        np.sum(8.64e7*np.array(nc.variables['Esed'][:]),axis=0)) / \
-        rhoSed['M12'] / (1.0-porSed['M12']) # mm/yr
-    om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
-finally:
-    nc.close()
-index0 = np.argmin(np.abs(zh))
-x = x - x[index0]
-indices = np.logical_or(pft==2, pft==5)
-x = 1e-3 * x[indices]   # km
-min_accr_sim['M12'] = min_accr[indices]
-om_accr_sim['M12'] = om_accr[indices]
+for model in models:
+    filename = rdir + 'maces_ecogeom_2004-01-01_2005-01-01_11099.' + model + 'DA07.nc'
+    try:
+        nc = Dataset(filename, 'r')
+        x = np.array(nc.variables['x'][:])
+        zh = np.array(nc.variables['zh'][0,:])
+        pft = np.array(nc.variables['pft'][0,:], dtype=np.int8)
+        min_accr = (np.sum(8.64e7*np.array(nc.variables['Dsed'][:]),axis=0) - \
+            np.sum(8.64e7*np.array(nc.variables['Esed'][:]),axis=0)) / \
+            rhoSed[model] / (1.0-porSed[model]) # mm/yr
+        om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+    finally:
+        nc.close()
+    index0 = np.argmin(np.abs(zh))
+    x = x - x[index0]
+    index = np.argmin(np.abs(zh-site_dem))
+    print(model, ': ', min_accr[index], om_accr[index])
+    #indices = np.logical_or(pft==2, pft==5)
+    #x = 1e-3 * x[indices]   # km
+    min_accr_sim[model] = min_accr
+    om_accr_sim[model] = om_accr
+#    if model in ['F07','M12']:
+#        min_accr_sim[model] = min_accr * 3.66 / min_accr[index]
+#    else:
+#        min_accr_sim[model] = min_accr
 
 # plotting
 plt.clf()
@@ -57,8 +67,10 @@ fig, axes = plt.subplots(2, 1, figsize=(6,8))
 
 plt.style.use('default')
 
-colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
-          "#b3e61c"]
+colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
+          '#e9d043', '#ad5b50', '#e377c2']
+#colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
+#          "#b3e61c"]
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # comparison of simulted mineral accretion
@@ -72,13 +84,13 @@ for key in min_accr_sim:
 legend = ax.legend(handles, list(min_accr_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
-#ax.set_xlim(np.min(x), np.max(x))
+ax.set_xlim(0, 150)
 #ax.set_ylim(0, 150)
-#ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
+ax.xaxis.set_ticks(np.linspace(0,150,6))
 #ax.yaxis.set_ticks(np.linspace(0,150,6))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
-              fontname='Times New Roman', color='black')
+#ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
+#              fontname='Times New Roman', color='black')
 ylabel = 'Mineral accretion ($\mathregular{mm}$ $\mathregular{yr^{-1}}$)'
 ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
@@ -98,12 +110,12 @@ for key in om_accr_sim:
     h, = ax.plot(x, om_accr_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=3, alpha=1)
     handles.append(h)
-#ax.set_xlim(-1, 2)
+ax.set_xlim(0, 150)
 #ax.set_ylim(0, 150)
-#ax.xaxis.set_ticks(np.linspace(-1,2,7))
+ax.xaxis.set_ticks(np.linspace(0,150,6))
 #ax.yaxis.set_ticks(np.linspace(0,150,6))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
+ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
               fontname='Times New Roman', color='black')
 ylabel = 'OM accretion ($\mathregular{g}$ $\mathregular{m^{-2}}$ $\mathregular{yr^{-1}}$)'
 ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
@@ -118,5 +130,5 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
     
 plt.tight_layout()
 fig.savefig('F13.png', dpi=300)
-#fig.savefig('F13.pdf', dpi=600)
+fig.savefig('F13.pdf', dpi=600)
 plt.show()

@@ -18,15 +18,18 @@ from datetime import date
 # read sediment density and porosity of different mineral accretion models
 min_models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
+rhoSed = {}
+porSed = {}
 xmlfile = '/Users/tanz151/Python_maces/src/optpar_minac.xml'
 tree = ET.parse(xmlfile)
-root = tree.getroot()
-findstr = "./group/[@id='" + 'M12MOD' + "']/entry"
-for entry in root.findall(findstr):
-    if entry.get('id')=='rhoSed':
-        rhoSed = float(entry.get('value'))
-    elif entry.get('id')=='porSed':
-        porSed = float(entry.get('value'))
+root = tree.getroot()        
+for key in min_models:
+    findstr = "./group/[@id='" + key + 'MOD' + "']/entry"
+    for entry in root.findall(findstr):
+        if entry.get('id')=='rhoSed':
+            rhoSed[key] = float(entry.get('value'))
+        elif entry.get('id')=='porSed':
+            porSed[key] = float(entry.get('value'))
 
 # site elevation
 z_LAC = 1.1     # Spartina alterniflora-dominated high salt marsh
@@ -86,11 +89,11 @@ for model in min_models:
     finally:
         nc.close()
     minac_sim_LAC = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_LACx]) - \
-        np.sum(8.64e4*Esed[:,index_LACx])) / rhoSed / (1.0-porSed) # mm/yr
+        np.sum(8.64e4*Esed[:,index_LACx])) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
     minac_sim_LPC = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_LPCx]) - \
-        np.sum(8.64e4*Esed[:,index_LPCx])) / rhoSed / (1.0-porSed) # mm/yr
+        np.sum(8.64e4*Esed[:,index_LPCx])) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
     minac_sim_MRS = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_MRSx]) - \
-        np.sum(8.64e4*Esed[:,index_MRSx])) / rhoSed / (1.0-porSed) # mm/yr
+        np.sum(8.64e4*Esed[:,index_MRSx])) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
     minac_mean_sim[model] = np.array([minac_sim_MRS, minac_sim_LAC, minac_sim_LPC])
 
 # read Law's Point marsh biomass and mineral accretion
