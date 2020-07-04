@@ -41,7 +41,7 @@ for model in models:
     try:
         nc = Dataset(filename,'r')
         Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
-        om_accr = 0.5*8.64e4*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+        om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
     finally:
         nc.close()
     bg_sim[model] = Bag[indices_marsh]
@@ -67,10 +67,13 @@ for key in bg_sim:
     h, = ax.plot(x, bg_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
+legend = ax.legend(handles, list(bg_sim.keys()), numpoints=1, loc=1, 
+                   prop={'family':'Times New Roman', 'size':'large'}, 
+                   framealpha=0.0)
 ax.set_xlim(0, 1.5)
-ax.set_ylim(0, 2000)
+ax.set_ylim(500, 2500)
 ax.xaxis.set_ticks(np.linspace(0,1.5,6))
-ax.yaxis.set_ticks(np.linspace(0,2000,6))
+ax.yaxis.set_ticks(np.linspace(500,2500,6))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 #ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
 #              fontname='Times New Roman', color='black')
@@ -93,13 +96,10 @@ for key in om_accr_sim:
     h, = ax.plot(x, om_accr_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
-legend = ax.legend(handles, list(bg_sim.keys()), numpoints=1, loc=1, 
-                   prop={'family':'Times New Roman', 'size':'large'}, 
-                   framealpha=0.0)
 ax.set_xlim(0, 1.5)
-ax.set_ylim(0, 500)
+#ax.set_ylim(0, 300)
 ax.xaxis.set_ticks(np.linspace(0,1.5,6))
-ax.yaxis.set_ticks(np.linspace(0,500,6))
+#ax.yaxis.set_ticks(np.linspace(0,300,7))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
               fontname='Times New Roman', color='black')

@@ -272,7 +272,7 @@ class KM12MOD(OMACMODSuper):
         Gps = rGps/8.64e4 * Bps     # peak growth rate (kg/m2/s)
         # the mortality rate (kg/m2/s) of aboveground biomass
         Mag = 0.5*(Gmin+Gps+(Gps-Gmin)*np.cos(2.0*np.pi*(jd-jdps+jd_phi)/365)) + \
-            np.pi/365*(Bps-Bmin)*np.sin(2.0*np.pi*(jd-jdps)/365)
+            np.pi/365*(Bps-Bmin)/8.64e4*np.sin(2.0*np.pi*(jd-jdps)/365)
         DepOM[indice] = np.maximum(phi,0.0) * np.maximum(Mag,0.0)
         return DepOM
         
