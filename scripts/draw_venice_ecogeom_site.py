@@ -97,9 +97,9 @@ for key in om_accr_sim:
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 ax.set_xlim(0, 1.5)
-#ax.set_ylim(0, 300)
+ax.set_ylim(0, 300)
 ax.xaxis.set_ticks(np.linspace(0,1.5,6))
-#ax.yaxis.set_ticks(np.linspace(0,300,7))
+ax.yaxis.set_ticks(np.linspace(0,300,7))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
               fontname='Times New Roman', color='black')
