@@ -242,9 +242,9 @@ legend = ax.legend(handles, list(Bag_mean_sim.keys()), numpoints=1, loc=1,
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
 ax.set_xlim(0, 4)
-#ax.set_ylim(0, 300)
+ax.set_ylim(0, 1800)
 ax.xaxis.set_ticks(np.arange(1,4,1))
-#ax.yaxis.set_ticks(np.linspace(0,300,6))
+ax.yaxis.set_ticks(np.linspace(0,1800,7))
 ax.set_xticklabels(['0–0.5 m','0.5–1 m','1–1.5 m'])
 #ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
 ylabel = 'Biomass ($\mathregular{g}$ $\mathregular{{m}^{-2}}$)'
@@ -272,9 +272,9 @@ for key in Bag_sim_mean_LAC:
                  linewidth=2, alpha=1)
     handles.append(h)
 ax.set_xlim(0, 11)
-#ax.set_ylim(0, 300)
+ax.set_ylim(0, 1000)
 ax.xaxis.set_ticks(np.arange(1,11,1))
-#ax.yaxis.set_ticks(np.linspace(0,300,6))
+ax.yaxis.set_ticks(np.linspace(0,1000,6))
 ax.set_xticklabels(['17/5','17/6','17/7','17/8','17/10','18/5','18/6','18/7', 
                     '18/8','18/10'])
 #ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')

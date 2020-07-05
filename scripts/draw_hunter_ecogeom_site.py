@@ -16,6 +16,7 @@ from netCDF4 import Dataset
 
 # read sediment density and porosity of different mineral accretion models
 models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+om_models = ['M12', 'DA07', 'KM12', 'K16']
 xmlfile = '/Users/tanz151/Python_maces/src/optpar_minac.xml'
 tree = ET.parse(xmlfile)
 root = tree.getroot()
@@ -32,7 +33,6 @@ for key in models:
 rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs/'
             
 min_accr_sim = {}
-om_accr_sim = {}
 site_dem = 0.56
 # read simulation
 for model in models:
@@ -45,21 +45,37 @@ for model in models:
         min_accr = (np.sum(8.64e7*np.array(nc.variables['Dsed'][:]),axis=0) - \
             np.sum(8.64e7*np.array(nc.variables['Esed'][:]),axis=0)) / \
             rhoSed[model] / (1.0-porSed[model]) # mm/yr
-        om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
     finally:
         nc.close()
     index0 = np.argmin(np.abs(zh))
     x = x - x[index0]
     index = np.argmin(np.abs(zh-site_dem))
-    print(model, ': ', min_accr[index], om_accr[index])
+    print(model, ': ', min_accr[index])
     #indices = np.logical_or(pft==2, pft==5)
     #x = 1e-3 * x[indices]   # km
     min_accr_sim[model] = min_accr
+    
+om_accr_sim = {}
+Bag_sim = {}
+for model in om_models:
+    filename = rdir + 'maces_ecogeom_2004-01-01_2005-01-01_11099.F06' + model + '.nc'
+    try:
+        nc = Dataset(filename, 'r')
+        x = np.array(nc.variables['x'][:])
+        zh = np.array(nc.variables['zh'][0,:])
+        pft = np.array(nc.variables['pft'][0,:], dtype=np.int8)
+        om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+        Bag = 1e3 * np.mean(np.array(nc.variables['Bag'][:]),axis=0)
+    finally:
+        nc.close()
+    index0 = np.argmin(np.abs(zh))
+    x = x - x[index0]
+    index = np.argmin(np.abs(zh-site_dem))
+    print(model, ': ', om_accr[index])
+    #indices = np.logical_or(pft==2, pft==5)
+    #x = 1e-3 * x[indices]   # km
     om_accr_sim[model] = om_accr
-#    if model in ['F07','M12']:
-#        min_accr_sim[model] = min_accr * 3.66 / min_accr[index]
-#    else:
-#        min_accr_sim[model] = min_accr
+    Bag_sim[model] = Bag
 
 # plotting
 plt.clf()
@@ -85,9 +101,9 @@ legend = ax.legend(handles, list(min_accr_sim.keys()), numpoints=1, loc=1,
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
 ax.set_xlim(0, 150)
-#ax.set_ylim(0, 150)
+ax.set_ylim(0, 10)
 ax.xaxis.set_ticks(np.linspace(0,150,6))
-#ax.yaxis.set_ticks(np.linspace(0,150,6))
+ax.yaxis.set_ticks(np.linspace(0,10,6))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 #ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
 #              fontname='Times New Roman', color='black')
@@ -110,10 +126,13 @@ for key in om_accr_sim:
     h, = ax.plot(x, om_accr_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=3, alpha=1)
     handles.append(h)
+legend = ax.legend(handles, list(om_accr_sim.keys()), numpoints=1, loc=1, 
+                   prop={'family':'Times New Roman', 'size':'large'}, 
+                   framealpha=0.0)
 ax.set_xlim(0, 150)
-#ax.set_ylim(0, 150)
+ax.set_ylim(0, 600)
 ax.xaxis.set_ticks(np.linspace(0,150,6))
-#ax.yaxis.set_ticks(np.linspace(0,150,6))
+ax.yaxis.set_ticks(np.linspace(0,600,7))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
               fontname='Times New Roman', color='black')
