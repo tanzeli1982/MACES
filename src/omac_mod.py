@@ -46,7 +46,8 @@ class NULLMOD(OMACMODSuper):
         bb = self.m_params['bb']
         cc = self.m_params['cc']
         zh = inputs['zh']           # platform surface elevation (msl)
-        MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        #MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        MHT = inputs['MHHW']        # mean high high water level (msl)
         pft = inputs['pft']         # platform pft
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         
@@ -98,7 +99,8 @@ class VDK05MOD(OMACMODSuper):
         S = inputs['S']         # platform surface slope (m/m)
         Bag = inputs['Bag']     # aboveground biomass (kg/m2)
         pft = inputs['pft']     # platform pft
-        MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        #MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        MHT = inputs['MHHW']        # mean high high water level (msl)
         
         Bag[:] = 0.0
         indice = np.logical_and(np.logical_and(pft>=2,pft<=5), 
@@ -153,7 +155,8 @@ class M12MOD(OMACMODSuper):
         bb = self.m_params['bb']
         cc = self.m_params['cc']
         zh = inputs['zh']           # platform surface elevation (msl)
-        MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        #MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        MHT = inputs['MHHW']        # mean high high water level (msl)
         pft = inputs['pft']         # platform pft
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         
@@ -209,7 +212,8 @@ class DA07MOD(OMACMODSuper):
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         zh = inputs['zh']           # platform surface elevation (msl)
         pft = inputs['pft']         # platform pft
-        MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        #MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        MHT = inputs['MHHW']        # mean high high water level (msl)
         m = inputs['month']         # month (1 to 12)
         
         Bag[:] = 0.0
@@ -272,7 +276,7 @@ class KM12MOD(OMACMODSuper):
         Gps = rGps/8.64e4 * Bps     # peak growth rate (kg/m2/s)
         # the mortality rate (kg/m2/s) of aboveground biomass
         Mag = 0.5*(Gmin+Gps+(Gps-Gmin)*np.cos(2.0*np.pi*(jd-jdps+jd_phi)/365)) + \
-            np.pi/365*(Bps-Bmin)*np.sin(2.0*np.pi*(jd-jdps)/365)
+            np.pi/365*(Bps-Bmin)/8.64e4*np.sin(2.0*np.pi*(jd-jdps)/365)
         DepOM[indice] = np.maximum(phi,0.0) * np.maximum(Mag,0.0)
         return DepOM
         
@@ -400,7 +404,8 @@ class K16MOD(OMACMODSuper):
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         zh = inputs['zh']           # platform surface elevation (msl)
         pft = inputs['pft']         # platform pft
-        MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        #MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        MHT = inputs['MHHW']        # mean high high water level (msl)
         
         Bag[:] = 0.0
         indice_zh = np.logical_and(zh>=0, zh<=MHT)
@@ -442,7 +447,8 @@ class K16MOD(OMACMODSuper):
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         pft = inputs['pft']         # platform pft
         zh = inputs['zh']           # platform surface elevation (msl)
-        MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        #MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
+        MHT = inputs['MHHW']        # mean high high water level (msl)
         
         indice_zh = np.logical_and(zh>=0, zh<=MHT)
         # marshes

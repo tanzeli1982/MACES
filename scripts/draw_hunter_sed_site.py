@@ -30,9 +30,6 @@ try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:])
     zh = np.array(nc.variables['zh'][0,:])
-    #Bag = 1e3 * np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)
-    #min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
-    #    8.64e7*np.mean(np.array(nc.variables['Esed'][day0:day1,:]),axis=0)   # g/m2/day
 finally:
     nc.close()
     
@@ -62,6 +59,16 @@ for model in models:
     sed4_sim[model] = sed4
 nt_model = np.size(sed1_sim['M12'])
 tt_model = np.arange(nt_model)
+
+Bag_sim = {}
+for model in models:
+    filename = rdir + 'maces_ecogeom_2004-09-25_2004-10-06_11099.' + model + '.nc'
+    try:
+        nc = Dataset(filename,'r')
+        Bag = 1e3 * np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)
+    finally:
+        nc.close()
+    Bag_sim[model] = Bag
 
 # read benchmark estimates
 filename = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
@@ -98,9 +105,9 @@ for key in sed1_sim:
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 ax.set_xlim(0, nt_model)
-#ax.set_ylim(0, 100)
+ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-#ax.yaxis.set_ticks(np.linspace(0,100,6))
+ax.yaxis.set_ticks(np.linspace(0,40,5))
 ax.set_xticklabels(['9/28','9/29','9/30','10/1'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 #ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
@@ -126,9 +133,9 @@ for key in sed2_sim:
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 ax.set_xlim(0, nt_model)
-#ax.set_ylim(0, 100)
+ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-#ax.yaxis.set_ticks(np.linspace(0,100,6))
+ax.yaxis.set_ticks(np.linspace(0,40,5))
 ax.set_xticklabels(['9/28','9/29','9/30','10/1'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 #ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
@@ -154,9 +161,9 @@ for key in sed3_sim:
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 ax.set_xlim(0, nt_model)
-#ax.set_ylim(0, 50)
+ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-#ax.yaxis.set_ticks(np.linspace(0,50,6))
+ax.yaxis.set_ticks(np.linspace(0,40,5))
 ax.set_xticklabels(['9/28','9/29','9/30','10/1'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black')
@@ -183,11 +190,11 @@ for key in sed4_sim:
     handles.append(h)
 legend = ax.legend(handles, list(sed4_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
-                   framealpha=0.0)
+                   framealpha=0.0, ncol=2)
 ax.set_xlim(0, nt_model)
-#ax.set_ylim(0, 10)
+ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-#ax.yaxis.set_ticks(np.linspace(0,10,6))
+ax.yaxis.set_ticks(np.linspace(0,40,5))
 ax.set_xticklabels(['9/28','9/29','9/30','10/1'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black')
