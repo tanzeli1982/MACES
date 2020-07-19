@@ -502,7 +502,7 @@ contains
       real(kind=8), dimension(n,m) :: uhydro, sources
       integer :: n, m
       ! local variables
-      real(kind=8) :: scaler
+      real(kind=8) :: scaler, scalerL, scalerR
       integer :: ii
 
       do ii = 1, n, 1
@@ -527,26 +527,30 @@ contains
       do ii = 1, n, 1
          scaler = max(0.0,uhydro(ii,3))/(m_uhydro(ii,3)+TOL_REL)
          if (ii==1) then
+            scalerR = max(0.0,uhydro(ii+1,3))/(m_uhydro(ii+1,3)+TOL_REL)
             sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
                0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G*m_Cz(ii+1)) - &
                G*(0.75*uhydro(ii,1)+0.25*uhydro(ii+1,1))*tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.75*Cs_source(ii)+0.25*Cs_source(ii+1)) - &
-               (0.75*Cs_sink(ii)+0.25*Cs_sink(ii+1))*scaler
+               (0.75*Cs_sink(ii)*scaler+0.25*Cs_sink(ii+1)*scalerR)
          else if (ii==n) then
+            scalerL = max(0.0,uhydro(ii-1,3))/(m_uhydro(ii-1,3)+TOL_REL)
             sources(ii,2) = -(0.75*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
                0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G*m_Cz(ii-1)) - &
                G*(0.75*uhydro(ii,1)+0.25*uhydro(ii-1,1))*tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.25*Cs_source(ii-1)+0.75*Cs_source(ii)) - &
-               (0.25*Cs_sink(ii-1)+0.75*Cs_sink(ii))*scaler
+               (0.25*Cs_sink(ii-1)*scalerL+0.75*Cs_sink(ii)*scaler)
          else
+            scalerR = max(0.0,uhydro(ii+1,3))/(m_uhydro(ii+1,3)+TOL_REL)
+            scalerL = max(0.0,uhydro(ii-1,3))/(m_uhydro(ii-1,3)+TOL_REL)
             sources(ii,2) = -(0.5*tmp_U(ii)*abs(tmp_U(ii))*G*m_Cz(ii)+ &
                0.25*tmp_U(ii-1)*abs(tmp_U(ii-1))*G*m_Cz(ii-1)+ &
                0.25*tmp_U(ii+1)*abs(tmp_U(ii+1))*G*m_Cz(ii+1)) - &
                G*(0.5*uhydro(ii,1)+0.25*uhydro(ii-1,1)+0.25*uhydro(ii+1,1))* &
                tmp_B(ii)/m_dX(ii)
             sources(ii,3) = (0.25*Cs_source(ii-1)+0.5*Cs_source(ii)+ &
-               0.25*Cs_source(ii+1)) - (0.25*Cs_sink(ii-1)+ &
-               0.5*Cs_sink(ii)+0.25*Cs_sink(ii+1))*scaler
+               0.25*Cs_source(ii+1)) - (0.25*Cs_sink(ii-1)*scalerL+ &
+               0.5*Cs_sink(ii)*scaler+0.25*Cs_sink(ii+1)*scalerR)
          end if
       end do
    end subroutine
