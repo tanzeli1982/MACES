@@ -199,6 +199,7 @@ hbar = ax.bar(xpos, minac_mean_obs, yerr=minac_std_obs, align='center',
               width=0.8, color='#d8dcd6', ecolor='black', capstyle='butt', 
               capsize=2, alpha=1.0)
 handles = []
+print(minac_mean_sim)
 for key in minac_mean_sim:
     indx = len(handles)
     h, = ax.plot(xpos, minac_mean_sim[key], color=colors[indx], marker='.',
