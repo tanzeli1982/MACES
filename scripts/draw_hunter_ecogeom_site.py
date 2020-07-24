@@ -15,7 +15,7 @@ from matplotlib.ticker import AutoMinorLocator
 from netCDF4 import Dataset
 
 # read sediment density and porosity of different mineral accretion models
-models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
 xmlfile = '/Users/tanz151/Python_maces/src/optpar_minac.xml'
 tree = ET.parse(xmlfile)
@@ -101,9 +101,9 @@ legend = ax.legend(handles, list(min_accr_sim.keys()), numpoints=1, loc=1,
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
 ax.set_xlim(0, 150)
-ax.set_ylim(0, 10)
+ax.set_ylim(0, 50)
 ax.xaxis.set_ticks(np.linspace(0,150,6))
-ax.yaxis.set_ticks(np.linspace(0,10,6))
+ax.yaxis.set_ticks(np.linspace(0,50,6))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 #ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
 #              fontname='Times New Roman', color='black')

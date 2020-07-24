@@ -149,10 +149,10 @@ def get_refshore_coordinate(x, zh):
     Arguments:
         x : longitudinal coordinate (m)
         zh : platform surface elevation (msl)
-    Returns : the coordinate of shore at msl (km)
+    Returns : the coordinate of shore at msl (m)
     """
     indx = np.argmin(np.abs(zh))
-    return 1e-3 * x[indx]
+    return x[indx]
 
 def get_platform_slope(x, zh):
     """Get the platform slope.

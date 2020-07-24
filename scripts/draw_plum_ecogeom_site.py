@@ -84,16 +84,16 @@ for model in min_models:
     filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.' + model + 'DA07.nc'
     try:
         nc = Dataset(filename,'r')
-        Esed = np.array(nc.variables['Esed'][:])
-        Dsed = np.array(nc.variables['Dsed'][:])
+        Esed = 8.64e7 * np.sum(np.array(nc.variables['Esed'][:]),axis=0)
+        Dsed = 8.64e7 * np.sum(np.array(nc.variables['Dsed'][:]),axis=0)
     finally:
         nc.close()
-    minac_sim_LAC = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_LACx]) - \
-        np.sum(8.64e4*Esed[:,index_LACx])) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
-    minac_sim_LPC = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_LPCx]) - \
-        np.sum(8.64e4*Esed[:,index_LPCx])) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
-    minac_sim_MRS = 0.5e3 * (np.sum(8.64e4*Dsed[:,index_MRSx]) - \
-        np.sum(8.64e4*Esed[:,index_MRSx])) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
+    minac_sim_LAC = 0.5 * (Dsed[index_LACx] - Esed[index_LACx]) / \
+        rhoSed[model] / (1.0-porSed[model]) # mm/yr
+    minac_sim_LPC = 0.5 * (Dsed[index_LPCx] - Esed[index_LPCx]) / \
+        rhoSed[model] / (1.0-porSed[model]) # mm/yr
+    minac_sim_MRS = 0.5 * (Dsed[index_MRSx] - Esed[index_MRSx]) / \
+        rhoSed[model] / (1.0-porSed[model]) # mm/yr
     minac_mean_sim[model] = np.array([minac_sim_MRS, minac_sim_LAC, minac_sim_LPC])
 
 # read Law's Point marsh biomass and mineral accretion
@@ -199,6 +199,7 @@ hbar = ax.bar(xpos, minac_mean_obs, yerr=minac_std_obs, align='center',
               width=0.8, color='#d8dcd6', ecolor='black', capstyle='butt', 
               capsize=2, alpha=1.0)
 handles = []
+print(minac_mean_sim)
 for key in minac_mean_sim:
     indx = len(handles)
     h, = ax.plot(xpos, minac_mean_sim[key], color=colors[indx], marker='.',
