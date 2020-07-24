@@ -186,8 +186,8 @@ def run_tai_maces(input_data, models, spinup):
                       'Css': taihydro.sim_css, 'tau': taihydro.sim_tau, 
                       'U': taihydro.sim_u, 'h': taihydro.sim_h, 
                       'Bag': Bag, 'Esed': Esed, 'Dsed': Dsed, 'Lbed': Lbed, 
-                      'S': slope, 'dtau': dtau, 'TR': trng, 'dt': curstep, 
-                      'refCss': refCss}
+                      'S': slope, 'dtau': dtau, 'TR': trng, 'MHHW': mhws, 
+                      'dt': curstep, 'refCss': refCss}
         Esed = mac_mod.mineral_suspension(mac_inputs)
         Dsed = mac_mod.mineral_deposition(mac_inputs)
         Lbed = mac_mod.bed_loading(mac_inputs)
