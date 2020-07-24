@@ -246,7 +246,7 @@ class M12MOD(MACMODSuper):
         
         ws = self.settling_velocity(tau)
         Dsed[:] = 0.0
-        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), Css>Css0)
+        indice = np.logical_and(np.logical_and(pft>1,pft<=9), Css>Css0)
         Dsed[indice] = np.maximum( Css[indice]*(ws[indice]+ks[pft[indice]]* \
             Bag[indice]), 0.0 )
         return Dsed
@@ -331,7 +331,7 @@ class F07MOD(MACMODSuper):
         Dsed = inputs['Dsed']   # sediment deposition (kg/m2/s)
         
         Dsed[:] = 0.0
-        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), 
+        indice = np.logical_and(np.logical_and(pft>1,pft<=9), 
                                 np.logical_and(Css>Css0,tau<tauD_cr))
         Dsed[indice] = KD*Css[indice]**(7/3)*(1-tau[indice]/tauD_cr)
         return Dsed
@@ -394,11 +394,11 @@ class VDK05MOD(MACMODSuper):
         Css = inputs['Css']             # sediment conc (kg/m3)
         zh = inputs['zh']               # platform surface elevation (msl)
         pft = inputs['pft']             # platform pft
-        Ks = 0.5*inputs['TR']           # mean high water level (msl)
+        Ks = inputs['MHHW']             # mean high high water level (msl)
         
         Dsed[:] = 0.0
         indice = np.logical_and(np.logical_and(zh>=0, zh<=Ks), 
-                                np.logical_and(Css>utils.TOL,pft>0))
+                                np.logical_and(Css>utils.TOL,pft>1))
         Dsed[indice] = Rous * Dmax/3.1536e7 * (1.0 - zh[indice]/Ks)
         return Dsed
     
@@ -475,7 +475,7 @@ class DA07MOD(MACMODSuper):
         nv = utils.visc
         # direct deposition
         ws = self.settling_velocity(tau)
-        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), 
+        indice = np.logical_and(np.logical_and(pft>1,pft<=9), 
                                 np.logical_and(Css>Css0,tau<tauD_cr))
         Dsed[indice] = 2.0*ws[indice]*Css[indice]*(1.0-tau[indice]/tauD_cr)
         # plant trapping
