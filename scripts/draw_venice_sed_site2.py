@@ -18,7 +18,7 @@ z_2BF = -2.1
 day0 = (date(2002,12,10) - date(2002,12,1)).days
 day1 = (date(2002,12,12) - date(2002,12,1)).days
 
-models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 min_accr_sim = {}
 sed_sim = {}
 

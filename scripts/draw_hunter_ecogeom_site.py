@@ -100,9 +100,9 @@ for key in min_accr_sim:
 legend = ax.legend(handles, list(min_accr_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
-ax.set_xlim(0, 150)
+ax.set_xlim(0, 100)
 ax.set_ylim(0, 50)
-ax.xaxis.set_ticks(np.linspace(0,150,6))
+ax.xaxis.set_ticks(np.linspace(0,100,6))
 ax.yaxis.set_ticks(np.linspace(0,50,6))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 #ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
@@ -129,9 +129,9 @@ for key in om_accr_sim:
 legend = ax.legend(handles, list(om_accr_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
-ax.set_xlim(0, 150)
+ax.set_xlim(0, 100)
 ax.set_ylim(0, 600)
-ax.xaxis.set_ticks(np.linspace(0,150,6))
+ax.xaxis.set_ticks(np.linspace(0,100,6))
 ax.yaxis.set_ticks(np.linspace(0,600,7))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 

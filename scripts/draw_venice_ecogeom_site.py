@@ -37,7 +37,7 @@ day0 = (date(2002,7,1) - date(2002,1,1)).days
 day1 = (date(2002,8,1) - date(2002,1,1)).days
 # read simulation outputs
 rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/Outputs/'
-filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_466.M12M12.nc'
+filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_466.T03M12.nc'
 try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:])
@@ -76,7 +76,7 @@ for model in min_models:
     print('MINAC MODEL: ', model, ', ', minac_sim)
 
 for model in om_models:
-    filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_466.M12' + model + '.nc'
+    filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_466.T03' + model + '.nc'
     try:
         nc = Dataset(filename,'r')
         Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
@@ -115,7 +115,7 @@ ax.set_xlim(0, 1.5)
 ax.set_ylim(500, 2500)
 ax.xaxis.set_ticks(np.linspace(0,1.5,6))
 ax.yaxis.set_ticks(np.linspace(500,2500,6))
-ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax.xaxis.set_minor_locator(AutoMinorLocator(3))
 #ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
 #              fontname='Times New Roman', color='black')
 ylabel = 'Aboveground biomass ($\mathregular{g}$ $\mathregular{m^{-2}}$)'
@@ -138,10 +138,10 @@ for key in om_accr_sim:
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 ax.set_xlim(0, 1.5)
-ax.set_ylim(0, 300)
+ax.set_ylim(50, 250)
 ax.xaxis.set_ticks(np.linspace(0,1.5,6))
-ax.yaxis.set_ticks(np.linspace(0,300,7))
-ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax.yaxis.set_ticks(np.linspace(50,250,6))
+ax.xaxis.set_minor_locator(AutoMinorLocator(3))
 ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
               fontname='Times New Roman', color='black')
 ylabel = 'OM accretion ($\mathregular{gC}$ $\mathregular{m^{-2}}$ $\mathregular{yr^{-1}}$)'

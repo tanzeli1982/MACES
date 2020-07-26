@@ -16,7 +16,7 @@ from netCDF4 import Dataset
 from datetime import date
 
 # read sediment density and porosity of different mineral accretion models
-min_models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
 rhoSed = {}
 porSed = {}
@@ -47,7 +47,7 @@ Bag_mean_sim = {}
 
 # read simulation
 rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/PlumIsland/Outputs/'
-filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.M12M12.nc'
+filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.F06DA07.nc'
 try:
     nc = Dataset(filename, 'r')
     x = np.array(nc.variables['x'][:])
@@ -76,9 +76,12 @@ index_LAC = np.argmin(np.abs(zh - z_LAC))
 index_LPC = np.argmin(np.abs(zh - z_LPC))
 index_MRS = np.argmin(np.abs(zh - z_MRS))
 
-index_LACx = np.argmin(np.abs(x - x_LAC))
-index_LPCx = np.argmin(np.abs(x - x_LPC))
-index_MRSx = np.argmin(np.abs(x - x_MRS))
+index0 = np.argmin(np.abs(zh))
+x_adj = x - x[index0]
+
+index_LACx = np.argmin(np.abs(x_adj - x_LAC))
+index_LPCx = np.argmin(np.abs(x_adj - x_LPC))
+index_MRSx = np.argmin(np.abs(x_adj - x_MRS))
 
 for model in min_models:
     filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.' + model + 'DA07.nc'
