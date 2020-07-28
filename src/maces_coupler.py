@@ -48,19 +48,18 @@ def run_tai_maces(input_data, models, spinup):
     zh = input_data['state']['zh']
     Bag = input_data['state']['Bag']
     Bbg = input_data['state']['Bbg']
-    OM = input_data['state']['OM']
     trng = input_data['forcings']['trng']
     mhws = input_data['forcings']['mhws']
     U10 = input_data['forcings']['U10']
     Twav = input_data['forcings']['Twav']
-    Tair = input_data['forcings']['Tair']
+    Tair_avg = input_data['forcings']['Tmean']
+    Tair_summer = input_data['forcings']['Tsummer']
     h0 = input_data['forcings']['h0']
     Cs0 = input_data['forcings']['Cs0']
     refCss = input_data['forcings']['refCss']
     sal = input_data['forcings']['sal']
     rslr = input_data['forcings']['rslr']
     nx = len(x)
-    npool = np.shape(OM)[1]
     xref = utils.get_refshore_coordinate(x, zh)
     
     # hydrodynamic and eco-geomorphology model objects
@@ -101,14 +100,12 @@ def run_tai_maces(input_data, models, spinup):
         ecogeom_out['DepOM'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
         ecogeom_out['Bag'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
         ecogeom_out['Bbg'] = np.zeros((nt_ecogeom,nx), dtype=np.float32)
-        ecogeom_out['OM'] = 1e20 * np.ones((nt_ecogeom,nx,npool), dtype=np.float32)
         
     # temporal variables
     Esed = np.zeros(nx, dtype=np.float64, order='F')
     Dsed = np.zeros(nx, dtype=np.float64, order='F')
     Lbed = np.zeros(nx, dtype=np.float64, order='F')
     DepOM = np.zeros(nx, dtype=np.float64, order='F')
-    DecayOM = np.zeros((nx,npool), dtype=np.float64, order='F')
     sources = np.zeros(nx, dtype=np.float64, order='F')
     sinks = np.zeros(nx, dtype=np.float64, order='F')
     tau_old = np.zeros(nx, dtype=np.float64, order='F')
@@ -147,14 +144,15 @@ def run_tai_maces(input_data, models, spinup):
         # get instant boundary conditions
         indx = utils.get_forcing_index(t, 'minute', namelist['U10_TSTEP'])
         U10_inst = U10[indx]
-        indx = utils.get_forcing_index(t, 'hour', namelist['Tair_TSTEP'])
-        Tair_inst = Tair[indx]
         indx = utils.get_forcing_index(t, 'minute', namelist['h_TSTEP'])
         h0_inst = h0[indx] - zh[0]
         indx = utils.get_forcing_index(t, 'minute', namelist['Wave_TSTEP'])
         Twav_inst = Twav[indx]
         indx = utils.get_forcing_index(t, 'minute', namelist['SSC_TSTEP'])
         Cs0_inst = Cs0[indx]
+        indx = int( year - date0.year )
+        Tmean_inst = Tair_avg[indx]
+        Tsummer_inst = Tair_summer[indx]
         indx = int( (year-date0.year)/namelist['SLR_TSTEP'] )
         rslr_inst = rslr[indx]
         
@@ -193,19 +191,13 @@ def run_tai_maces(input_data, models, spinup):
         Lbed = mac_mod.bed_loading(mac_inputs)
         
         # simulate organic matter accretion
-        omac_inputs = {'x': x, 'zh': zh, 'S': slope, 'pft': pft, 'OM': OM, 
-                       'Bag': Bag, 'Bbg': Bbg, 'DepOM': DepOM, 
-                       'DecayOM': DecayOM, 'TR': trng, 'MHHW': mhws, 
-                       'month': month, 'doy': doy, 'Tair': Tair_inst}
+        omac_inputs = {'x': x, 'zh': zh, 'S': slope, 'pft': pft, 'Bag': Bag, 
+                       'Bbg': Bbg, 'DepOM': DepOM, 'TR': trng, 'MHHW': mhws, 
+                       'month': month, 'doy': doy, 'Tmean': Tmean_inst, 
+                       'Tsummer': Tsummer_inst}
         Bag = omac_mod.aboveground_biomass(omac_inputs)
         Bbg = omac_mod.belowground_biomass(omac_inputs)
         DepOM = omac_mod.organic_deposition(omac_inputs)
-        DecayOM = omac_mod.soilcarbon_decay(omac_inputs)
-        # update soil OM pool
-        DepOM_pools = np.zeros((nx,npool), dtype=np.float64, order='F')
-        DepOM_pools[:,0] = 0.158 * DepOM
-        DepOM_pools[:,1] = 0.842 * DepOM
-        OM += (DepOM_pools - DecayOM) * curstep
         
         # simulate wave-driven lateral erosion
         wavero_inputs = {'x': x}
@@ -260,7 +252,6 @@ def run_tai_maces(input_data, models, spinup):
             if indx>ecogeom_indx:
                 ecogeom_indx = indx
                 ecogeom_out['zh'][indx] = zh
-                ecogeom_out['OM'][indx] = OM
                 ecogeom_out['pft'][indx] = pft
             
         # check small time step
@@ -284,5 +275,5 @@ def run_tai_maces(input_data, models, spinup):
             ecogeom_out['DepOM'][:,jj] = ecogeom_out['DepOM'][:,jj]/ecogeom_tot
             ecogeom_out['Bag'][:,jj] = ecogeom_out['Bag'][:,jj]/ecogeom_tot
             ecogeom_out['Bbg'][:,jj] = ecogeom_out['Bbg'][:,jj]/ecogeom_tot
-    tai_state = {'pft': pft, 'zh': zh, 'Bag': Bag, 'Bbg': Bbg, 'OM': OM}
+    tai_state = {'pft': pft, 'zh': zh, 'Bag': Bag, 'Bbg': Bbg}
     return tai_state, uhydro_out, ecogeom_out

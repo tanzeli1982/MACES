@@ -419,13 +419,37 @@
          <type>real</type>
          <desc>OM decay increase due to temperature</desc>
       </entry>
-      <entry id="kl0" units="yr-1" value="1.0">
+      <entry id="Kr" units="none">
          <type>real</type>
-         <desc>column-integrated decay rate of labile OM pool</desc>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">0.02</value>
+            <value pft="3">0.2</value>
+            <value pft="4">0.2</value>
+            <value pft="5">0.2</value>
+            <value pft="6">0.2</value>
+            <value pft="7">0.2</value>
+            <value pft="8">0.2</value>
+            <value pft="9">0.2</value>
+         </values>
+         <desc>the refractory fraction of root and rhizome biomass</desc>
       </entry>
-      <entry id="kr0" units="yr-1" value="0.0015">
+      <entry id="Tr" units="yr">
          <type>real</type>
-         <desc>column-integrated decay rate of refractory OM pool</desc>
+         <values>
+            <value pft="0">0.0</value>
+            <value pft="1">0.0</value>
+            <value pft="2">1.5</value>
+            <value pft="3">1.5</value>
+            <value pft="4">1.5</value>
+            <value pft="5">1.5</value>
+            <value pft="6">1.5</value>
+            <value pft="7">1.5</value>
+            <value pft="8">1.5</value>
+            <value pft="9">1.5</value>
+         </values>
+         <desc>the root and rhizome turnover time</desc>
       </entry>
    </group>
    <group id="K16MOD">

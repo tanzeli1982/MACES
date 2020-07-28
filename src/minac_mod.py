@@ -377,7 +377,7 @@ class VDK05MOD(MACMODSuper):
             Esed[indice] = Rous * Emax/3.1536e7 * (aNv/(aNv+Bag[indice])) * \
                 (tau[indice]/tau_max)
             # wave driven erosion
-            indice = np.logical_and(np.logical_and(pft>=1, pft<=9), h>0)
+            indice = np.logical_and(np.logical_and(pft>=1, pft<=9), h>utils.TOL)
             Esed[indice] = Esed[indice] + ds/3.1536e7 * (bNv/(bNv+Bag[indice])) * \
                 S[indice]
         return Esed

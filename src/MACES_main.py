@@ -121,7 +121,6 @@ if __name__=='__main__':
     site_TSM = site_TSM[site_1:site_n]
     site_sal = site_sal[site_1:site_n]
     npft = TAIMODSuper.npft
-    npool = TAIMODSuper.npool
     
     diva_segments = []
     pft_segments = []
@@ -155,8 +154,10 @@ if __name__=='__main__':
     if master_process:
         SLR = utils.read_force_data(namelist['FILE_SLR'], 'SLR', \
             run_date0, run_date1, namelist['SLR_TSTEP'], 'year', sid_range)
-        Tair = utils.read_force_data(namelist['FILE_Tair'], 'Tair', \
-            run_date0, run_date1, namelist['Tair_TSTEP'], 'hour', sid_range)
+        Tair_avg = utils.read_force_data(namelist['FILE_Tair'], 'Tmean', \
+            run_date0, run_date1, 1, 'year', sid_range)
+        Tair_summer = utils.read_force_data(namelist['FILE_Tair'], 'Tsummer', \
+            run_date0, run_date1, 1, 'year', sid_range)
         U10 = utils.read_force_data(namelist['FILE_U10'], 'U10', \
             run_date0, run_date1, namelist['U10_TSTEP'], 'minute', sid_range)
         h0 = utils.read_force_data(namelist['FILE_h'], 'h', \
@@ -174,13 +175,15 @@ if __name__=='__main__':
                 SSC[:,ii] = site_TSM[ii]
     else:
         SLR = None
-        Tair = None
+        Tair_avg = None
+        Tair_summer = None
         U10 = None
         h0 = None
         Twav = None
         SSC = None
     SLR = comm.bcast(SLR, root=0)
-    Tair = comm.bcast(Tair, root=0)
+    Tair_avg = comm.bcast(Tair_avg, root=0)
+    Tair_summer = comm.bcast(Tair_summer, root=0)
     U10 = comm.bcast(U10, root=0)
     h0 = comm.bcast(h0, root=0)
     Twav = comm.bcast(Twav, root=0)
@@ -263,13 +266,13 @@ if __name__=='__main__':
             # first run the spin-up
             site_Bag = np.zeros(nx, dtype=np.float64, order='F')
             site_Bbg = np.zeros(nx, dtype=np.float64, order='F')
-            site_OM = np.zeros((nx,npool), dtype=np.float64, order='F')
             tai_state = {'pft': site_pft, 'zh': site_zh, 'Bag': site_Bag, 
-                         'Bbg': site_Bbg, 'OM': site_OM}
+                         'Bbg': site_Bbg}
             
             rslr = SLR[:,iid] - site_uplift[iid]
             sal = site_sal[iid]
-            forcings = {'U10': U10[:,iid], 'Tair': Tair[:,iid], 'h0': h0[:,iid],
+            forcings = {'U10': U10[:,iid], 'Tmean': Tair_avg[:,iid], 
+                        'Tsummer': Tair_summer[:,iid], 'h0': h0[:,iid],
                         'Twav': Twav[:,iid], 'Cs0': SSC[:,iid], 'sal': sal, 
                         'rslr': rslr, 'trng': site_trng[iid], 'mhws': site_mhws[iid], 
                         'mhwn': site_mhwn[iid], 'refCss': site_TSM[iid]}

@@ -27,7 +27,6 @@ import maces_utilities as utils
 from abc import ABCMeta, abstractmethod
 
 npft = 10
-npool = 2
 
 ###############################################################################
 class MACMODSuper(object):
@@ -161,16 +160,6 @@ class OMACMODSuper(object):
         
         Bbg[:] = phi[pft] * Bag
         return Bbg
-    
-    def soilcarbon_decay(self, inputs):
-        """"Calculate soil OC mineralization rate.
-        Arguments:
-            inputs : driving data for SOC decay rate calculation
-        Returns: SOC decay rate (kg m-2 s-1) of two pools
-        """
-        DecayOM = inputs['DecayOM']
-        DecayOM[:] = 0.0
-        return DecayOM
 
 ###############################################################################    
 class WAVEROMODSuper(object):

@@ -549,9 +549,7 @@ def write_ecogeom_outputs(filename, tstep, ecogeom_out):
         ecogeom_out  : ecogeomorphology model outputs
     Returns : 
     """
-    #nt = np.shape(ecogeom_out['OM'])[0]
-    nx = np.shape(ecogeom_out['OM'])[1]
-    npool = np.shape(ecogeom_out['OM'])[2]
+    nx = np.size(ecogeom_out['x'])
     # create output file if needed
     try:
         nc = Dataset(filename, 'w', format='NETCDF4_CLASSIC')
@@ -559,7 +557,6 @@ def write_ecogeom_outputs(filename, tstep, ecogeom_out):
         nc.contact = r'Please contact zeli.tan@pnnl.gov for more information'
         nc.createDimension('time', None)
         nc.createDimension('x', nx)
-        nc.createDimension('pool',npool)
         # create and write variables
         x_var = nc.createVariable('x', 'f4', ('x',))
         x_var.long_name = r'platform transect coordinate'
@@ -605,10 +602,5 @@ def write_ecogeom_outputs(filename, tstep, ecogeom_out):
         Bbg_var.long_name = r'platform belowground biomass'
         Bbg_var.units = 'kg/m2'
         Bbg_var[:] = ecogeom_out['Bbg']
-        OM_var = nc.createVariable('OM', 'f4', ('time','x','pool',), 
-                                   fill_value=1e20)
-        OM_var.long_name = r'platform column-integrated soil organic matter'
-        OM_var.units = 'kg/m2'
-        OM_var[:] = ecogeom_out['OM']
     finally:
         nc.close()
