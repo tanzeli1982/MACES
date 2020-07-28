@@ -171,10 +171,6 @@
          <type>char</type>
          <desc>Path of near-surface air temperature file</desc>
       </entry>
-      <entry id="Tair_TSTEP" value="24">
-         <type>integer</type>
-         <desc>Time step in hours of the Tair data</desc>
-      </entry>
       <entry id="FILE_h" value="$DIN_ROOT/force_h.nc">
          <type>char</type>
          <desc>Path of boundary water level file</desc>
