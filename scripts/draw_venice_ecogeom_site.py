@@ -19,7 +19,8 @@ om_models = ['M12', 'DA07', 'KM12', 'K16']
 min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 rhoSed = {}
 porSed = {}
-xmlfile = '/Users/tanz151/Python_maces/src/optpar_minac.xml'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/Outputs/'
+xmlfile = rdir + 'optpar_minac.xml'
 tree = ET.parse(xmlfile)
 root = tree.getroot()
 for key in min_models:
@@ -36,7 +37,6 @@ bg_sim = {}
 day0 = (date(2002,7,1) - date(2002,1,1)).days
 day1 = (date(2002,8,1) - date(2002,1,1)).days
 # read simulation outputs
-rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/Outputs/'
 filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_466.T03M12.nc'
 try:
     nc = Dataset(filename,'r')

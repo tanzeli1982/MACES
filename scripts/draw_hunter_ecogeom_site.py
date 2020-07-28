@@ -17,7 +17,8 @@ from netCDF4 import Dataset
 # read sediment density and porosity of different mineral accretion models
 models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
-xmlfile = '/Users/tanz151/Python_maces/src/optpar_minac.xml'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs/'
+xmlfile = rdir + 'optpar_minac.xml'
 tree = ET.parse(xmlfile)
 root = tree.getroot()
 rhoSed = {}
@@ -29,8 +30,6 @@ for key in models:
             rhoSed[key] = float(entry.get('value'))
         elif entry.get('id')=='porSed':
             porSed[key] = float(entry.get('value'))
-            
-rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs/'
             
 min_accr_sim = {}
 site_dem = 0.56
@@ -58,7 +57,7 @@ for model in models:
 om_accr_sim = {}
 Bag_sim = {}
 for model in om_models:
-    filename = rdir + 'maces_ecogeom_2004-01-01_2005-01-01_11099.F06' + model + '.nc'
+    filename = rdir + 'maces_ecogeom_2004-01-01_2005-01-01_11099.T03' + model + '.nc'
     try:
         nc = Dataset(filename, 'r')
         x = np.array(nc.variables['x'][:])
@@ -71,7 +70,7 @@ for model in om_models:
     index0 = np.argmin(np.abs(zh))
     x = x - x[index0]
     index = np.argmin(np.abs(zh-site_dem))
-    print(model, ': ', om_accr[index])
+    print(model, ': ', om_accr[index], Bag[index])
     #indices = np.logical_or(pft==2, pft==5)
     #x = 1e-3 * x[indices]   # km
     om_accr_sim[model] = om_accr

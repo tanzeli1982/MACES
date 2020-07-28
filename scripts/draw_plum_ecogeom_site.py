@@ -109,13 +109,17 @@ Bag_mean_obs_LAC = np.array(df['Bag'])[96:106]      # g/m2
 Bag_std_obs_LAC = np.array(df['Bag_std'])[96:106]   # g/m2
 Year_LAC = np.array(df['Year'],dtype=np.int32)[96:106]
 Month_LAC = np.array(df['Month'],dtype=np.int32)[96:106]
+indice_obs = np.logical_and(zh>=0, zh<=1.5)
 for model in om_models:
     filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.M12' + model + '.nc'
     try:
         nc = Dataset(filename,'r')
         Bag = 1e3 * np.array(nc.variables['Bag'][:])    # gC/m2
+        om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
     finally:
         nc.close()
+    omac_sim = np.sum(om_accr[indice_obs]*dx[indice_obs]) / np.sum(dx[indice_obs])
+    print('OMAC MODEL: ', model, ', ', omac_sim)
     Bag_sim_LAC = np.NaN * np.ones_like(Bag_mean_obs_LAC)
     for ii, year in enumerate(Year_LAC):
         month = Month_LAC[ii]
@@ -211,7 +215,7 @@ for key in minac_mean_sim:
     handles.append(h)
 legend = ax.legend(handles, list(minac_mean_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
-                   framealpha=0.0)
+                   ncol=1, framealpha=0.0)
 ax.set_xlim(0, 4)
 ax.set_ylim(0, 10)
 ax.xaxis.set_ticks(np.arange(1,4,1))
