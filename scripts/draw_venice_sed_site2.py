@@ -83,7 +83,7 @@ tt_obs = np.arange(nt_obs)/4
 
 # plotting
 plt.clf()
-fig, axes = plt.subplots(2, 1, figsize=(6,8))
+fig, ax = plt.subplots(figsize=(6,4))
 
 plt.style.use('default')
 
@@ -94,7 +94,6 @@ colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # comparison of observed and simulated suspended sediment
-ax = axes[0]
 ax.plot(tt_obs, sed_obs_1BF, color='black', linestyle='-', linewidth=2, 
         marker='.', markersize=8)
 handles = []
@@ -119,36 +118,36 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
-ax.text(0.05, 0.93, 'a', transform=ax.transAxes, fontsize=20,
-        fontname='Times New Roman', fontweight='bold')
+#ax.text(0.05, 0.93, 'a', transform=ax.transAxes, fontsize=20,
+#        fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
-# comparison of simulated sedimentation
-ax = axes[1]
-handles = []
-for key in min_accr_sim:
-    indx = len(handles)
-    h, = ax.plot(1e-3*x, min_accr_sim[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=2, alpha=1)
-    handles.append(h)
-ax.set_xlim(-1, 2)
-#ax.set_ylim(0, 150)
-ax.xaxis.set_ticks(np.linspace(-1,2,7))
-#ax.yaxis.set_ticks(np.linspace(0,150,6))
-ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
-              fontname='Times New Roman', color='black')
-ylabel = 'Net sedimentation ($\mathregular{g}$ $\mathregular{m^{-2}}$ $\mathregular{day^{-1}}$)'
-ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
-labels = ax.get_xticklabels() + ax.get_yticklabels()
-[label.set_fontname('Times New Roman') for label in labels]
-[label.set_fontsize(12) for label in labels]
-[label.set_color('black') for label in labels]
-ax.text(0.05, 0.93, 'b', transform=ax.transAxes, fontsize=20,
-        fontname='Times New Roman', fontweight='bold')
-ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
-ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+## comparison of simulated sedimentation
+#ax = axes[1]
+#handles = []
+#for key in min_accr_sim:
+#    indx = len(handles)
+#    h, = ax.plot(1e-3*x, min_accr_sim[key], color=colors[indx], 
+#                 linestyle=linestyles[indx], linewidth=2, alpha=1)
+#    handles.append(h)
+#ax.set_xlim(-1, 2)
+##ax.set_ylim(0, 150)
+#ax.xaxis.set_ticks(np.linspace(-1,2,7))
+##ax.yaxis.set_ticks(np.linspace(0,150,6))
+#ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+#ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
+#              fontname='Times New Roman', color='black')
+#ylabel = 'Net sedimentation ($\mathregular{g}$ $\mathregular{m^{-2}}$ $\mathregular{day^{-1}}$)'
+#ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+#labels = ax.get_xticklabels() + ax.get_yticklabels()
+#[label.set_fontname('Times New Roman') for label in labels]
+#[label.set_fontsize(12) for label in labels]
+#[label.set_color('black') for label in labels]
+#ax.text(0.05, 0.93, 'b', transform=ax.transAxes, fontsize=20,
+#        fontname='Times New Roman', fontweight='bold')
+#ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
+#ax.tick_params(which='minor', direction='in', colors='xkcd:black')
     
 plt.tight_layout()
 fig.savefig('F5.png', dpi=300)

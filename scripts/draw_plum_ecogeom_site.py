@@ -20,7 +20,8 @@ min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
 rhoSed = {}
 porSed = {}
-xmlfile = '/Users/tanz151/Python_maces/src/optpar_minac.xml'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/PlumIsland/Outputs/'
+xmlfile = rdir + 'optpar_minac.xml'
 tree = ET.parse(xmlfile)
 root = tree.getroot()        
 for key in min_models:
@@ -46,8 +47,7 @@ Bag_sim_mean_LAC = {}
 Bag_mean_sim = {}
 
 # read simulation
-rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/PlumIsland/Outputs/'
-filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.F06DA07.nc'
+filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.T03DA07.nc'
 try:
     nc = Dataset(filename, 'r')
     x = np.array(nc.variables['x'][:])
@@ -98,6 +98,7 @@ for model in min_models:
     minac_sim_MRS = 0.5 * (Dsed[index_MRSx] - Esed[index_MRSx]) / \
         rhoSed[model] / (1.0-porSed[model]) # mm/yr
     minac_mean_sim[model] = np.array([minac_sim_MRS, minac_sim_LAC, minac_sim_LPC])
+    print(model, ': ', minac_mean_sim[model])
 
 # read Law's Point marsh biomass and mineral accretion
 filename = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
@@ -111,7 +112,7 @@ Year_LAC = np.array(df['Year'],dtype=np.int32)[96:106]
 Month_LAC = np.array(df['Month'],dtype=np.int32)[96:106]
 indice_obs = np.logical_and(zh>=0, zh<=1.5)
 for model in om_models:
-    filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.M12' + model + '.nc'
+    filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.T03' + model + '.nc'
     try:
         nc = Dataset(filename,'r')
         Bag = 1e3 * np.array(nc.variables['Bag'][:])    # gC/m2
@@ -150,7 +151,7 @@ Bag_std_obs = np.array([Bag_std_obs_MAR['A'], Bag_std_obs_MAR['B'], Bag_std_obs_
 day0 = (date(2018,7,1) - date(2017,1,1)).days
 day1 = (date(2018,8,1) - date(2017,1,1)).days
 for model in om_models:
-    filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.M12' + model + '.nc'
+    filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_4097.T03' + model + '.nc'
     try:
         nc = Dataset(filename,'r')
         Bag = 1e3 * np.array(nc.variables['Bag'][:])    # gC/m2
@@ -171,6 +172,7 @@ for model in om_models:
             x_tot = x_tot + frac*dx[index]
         Bag_sim_MAR[key] = Bag_tot / x_tot
     Bag_mean_sim[model] = np.array([Bag_sim_MAR['A'], Bag_sim_MAR['B'], Bag_sim_MAR['C']])
+    print(model, ': ', Bag_mean_sim[model])
     
 # from LTE-MP-LAC-elevationmeans_1.xls
 minac_mean_obs_LAC = 5.3    # mm/yr
@@ -206,7 +208,6 @@ hbar = ax.bar(xpos, minac_mean_obs, yerr=minac_std_obs, align='center',
               width=0.8, color='#d8dcd6', ecolor='black', capstyle='butt', 
               capsize=2, alpha=1.0)
 handles = []
-print(minac_mean_sim)
 for key in minac_mean_sim:
     indx = len(handles)
     h, = ax.plot(xpos, minac_mean_sim[key], color=colors[indx], marker='.',
@@ -217,7 +218,7 @@ legend = ax.legend(handles, list(minac_mean_sim.keys()), numpoints=1, loc=1,
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    ncol=1, framealpha=0.0)
 ax.set_xlim(0, 4)
-ax.set_ylim(0, 10)
+ax.set_ylim(0, 10.5)
 ax.xaxis.set_ticks(np.arange(1,4,1))
 ax.yaxis.set_ticks(np.linspace(0,10,6))
 ax.set_xticklabels(['MRS','LAC','LPC'])

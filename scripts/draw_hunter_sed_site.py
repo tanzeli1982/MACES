@@ -19,7 +19,7 @@ z2 = 0.05   # mangrove edge
 z3 = 0.38   # mangrove interior
 z4 = 0.65   # salt marsh edge
 
-models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 
 day0 = (date(2004,9,28) - date(2004,9,25)).days
 day1 = (date(2004,10,1) - date(2004,9,25)).days
