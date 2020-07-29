@@ -21,7 +21,7 @@ z_marsh = 1.686         # marsh elevation
 day0 = (date(2017,7,19) - date(2017,7,17)).days
 day1 = (date(2017,7,23) - date(2017,7,17)).days
 
-models = ['F06', 'T03', 'KM12', 'F07', 'VDK05', 'DA07', 'M12']
+models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 min_accr_sim = {}
 sed_sim_c = {}
 sed_sim_m = {}
@@ -88,7 +88,7 @@ tt_obs = np.arange(nt_obs)
 
 # plot water level, significant wave height, suspended sediment
 plt.clf()
-fig = plt.figure(figsize=(8,7.5))
+fig = plt.figure(figsize=(8,3.5))
 
 plt.style.use('default')
 
@@ -99,7 +99,7 @@ colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # channel
-ax = plt.subplot2grid((2,2),(0,0))
+ax = plt.subplot2grid((1,2),(0,0))
 ax.plot(tt_obs, sed_obs_c, color='black', linestyle='-', linewidth=2, marker='.', 
         markersize=8)
 handles = []
@@ -127,7 +127,7 @@ ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 # marsh
-ax = plt.subplot2grid((2,2),(0,1))
+ax = plt.subplot2grid((1,2),(0,1))
 ax.plot(tt_obs, sed_obs_m, color='black', linestyle='-', linewidth=2, marker='.', 
         markersize=8)
 handles = []
@@ -157,31 +157,31 @@ ax.text(0.05, 0.93, 'b', transform=ax.transAxes, fontsize=16,
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
-# sedimentation
-ax = plt.subplot2grid((2,2), (1,0), colspan=2)
-handles = []
-for key in min_accr_sim:
-    indx = len(handles)
-    h, = ax.plot(x, min_accr_sim[key], color=colors[indx], 
-                 linestyle=linestyles[indx], linewidth=2, alpha=1)
-    handles.append(h)
-ax.set_xlim(-0.2, 0.2)
-#ax.set_ylim(0, 150)
-ax.xaxis.set_ticks(np.linspace(-0.2,0.2,5))
-#ax.yaxis.set_ticks(np.linspace(0,150,6))
-ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
-              fontname='Times New Roman', color='black')
-ylabel = 'Net sedimentation ($\mathregular{g}$ $\mathregular{m^{-2}}$ $\mathregular{day^{-1}}$)'
-ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
-labels = ax.get_xticklabels() + ax.get_yticklabels()
-[label.set_fontname('Times New Roman') for label in labels]
-[label.set_fontsize(12) for label in labels]
-[label.set_color('black') for label in labels]
-ax.text(0.03, 0.93, 'c', transform=ax.transAxes, fontsize=20,
-        fontname='Times New Roman', fontweight='bold')
-ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
-ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+## sedimentation
+#ax = plt.subplot2grid((2,2), (1,0), colspan=2)
+#handles = []
+#for key in min_accr_sim:
+#    indx = len(handles)
+#    h, = ax.plot(x, min_accr_sim[key], color=colors[indx], 
+#                 linestyle=linestyles[indx], linewidth=2, alpha=1)
+#    handles.append(h)
+#ax.set_xlim(-0.2, 0.2)
+##ax.set_ylim(0, 150)
+#ax.xaxis.set_ticks(np.linspace(-0.2,0.2,5))
+##ax.yaxis.set_ticks(np.linspace(0,150,6))
+#ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+#ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
+#              fontname='Times New Roman', color='black')
+#ylabel = 'Net sedimentation ($\mathregular{g}$ $\mathregular{m^{-2}}$ $\mathregular{day^{-1}}$)'
+#ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+#labels = ax.get_xticklabels() + ax.get_yticklabels()
+#[label.set_fontname('Times New Roman') for label in labels]
+#[label.set_fontsize(12) for label in labels]
+#[label.set_color('black') for label in labels]
+#ax.text(0.03, 0.93, 'c', transform=ax.transAxes, fontsize=20,
+#        fontname='Times New Roman', fontweight='bold')
+#ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
+#ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 plt.tight_layout()
 fig.savefig('F9.png', dpi=300)

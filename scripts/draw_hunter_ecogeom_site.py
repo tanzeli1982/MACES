@@ -96,6 +96,8 @@ for key in min_accr_sim:
     h, = ax.plot(x, min_accr_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=3, alpha=1)
     handles.append(h)
+ax.plot(x[index], 3.66, color='black', marker='*', mec='black', mfc='black', ms=15, 
+        alpha=1.0)
 legend = ax.legend(handles, list(min_accr_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
@@ -112,7 +114,7 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
-ax.text(0.05, 0.93, 'a', transform=ax.transAxes, fontsize=20,
+ax.text(0.05, 0.93, 'a', transform=ax.transAxes, fontsize=18,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
@@ -125,13 +127,15 @@ for key in om_accr_sim:
     h, = ax.plot(x, om_accr_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=3, alpha=1)
     handles.append(h)
+ax.plot(x[index], 105, color='black', marker='*', mec='black', mfc='black', ms=15, 
+        alpha=1.0)
 legend = ax.legend(handles, list(om_accr_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
 ax.set_xlim(0, 100)
-ax.set_ylim(0, 600)
+ax.set_ylim(0, 300)
 ax.xaxis.set_ticks(np.linspace(0,100,6))
-ax.yaxis.set_ticks(np.linspace(0,600,7))
+ax.yaxis.set_ticks(np.linspace(0,300,7))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
               fontname='Times New Roman', color='black')
@@ -141,7 +145,7 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
-ax.text(0.05, 0.93, 'b', transform=ax.transAxes, fontsize=20,
+ax.text(0.05, 0.93, 'b', transform=ax.transAxes, fontsize=18,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
