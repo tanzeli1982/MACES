@@ -68,7 +68,7 @@ for model in min_models:
     filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_466.' + model + 'DA07.nc'
     try:
         nc = Dataset(filename,'r')
-        Esed = 0.5*8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)
+        Esed = 0.5*8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)  # kg/m2/yr
         Dsed = 0.5*8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)
     finally:
         nc.close()
