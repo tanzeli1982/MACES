@@ -104,6 +104,8 @@ ax.plot(tt_obs, sed_obs_c, color='black', linestyle='-', linewidth=2, marker='.'
         markersize=8)
 handles = []
 for key in sed_sim_c:
+    #if key in ['F06', 'T03', 'KM12']:
+    #    sed_sim_c[key][:] = 2.68165
     indx = len(handles)
     h, = ax.plot(tt_model, sed_sim_c[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)

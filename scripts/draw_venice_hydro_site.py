@@ -168,6 +168,16 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+rmse_h_1BF = 0.0
+count = 0
+for ii, tt in enumerate(tt1_obs2):
+    if tt in tt1_model and np.isfinite(h_obs_1BF[ii]):
+        indx = np.where(tt1_model==tt)
+        rmse_h_1BF = rmse_h_1BF + (h1_1BF[indx] - h_obs_1BF[ii])**2
+        count = count + 1
+rmse_h_1BF = np.sqrt( rmse_h_1BF / count )
+nrmse_h_1BF = rmse_h_1BF / np.nanmean(h_obs_1BF)
+
 ax = axes[1][0]
 ax.plot(tt1_model, Hwav1_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
 ax.plot(tt1_obs, Hwav_obs_1BF, color='C3', linestyle='-', marker='.', markersize=5)
@@ -186,6 +196,17 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+rmse_Hwav_1BF = 0.0
+count = 0
+for ii, tt in enumerate(tt1_obs2):
+    if tt in tt1_model and np.isfinite(Hwav_obs_1BF[ii]):
+        indx = np.where(tt1_model==tt)
+        rmse_Hwav_1BF = rmse_Hwav_1BF + (Hwav1_1BF[indx] - Hwav_obs_1BF[ii])**2
+        count = count + 1
+rmse_Hwav_1BF = np.sqrt( rmse_Hwav_1BF / count )
+nrmse_Hwav_1BF = rmse_Hwav_1BF / np.nanmean(Hwav1_1BF)
+print('Max Hwav: ', np.max(Hwav1_1BF), np.max(Hwav1_2BF))
+
 ax = axes[2][0]
 ax.plot(tt1_model, tau1_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
 ax.set_xlim(0, nt1_model-1)
@@ -202,6 +223,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_color('black') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+print('Max tau: ', np.max(tau1_1BF), np.max(tau1_2BF))
 
 ax = axes[3][0]
 ax.plot(tt2_model, h2_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -237,6 +260,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+print('Max Hwav: ', np.max(Hwav2_1BF), np.max(Hwav2_2BF))
+
 ax = axes[5][0]
 ax.plot(tt2_model, tau2_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
 ax.plot(tt2_obs, tau_3d_1BF, color='C3', linestyle='-', marker='.', markersize=5)
@@ -256,6 +281,18 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+rmse_tau_1BF = 0.0
+count = 0
+for ii, tt in enumerate(tt2_obs):
+    if tt in tt2_model and np.isfinite(tau_3d_1BF[ii]):
+        indx = np.where(tt2_model==tt)
+        rmse_tau_1BF = rmse_tau_1BF + (tau2_1BF[indx] - tau_3d_1BF[ii])**2
+        count = count + 1
+rmse_tau_1BF = np.sqrt( rmse_tau_1BF / count )
+nrmse_tau_1BF = rmse_tau_1BF / np.nanmean(tau_3d_1BF)
+print('Max Hwav: ', np.max(Hwav1_1BF), np.max(Hwav1_2BF))
+print('Max tau: ', np.max(tau2_1BF), np.max(tau2_2BF))
+
 # 2BF
 ax = axes[0][1]
 ax.plot(tt1_model, h1_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -274,6 +311,19 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+rmse_h_2BF = 0.0
+count = 0
+for ii, tt in enumerate(tt1_obs):
+    if tt in tt1_model and np.isfinite(h_obs_2BF[ii]):
+        indx = np.where(tt1_model==tt)
+        rmse_h_2BF = rmse_h_2BF + (h1_2BF[indx] - h_obs_2BF[ii])**2
+        count = count + 1
+rmse_h_2BF = np.sqrt( rmse_h_2BF / count )
+nrmse_h_2BF = rmse_h_2BF / np.nanmean(h_obs_2BF)
+
+print('RMSE_h_1BF', rmse_h_1BF, nrmse_h_1BF)
+print('RMSE_h_2BF', rmse_h_2BF, nrmse_h_2BF)
+
 ax = axes[1][1]
 ax.plot(tt1_model, Hwav1_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
 ax.plot(tt1_obs, Hwav_obs_2BF, color='C3', linestyle='-', marker='.', markersize=5)
@@ -289,6 +339,19 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_color('black') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+rmse_Hwav_2BF = 0.0
+count = 0
+for ii, tt in enumerate(tt1_obs):
+    if tt in tt1_model and np.isfinite(Hwav_obs_2BF[ii]):
+        indx = np.where(tt1_model==tt)
+        rmse_Hwav_2BF = rmse_Hwav_2BF + (Hwav1_2BF[indx] - Hwav_obs_2BF[ii])**2
+        count = count + 1
+rmse_Hwav_2BF = np.sqrt( rmse_Hwav_2BF / count )
+nrmse_Hwav_2BF = rmse_Hwav_2BF / np.nanmean(Hwav1_2BF)
+
+print('RMSE_Hwav_1BF', rmse_Hwav_1BF, nrmse_Hwav_1BF)
+print('RMSE_Hwav_2BF', rmse_Hwav_2BF, nrmse_Hwav_2BF)
 
 ax = axes[2][1]
 ax.plot(tt1_model, tau1_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -351,6 +414,19 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_color('black') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+rmse_tau_2BF = 0.0
+count = 0
+for ii, tt in enumerate(tt2_obs):
+    if tt in tt2_model and np.isfinite(tau_3d_2BF[ii]):
+        indx = np.where(tt2_model==tt)
+        rmse_tau_2BF = rmse_tau_2BF + (tau2_2BF[indx] - tau_3d_2BF[ii])**2
+        count = count + 1
+rmse_tau_2BF = np.sqrt( rmse_tau_2BF / count )
+nrmse_tau_2BF = rmse_tau_2BF / np.nanmean(tau_3d_2BF)
+
+print('RMSE_tau_1BF', rmse_tau_1BF, nrmse_tau_1BF)
+print('RMSE_tau_2BF', rmse_tau_2BF, nrmse_tau_2BF)
 
 plt.tight_layout()
 fig.savefig('F4.png', dpi=300)
