@@ -28,6 +28,7 @@ nt1_h = np.size(h_var1)
 tt1_h = np.arange(nt1_h)
 nt2_h = np.size(h_var2)
 tt2_h = np.arange(nt2_h)
+print(np.max(h_var1), np.max(h_var2))
     
 filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
     r'VeniceLagoon/force_U10.nc'
@@ -43,6 +44,7 @@ nt1_U10 = np.size(U10_var1)
 tt1_U10 = np.arange(nt1_U10)
 nt2_U10 = np.size(U10_var2)
 tt2_U10 = np.arange(nt2_U10)
+print(np.max(U10_var1),np.max(U10_var2))
     
 # plot
 plt.clf()

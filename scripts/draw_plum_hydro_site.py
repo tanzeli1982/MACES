@@ -126,6 +126,15 @@ ax.text(0.05, 0.90, 'a', transform=ax.transAxes, fontsize=16,
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+rmse_h1_nelson_c = 0.0
+count = 0
+for ii, tt in enumerate(tt1_obs):
+    if tt in tt1_model and np.isfinite(h1_nelson_gauge[ii]):
+        indx = np.where(tt1_model==tt)
+        rmse_h1_nelson_c = rmse_h1_nelson_c + (h1_nelson_c[indx] - h1_nelson_gauge[ii])**2
+        count = count + 1
+rmse_h1_nelson_c = np.sqrt( rmse_h1_nelson_c / count )
+
 ax = axes[0][1]
 ax.plot(tt2_model, h2_nelson_c, color='black', linestyle='-', linewidth=2, alpha=0.9)
 ax.plot(tt2_obs, h2_nelson_gauge, color='C3', linestyle='--', linewidth=2)
@@ -147,10 +156,25 @@ ax.text(0.05, 0.90, 'b', transform=ax.transAxes, fontsize=16,
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+rmse_h2_nelson_c = 0.0
+count = 0
+for ii, tt in enumerate(tt2_obs):
+    if tt in tt2_model and np.isfinite(h2_nelson_gauge[ii]):
+        indx = np.where(tt2_model==tt)
+        rmse_h2_nelson_c = rmse_h2_nelson_c + (h2_nelson_c[indx] - h2_nelson_gauge[ii])**2
+        count = count + 1
+rmse_h2_nelson_c = np.sqrt( rmse_h2_nelson_c / count )
+
+print('RMSE_h1_nelson_c', rmse_h1_nelson_c)
+print('RMSE_h2_nelson_c', rmse_h2_nelson_c)
+
 # nelson island marsh edge
 ax = axes[1][0]
+h1_nelson_cs = h1_nelson_c - 198
+h1_nelson_cs[h1_nelson_cs<0] = 0.0
 ax.plot(tt1_model, h1_nelson_m, color='black', linestyle='-', linewidth=2, alpha=0.9)
 ax.plot(tt1_obs, h1_nelson_n204, color='C3', linestyle='--', linewidth=2)
+#ax.plot(tt1_model, h1_nelson_cs, color='C0', linestyle='-', linewidth=2, alpha=0.9)
 ax.set_xlim(0, nt1_model)
 ax.set_ylim(0, 100)
 ax.xaxis.set_ticks(np.arange(0,nt1_model+1,24))
@@ -168,6 +192,15 @@ ax.text(0.05, 0.90, 'c', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+rmse_h1_nelson_m = 0.0
+count = 0
+for ii, tt in enumerate(tt1_obs):
+    if tt in tt1_model and np.isfinite(h1_nelson_n204[ii]):
+        indx = np.where(tt1_model==tt)
+        rmse_h1_nelson_m = rmse_h1_nelson_m + (h1_nelson_m[indx] - h1_nelson_n204[ii])**2
+        count = count + 1
+rmse_h1_nelson_m = np.sqrt( rmse_h1_nelson_m / count )
 
 ax = axes[1][1]
 ax.plot(tt2_model, h2_nelson_m, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -189,6 +222,18 @@ ax.text(0.05, 0.90, 'd', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+rmse_h2_nelson_m = 0.0
+count = 0
+for ii, tt in enumerate(tt2_obs):
+    if tt in tt2_model and np.isfinite(h2_nelson_n204[ii]):
+        indx = np.where(tt2_model==tt)
+        rmse_h2_nelson_m = rmse_h2_nelson_m + (h2_nelson_m[indx] - h2_nelson_n204[ii])**2
+        count = count + 1
+rmse_h2_nelson_m = np.sqrt( rmse_h2_nelson_m / count )
+
+print('RMSE_h1_nelson_m', rmse_h1_nelson_m)
+print('RMSE_h2_nelson_m', rmse_h2_nelson_m)
 
 ## shad creek channel
 #ax = axes[2][0]

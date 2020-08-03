@@ -94,6 +94,7 @@ colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # comparison of observed and simulated suspended sediment
+print(np.nanmin(sed_obs_1BF), np.nanmax(sed_obs_1BF))
 ax.plot(tt_obs, sed_obs_1BF, color='black', linestyle='-', linewidth=2, 
         marker='.', markersize=8)
 handles = []
@@ -102,6 +103,16 @@ for key in sed_sim:
     h, = ax.plot(tt_model, sed_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
+    rmse = 0.0
+    count = 0
+    for ii, tt in enumerate(tt_obs):
+        if tt in tt_model and np.isfinite(sed_obs_1BF[ii]):
+            index = np.where(tt_model==tt)
+            rmse = rmse + (sed_sim[key][index] - sed_obs_1BF[ii])**2
+            count = count + 1
+    rmse = np.sqrt( rmse / count )
+    nrmse = rmse / np.nanmean(sed_obs_1BF)
+    print(key, ': ', rmse, nrmse)
 legend = ax.legend(handles, list(sed_sim.keys()), numpoints=1, loc=1, 
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)

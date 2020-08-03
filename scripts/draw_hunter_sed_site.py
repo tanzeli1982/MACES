@@ -122,6 +122,17 @@ ax.text(0.05, 0.93, 'a', transform=ax.transAxes, fontsize=16,
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+rmse_sed1 = 0.0
+count = 0
+for ii, tt in enumerate(tt_obs):
+    if tt in tt_model and np.isfinite(sed1_obs[ii]):
+        index = np.where(tt_model==tt)
+        if sed1_sim['F07'][index]<1e-3 and sed1_obs[ii]>10:
+            continue
+        rmse_sed1 = rmse_sed1 + (sed1_sim['F07'][index] - sed1_obs[ii])**2
+        count = count + 1
+rmse_sed1 = np.sqrt( rmse_sed1 / count )
+
 # mangrove edge
 ax = axes[0][1]
 ax.plot(tt_obs, sed2_obs, color='black', linestyle='-', linewidth=2, marker='.', 
@@ -150,6 +161,17 @@ ax.text(0.05, 0.93, 'b', transform=ax.transAxes, fontsize=16,
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
+rmse_sed2 = 0.0
+count = 0
+for ii, tt in enumerate(tt_obs):
+    if tt in tt_model and np.isfinite(sed2_obs[ii]):
+        index = np.where(tt_model==tt)
+        if sed2_sim['F07'][index]<1e-3 and sed2_obs[ii]>10:
+            continue
+        rmse_sed2 = rmse_sed2 + (sed2_sim['F07'][index] - sed2_obs[ii])**2
+        count = count + 1
+rmse_sed2 = np.sqrt( rmse_sed2 / count )
+
 # mangrove interior
 ax = axes[1][0]
 ax.plot(tt_obs, sed3_obs, color='black', linestyle='-', linewidth=2, marker='.', 
@@ -177,6 +199,17 @@ ax.text(0.05, 0.93, 'c', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+rmse_sed3 = 0.0
+count = 0
+for ii, tt in enumerate(tt_obs):
+    if tt in tt_model and np.isfinite(sed3_obs[ii]):
+        index = np.where(tt_model==tt)
+        if sed3_sim['F07'][index]<1e-3 and sed3_obs[ii]>10:
+            continue
+        rmse_sed3 = rmse_sed3 + (sed3_sim['F07'][index] - sed3_obs[ii])**2
+        count = count + 1
+rmse_sed3 = np.sqrt( rmse_sed3 / count )
 
 # marsh edge
 ax = axes[1][1]
@@ -208,6 +241,18 @@ ax.text(0.05, 0.93, 'd', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+rmse_sed4 = 0.0
+count = 0
+for ii, tt in enumerate(tt_obs):
+    if tt in tt_model and np.isfinite(sed4_obs[ii]):
+        index = np.where(tt_model==tt)
+        if sed4_sim['F07'][index]<1e-3 and sed4_obs[ii]>10:
+            continue
+        rmse_sed4 = rmse_sed4 + (sed4_sim['F07'][index] - sed4_obs[ii])**2
+        count = count + 1
+rmse_sed4 = np.sqrt( rmse_sed4 / count )
+print('RMSE F07: ', rmse_sed1, rmse_sed2, rmse_sed3, rmse_sed4)
 
 plt.tight_layout()
 fig.savefig('F12.png', dpi=300)

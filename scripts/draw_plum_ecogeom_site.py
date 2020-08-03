@@ -78,6 +78,7 @@ index_MRS = np.argmin(np.abs(zh - z_MRS))
 
 index0 = np.argmin(np.abs(zh))
 x_adj = x - x[index0]
+print(np.min(x-x[index0]))
 
 index_LACx = np.argmin(np.abs(x_adj - x_LAC))
 index_LPCx = np.argmin(np.abs(x_adj - x_LPC))

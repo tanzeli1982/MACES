@@ -82,12 +82,14 @@ for model in om_models:
     try:
         nc = Dataset(filename,'r')
         Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
+        Bmax = 1e3*np.max(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
         om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
     finally:
         nc.close()
     omac_sim = om_accr[index_obs]
     print('OMAC MODEL: ', model, ', ', omac_sim)
     bg_sim[model] = Bag[indices_marsh]
+    print('Bmax: ', np.max(Bag[indices_marsh]))
     om_accr_sim[model] = om_accr[indices_marsh]
 
 # plotting
