@@ -15,7 +15,7 @@
          2: Transient.
          </desc>
       </entry>
-      <entry id="MINAC_TYPE" value="F07MOD">
+      <entry id="MINAC_TYPE" value="T03MOD">
          <type>char</type>
          <valid_values>
          F06MOD,T03MOD,KM12MOD,M12MOD,F07MOD,VDK05MOD,DA07MOD
@@ -93,11 +93,11 @@
          <type>char</type>
          <desc>Path of the hydrodynamics model parameter file</desc>
       </entry>
-      <entry id="MINAC_FILE" value="$RUNROOT/optpar_minac.xml">
+      <entry id="MINAC_FILE" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs/optpar_minac.xml">
          <type>char</type>
          <desc>Path of the mineral accretion model parameter file</desc>
       </entry>
-      <entry id="OMAC_FILE" value="$RUNROOT/optpar_omac.xml">
+      <entry id="OMAC_FILE" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs/optpar_omac.xml">
          <type>char</type>
          <desc>Path of the OM accretion model parameter file</desc>
       </entry>
@@ -121,7 +121,7 @@
          <type>integer</type>
          <desc>Last site index of the run</desc>
       </entry>
-      <entry id="CELL_RES" units="meter" value="5.0">
+      <entry id="CELL_RES" units="meter" value="2.0">
          <type>real</type>
          <desc>Reference node cell resolution</desc>
       </entry>

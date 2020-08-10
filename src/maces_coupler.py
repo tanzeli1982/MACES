@@ -131,6 +131,9 @@ def run_tai_maces(input_data, models, spinup):
                 print('spinup time step', int(hindx))
                 sys.stdout.flush()
             elif verbose:
+                #zh_indice = np.logical_and(zh>=0, zh<=2.0)
+                #x_indice = np.logical_and(x-xref>=0, x-xref<=200)
+                #print('regular time step', int(hindx), Dsed[zh_indice], Esed[zh_indice])
                 print('regular time step', int(hindx))
                 sys.stdout.flush()
             if np.mod(hindx,24)==0:
