@@ -1,4 +1,7 @@
-## Welcome to GitHub Pages
+# Multiple-Algorithm Coastal wetland Eco-geomorphology Simulator
+
+**Multiple-Algorithm Coastal wetland Eco-geomorphology Simulator (MACES)** is a model framework to assess the impact of structural uncertainty of eco-geomorphology models on the prediction of coastal wetland evolution under intensified natural and human-induced disturbances. The MACES model consists of two components: a one-dimensional (1-D) transect-based hydrodynamics module (MACES-hydro) and four eco-geomorphology modules with multiple algorithm implementations (MACES-geomor). MACES-hydro simulates water level, tide velocity, significant wave height, bottom shear stress, suspended sediment and other hydrodynamic conditions in a coastal transect along the elevation and land cover gradient with water level and wind speed at the seaward side as inputs. Based on the simulated hydrodynamics, MACES-geomor calculates sediment deposition and OM burial at each grid cell of the coastal transect and lateral erosion at the wetland edge grid cell. At the end of each year, MACES updates the transect elevation profile and land cover. A basic feature of MACES is that different combinations of algorithms within four eco-geomorphology modules can be configured to test different model structures and evaluate their performances.
+
 
 You can use the [editor on GitHub](https://github.com/tanzeli1982/MACES/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
