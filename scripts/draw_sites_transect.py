@@ -118,6 +118,6 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_color('black') for label in labels]
 
 plt.tight_layout()
-fig.savefig('S2.png', dpi=300)
-fig.savefig('S2.pdf', dpi=600)
+fig.savefig('F3.png', dpi=300)
+fig.savefig('F3.jpg', dpi=600)
 plt.show()
