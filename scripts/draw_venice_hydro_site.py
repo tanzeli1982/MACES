@@ -37,9 +37,9 @@ h1b_2BF = h_var1 - z_2BF*100
 h2b_1BF = h_var2 - z_1BF*100
 h2b_2BF = h_var2 - z_2BF*100
 nt1_h = len(h_var1)
-tt1_h = np.arange(nt1_h)
+tt1_h = np.arange(nt1_h) / 6.0
 nt2_h = len(h_var2)
-tt2_h = np.arange(nt2_h)
+tt2_h = np.arange(nt2_h) / 6.0
 
 filename = rdir + 'force_U10.nc'
 try:
@@ -50,13 +50,16 @@ finally:
     nc.close()
 
 nt1_U10 = np.size(U10_var1)
-tt1_U10 = np.arange(nt1_U10)
+tt1_U10 = np.arange(nt1_U10) / 4.0
 nt2_U10 = np.size(U10_var2)
-tt2_U10 = np.arange(nt2_U10)
+tt2_U10 = np.arange(nt2_U10) / 4.0
 
 # read simulation outputs
 day0 = 9
 day1 = 11
+
+d50 = 25e-6
+Roul = 1e3
 
 filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_466.nc'
 try:
@@ -76,17 +79,24 @@ try:
     h1_1BF = np.array(nc.variables['h'][day0*24:day1*24+1,index1])
     Hwav1_1BF = np.array(nc.variables['Hwav'][day0*24:day1*24+1,index1])
     tau1_1BF = np.array(nc.variables['tau'][day0*24:day1*24+1,index1])
+    U1_1BF = np.array(nc.variables['U'][day0*24:day1*24+1,index1])
     h1_2BF = np.array(nc.variables['h'][day0*24:day1*24+1,index2])
     Hwav1_2BF = np.array(nc.variables['Hwav'][day0*24:day1*24+1,index2])
     tau1_2BF = np.array(nc.variables['tau'][day0*24:day1*24+1,index2])
+    U1_2BF = np.array(nc.variables['U'][day0*24:day1*24+1,index2])
 finally:
     nc.close()
 h1_1BF = 100 * np.reshape(h1_1BF,(24*(day1-day0)+1))    # cm
 Hwav1_1BF = 100 * np.reshape(Hwav1_1BF,(24*(day1-day0)+1))  # cm
 tau1_1BF = np.reshape(tau1_1BF,(24*(day1-day0)+1))
+U1_1BF = np.reshape(U1_1BF,(24*(day1-day0)+1))
 h1_2BF = 100 * np.reshape(h1_2BF,(24*(day1-day0)+1))    # cm
 Hwav1_2BF = 100 * np.reshape(Hwav1_2BF,(24*(day1-day0)+1))  # cm
 tau1_2BF = np.reshape(tau1_2BF,(24*(day1-day0)+1))
+U1_2BF = np.reshape(U1_2BF,(24*(day1-day0)+1))
+
+tau1_curr_1BF = 0.125 * Roul * (0.24/(np.log(4.8*np.maximum(0.1,h1_1BF)/d50))**2) * (U1_1BF**2)
+tau1_curr_2BF = 0.125 * Roul * (0.24/(np.log(4.8*np.maximum(0.1,h1_2BF)/d50))**2) * (U1_2BF**2)
 
 nt1_model = np.size(h1_1BF)
 tt1_model = np.arange(nt1_model)
@@ -112,17 +122,24 @@ try:
     h2_1BF = np.array(nc.variables['h'][day0*24:day1*24+1,index1])
     Hwav2_1BF = np.array(nc.variables['Hwav'][day0*24:day1*24+1,index1])
     tau2_1BF = np.array(nc.variables['tau'][day0*24:day1*24+1,index1])
+    U2_1BF = np.array(nc.variables['U'][day0*24:day1*24+1,index1])
     h2_2BF = np.array(nc.variables['h'][day0*24:day1*24+1,index2])
     Hwav2_2BF = np.array(nc.variables['Hwav'][day0*24:day1*24+1,index2])
     tau2_2BF = np.array(nc.variables['tau'][day0*24:day1*24+1,index2])
+    U2_2BF = np.array(nc.variables['U'][day0*24:day1*24+1,index2])
 finally:
     nc.close()
 h2_1BF = 100 * np.reshape(h2_1BF,(24*(day1-day0)+1))    # cm
 Hwav2_1BF = 100 * np.reshape(Hwav2_1BF,(24*(day1-day0)+1))  # cm
 tau2_1BF = np.reshape(tau2_1BF,(24*(day1-day0)+1))
+U2_1BF = np.reshape(U2_1BF,(24*(day1-day0)+1))
 h2_2BF = 100 * np.reshape(h2_2BF,(24*(day1-day0)+1))    # cm
 Hwav2_2BF = 100 * np.reshape(Hwav2_2BF,(24*(day1-day0)+1))  # cm
 tau2_2BF = np.reshape(tau2_2BF,(24*(day1-day0)+1))
+U2_2BF = np.reshape(U2_2BF,(24*(day1-day0)+1))
+
+tau2_curr_1BF = 0.125 * Roul * (0.24/(np.log(4.8*np.maximum(0.1,h2_1BF)/d50))**2) * (U2_1BF**2)
+tau2_curr_2BF = 0.125 * Roul * (0.24/(np.log(4.8*np.maximum(0.1,h2_2BF)/d50))**2) * (U2_2BF**2)
 
 nt2_model = np.size(h2_1BF)
 tt2_model = np.arange(nt2_model)
@@ -205,6 +222,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('a', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 rmse_h_1BF = 0.0
 count = 0
@@ -234,6 +254,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('c', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 axInv = ax.twinx()
 axInv.plot(tt1_U10, U10_var1, color='blue', linestyle='--', linewidth=1, alpha=0.9)
@@ -267,8 +290,9 @@ print('Max Hwav: ', np.max(Hwav1_1BF), np.max(Hwav1_2BF))
 
 ax = fig.add_subplot(gs[2,0])
 ax.plot(tt1_model, tau1_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
+ax.plot(tt1_model, tau1_curr_1BF, color='black', linestyle='--', linewidth=1, alpha=0.9)
 ax.set_xlim(0, nt1_model-1)
-ax.set_ylim(0, 0.4)
+ax.set_ylim(-0.01, 0.4)
 ax.xaxis.set_ticks(np.arange(0,nt1_model,24))
 ax.yaxis.set_ticks(np.linspace(0,0.4,5))
 ax.set_xticklabels(['12/10','12/11','12/12'])
@@ -282,6 +306,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('e', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 print('Max tau: ', np.max(tau1_1BF), np.max(tau1_2BF))
 
@@ -303,6 +330,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('g', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 ax = fig.add_subplot(gs[4,0])
 ax.plot(tt2_model, Hwav2_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -320,6 +350,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_color('black') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('i', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 axInv = ax.twinx()
 axInv.plot(tt2_U10, U10_var2, color='blue', linestyle='--', linewidth=1, alpha=0.9)
@@ -344,9 +377,10 @@ print('Max Hwav: ', np.max(Hwav2_1BF), np.max(Hwav2_2BF))
 
 ax = fig.add_subplot(gs[5,0])
 ax.plot(tt2_model, tau2_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
+ax.plot(tt2_model, tau2_curr_1BF, color='black', linestyle='--', linewidth=1, alpha=0.9)
 ax.plot(tt2_obs, tau_3d_1BF, color='C3', linestyle='-', marker='.', markersize=5)
 ax.set_xlim(0, nt2_model-1)
-ax.set_ylim(0, 1)
+ax.set_ylim(-0.01, 1)
 ax.xaxis.set_ticks(np.arange(0,nt2_model,24))
 ax.yaxis.set_ticks(np.linspace(0,1,6))
 ax.set_xticklabels(['4/2','4/3','4/4','4/5'])
@@ -361,6 +395,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('k', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 rmse_tau_1BF = 0.0
 count = 0
@@ -393,6 +430,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('b', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 rmse_h_2BF = 0.0
 count = 0
@@ -423,6 +463,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('d', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 axInv = ax.twinx()
 axInv.plot(tt1_U10, U10_var1, color='blue', linestyle='--', linewidth=1, alpha=0.9)
@@ -458,8 +501,9 @@ print('RMSE_Hwav_2BF', rmse_Hwav_2BF, nrmse_Hwav_2BF)
 
 ax = fig.add_subplot(gs[2,1])
 ax.plot(tt1_model, tau1_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
+ax.plot(tt1_model, tau1_curr_2BF, color='black', linestyle='--', linewidth=1, alpha=0.9)
 ax.set_xlim(0, nt1_model-1)
-ax.set_ylim(0, 0.4)
+ax.set_ylim(-0.01, 0.4)
 ax.xaxis.set_ticks(np.arange(0,nt1_model,24))
 ax.yaxis.set_ticks(np.linspace(0,0.4,5))
 ax.set_xticklabels(['12/10','12/11','12/12'])
@@ -471,6 +515,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('f', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 ax = fig.add_subplot(gs[3,1])
 ax.plot(tt2_model, h2_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -488,6 +535,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('h', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 ax = fig.add_subplot(gs[4,1])
 ax.plot(tt2_model, Hwav2_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -504,6 +554,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('j', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 axInv = ax.twinx()
 axInv.plot(tt2_U10, U10_var2, color='blue', linestyle='--', linewidth=1, alpha=0.9)
@@ -526,9 +579,10 @@ labels = axInv.get_yticklabels()
 
 ax = fig.add_subplot(gs[5,1])
 ax.plot(tt2_model, tau2_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
+ax.plot(tt2_model, tau2_curr_2BF, color='black', linestyle='--', linewidth=1, alpha=0.9)
 ax.plot(tt2_obs, tau_3d_2BF, color='C3', linestyle='-', marker='.', markersize=5)
 ax.set_xlim(0, nt2_model-1)
-ax.set_ylim(0, 1)
+ax.set_ylim(-0.01, 1)
 ax.xaxis.set_ticks(np.arange(0,nt2_model,24))
 ax.yaxis.set_ticks(np.linspace(0,1,6))
 ax.set_xticklabels(['4/2','4/3','4/4','4/5'])
@@ -541,6 +595,9 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+ax.annotate('l', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
+            fontname='Times New Roman', horizontalalignment='left',
+            verticalalignment='top')
 
 rmse_tau_2BF = 0.0
 count = 0
