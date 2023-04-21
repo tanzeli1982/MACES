@@ -132,7 +132,7 @@ h2_shad_s102[h2_shad_s102<0] = 0
     
 # plot
 plt.clf()
-fig = plt.figure(figsize=(8,10))
+fig = plt.figure(figsize=(8,6))
 
 gs = gridspec.GridSpec(nrows=2, ncols=2)
 
@@ -151,7 +151,7 @@ ax.set_xticklabels(['7/19','7/20','7/21','7/22','7/23'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 #ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
 ylabel = 'Water depth ($\mathregular{cm}$)'
-ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', fontweight='bold')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
@@ -207,7 +207,7 @@ print('RMSE_h1_nelson_c', rmse_h1_nelson_c)
 print('RMSE_h2_nelson_c', rmse_h2_nelson_c)
 
 # nelson island marsh edge
-axax = fig.add_subplot(gs[1,0])
+ax = fig.add_subplot(gs[1,0])
 h1_nelson_cs = h1_nelson_c - 198
 h1_nelson_cs[h1_nelson_cs<0] = 0.0
 ax.plot(tt1_model, h1_nelson_m, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -222,7 +222,8 @@ ax.set_xticklabels(['7/19','7/20','7/21','7/22','7/23'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 #ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
 ylabel = 'Water depth ($\mathregular{cm}$)'
-ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', fontweight='bold')
+ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', fontweight='bold')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
@@ -252,9 +253,9 @@ ax.xaxis.set_ticks(np.arange(0,nt2_model+1,24))
 ax.yaxis.set_ticks(np.linspace(0,100,6))
 ax.set_xticklabels(['10/7','10/8','10/9','10/10','10/11'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-#ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
+ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', fontweight='bold')
 #ylabel = 'Water depth ($\mathregular{cm}$)'
-#ax.set_ylabel(ylabel, fontsize=11, fontname='Times New Roman', color='black')
+#ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', fontweight='bold')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
