@@ -223,8 +223,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('a', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 rmse_h_1BF = 0.0
 count = 0
@@ -255,15 +255,16 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('c', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 axInv = ax.twinx()
 axInv.plot(tt1_U10, U10_var1, color='blue', linestyle='--', linewidth=1, alpha=0.9)
 axInv.set_xlim(0, nt1_model-1)
 axInv.set_ylim(0, 15)
-axInv.xaxis.set_ticks([])
+axInv.xaxis.set_ticks(np.arange(0,nt1_model,24))
 axInv.yaxis.set_ticks(np.linspace(0,15,6))
+axInv.set_xticklabels(['12/10','12/11','12/12'])
 axInv.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 axInv.tick_params(which='minor', direction='in', colors='xkcd:black')
 axInv.tick_params(axis='y', colors='blue')
@@ -307,8 +308,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('e', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 print('Max tau: ', np.max(tau1_1BF), np.max(tau1_2BF))
 
@@ -331,8 +332,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('g', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 ax = fig.add_subplot(gs[4,0])
 ax.plot(tt2_model, Hwav2_1BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -348,18 +349,20 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(11) for label in labels]
 [label.set_color('black') for label in labels]
+[label.set_fontweight('bold') for label in labels]
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('i', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 axInv = ax.twinx()
 axInv.plot(tt2_U10, U10_var2, color='blue', linestyle='--', linewidth=1, alpha=0.9)
 axInv.set_xlim(0, nt1_model-1)
 axInv.set_ylim(0, 18)
-axInv.xaxis.set_ticks([])
+axInv.xaxis.set_ticks(np.arange(0,nt2_model,24))
 axInv.yaxis.set_ticks(np.linspace(0,18,4))
+axInv.set_xticklabels(['4/2','4/3','4/4','4/5'])
 axInv.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 axInv.tick_params(which='minor', direction='in', colors='xkcd:black')
 axInv.tick_params(axis='y', colors='blue')
@@ -396,8 +399,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('k', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 rmse_tau_1BF = 0.0
 count = 0
@@ -431,8 +434,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('b', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 rmse_h_2BF = 0.0
 count = 0
@@ -464,15 +467,16 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('d', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 axInv = ax.twinx()
 axInv.plot(tt1_U10, U10_var1, color='blue', linestyle='--', linewidth=1, alpha=0.9)
 axInv.set_xlim(0, nt1_model-1)
 axInv.set_ylim(0, 15)
-axInv.xaxis.set_ticks([])
+axInv.xaxis.set_ticks(np.arange(0,nt1_model+1,24))
 axInv.yaxis.set_ticks(np.linspace(0,15,6))
+axInv.set_xticklabels(['12/10','12/11','12/12'])
 axInv.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 axInv.tick_params(which='minor', direction='in', colors='xkcd:black')
 axInv.tick_params(axis='y', colors='blue')
@@ -516,8 +520,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('f', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 ax = fig.add_subplot(gs[3,1])
 ax.plot(tt2_model, h2_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -536,8 +540,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('h', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 ax = fig.add_subplot(gs[4,1])
 ax.plot(tt2_model, Hwav2_2BF, color='black', linestyle='-', linewidth=2, alpha=0.9)
@@ -555,15 +559,16 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('j', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 axInv = ax.twinx()
 axInv.plot(tt2_U10, U10_var2, color='blue', linestyle='--', linewidth=1, alpha=0.9)
-axInv.set_xlim(0, nt1_model-1)
+axInv.set_xlim(0, nt2_model-1)
 axInv.set_ylim(0, 18)
-axInv.xaxis.set_ticks([])
+axInv.xaxis.set_ticks(np.arange(0,nt2_model,24))
 axInv.yaxis.set_ticks(np.linspace(0,18,4))
+axInv.set_xticklabels(['4/2','4/3','4/4','4/5'])
 axInv.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 axInv.tick_params(which='minor', direction='in', colors='xkcd:black')
 axInv.tick_params(axis='y', colors='blue')
@@ -596,8 +601,8 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 ax.annotate('l', xy=(0.02, 0.98), xycoords='axes fraction', fontsize=12,
-            fontname='Times New Roman', horizontalalignment='left',
-            verticalalignment='top')
+            fontname='Times New Roman', fontweight='bold', 
+            horizontalalignment='left', verticalalignment='top')
 
 rmse_tau_2BF = 0.0
 count = 0
