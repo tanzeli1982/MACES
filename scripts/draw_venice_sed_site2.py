@@ -9,6 +9,7 @@ Created on Wed Apr  1 18:20:59 2020
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from netCDF4 import Dataset
 from matplotlib.ticker import AutoMinorLocator
 from datetime import date
@@ -23,8 +24,8 @@ min_accr_sim = {}
 sed_sim = {}
 
 # read simulation outputs
-rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/VeniceLagoon/Outputs/'
-filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_466.F06.nc'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Drafts/Outputs/VeniceLagoon/'
+filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_F06%DA07_466.nc'
 try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:])
@@ -40,7 +41,7 @@ index2 = np.argmin(np.abs(zh - z_2BF))
 
 for model in models:
     # hydrodynamics
-    filename = rdir + 'maces_hydro_2002-12-01_2002-12-13_466.' + model + '.nc'
+    filename = rdir + 'maces_hydro_2002-12-01_2002-12-13_' + model + '%DA07_466.nc'
     try:
         nc = Dataset(filename,'r')
         sed_1BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index1])
@@ -51,7 +52,7 @@ for model in models:
     sed_2BF = 1e3 * np.reshape(sed_2BF,(24*(day1-day0)+1))    # mg/L
     sed_sim[model] = sed_1BF
     # eco-geomorphology
-    filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_466.' + model + '.nc'
+    filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_' + model + '%DA07_466.nc'
     try:
         nc = Dataset(filename,'r')
         min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
@@ -64,15 +65,13 @@ nt_model = np.size(sed_sim['M12'])
 tt_model = np.arange(nt_model)
 
 # read data
-filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
-    'VeniceLagoon/1BF_OBS.xls'
+filename = rdir + '1BF_OBS.xls'
 df = pd.read_excel(filename, sheet_name='1BF', header=None, skiprows=range(3), 
                    usecols='A,B,F,O,Q')
 df.columns = ['Time','Hmo','Hmax','hw','Turbidity']
 sed_obs_1BF = np.array(df['Turbidity'])[5334:5526]  # mg/l
 
-filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
-    'VeniceLagoon/2BF_OBS.xls'
+filename = rdir + '2BF_OBS.xls'
 df = pd.read_excel(filename, sheet_name='2BF', header=None, skiprows=range(3), 
                    usecols='A,B,O,Q')
 df.columns = ['Time','Hmo','hw','Turbidity']
@@ -83,20 +82,23 @@ tt_obs = np.arange(nt_obs)/4
 
 # plotting
 plt.clf()
-fig, ax = plt.subplots(figsize=(6,4))
+fig = plt.figure(figsize=(8,5))
 
 plt.style.use('default')
+gs = gridspec.GridSpec(nrows=1, ncols=1)
 
-#colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
-#          "#b3e61c"]
+#colors = ["#41bbc5", "#672d7e", "#b4d170", "#463df6", "#36f459", "#bf209e", 
+#          "#256b33"]
 colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
           '#e9d043', '#ad5b50', '#e377c2']
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # comparison of observed and simulated suspended sediment
 print(np.nanmin(sed_obs_1BF), np.nanmax(sed_obs_1BF))
+
+ax = fig.add_subplot(gs[0,0])
 ax.plot(tt_obs, sed_obs_1BF, color='black', linestyle='-', linewidth=2, 
-        marker='.', markersize=8)
+        marker='.', markersize=10)
 handles = []
 for key in sed_sim:
     indx = len(handles)
@@ -114,21 +116,22 @@ for key in sed_sim:
     nrmse = rmse / np.nanmean(sed_obs_1BF)
     print(key, ': ', rmse, nrmse)
 legend = ax.legend(handles, list(sed_sim.keys()), numpoints=1, loc=1, 
-                   prop={'family':'Times New Roman', 'size':'large'}, 
-                   framealpha=0.0)
+                   prop={'family':'Times New Roman', 'size':'large', 
+                         'weight': 'bold'}, framealpha=0.0)
 ax.set_xlim(0, nt_model)
 ax.set_ylim(0, 150)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
 ax.yaxis.set_ticks(np.linspace(0,150,6))
 ax.set_xticklabels(['12/10','12/11','12/12'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black')
+ax.set_xlabel('Time', fontsize=16, fontname='Times New Roman', fontweight='bold')
 ylabel = 'Suspended sediment ($\mathregular{mg}$ $\mathregular{l^{-1}}$)'
-ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+ax.set_ylabel(ylabel, fontsize=16, fontname='Times New Roman', fontweight='bold')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
-[label.set_fontsize(12) for label in labels]
+[label.set_fontsize(14) for label in labels]
 [label.set_color('black') for label in labels]
+[label.set_fontweight('bold') for label in labels]
 #ax.text(0.05, 0.93, 'a', transform=ax.transAxes, fontsize=20,
 #        fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
@@ -161,6 +164,6 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 #ax.tick_params(which='minor', direction='in', colors='xkcd:black')
     
 plt.tight_layout()
-fig.savefig('F5.png', dpi=300)
-fig.savefig('F5.pdf', dpi=600)
+fig.savefig('F7.png', dpi=300)
+#fig.savefig('F7.jpg', dpi=600)
 plt.show()
