@@ -25,7 +25,7 @@ sed_sim = {}
 
 # read simulation outputs
 rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Drafts/Outputs/VeniceLagoon/'
-filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_F06%DA07_466.nc'
+filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_F06_466.nc'
 try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:])
@@ -38,10 +38,11 @@ x = x - x[index0]
 # find the site index
 index1 = np.argmin(np.abs(zh - z_1BF))
 index2 = np.argmin(np.abs(zh - z_2BF))
+print(index1, index2)
 
 for model in models:
     # hydrodynamics
-    filename = rdir + 'maces_hydro_2002-12-01_2002-12-13_' + model + '%DA07_466.nc'
+    filename = rdir + 'maces_hydro_2002-12-01_2002-12-13_' + model + '_466.nc'
     try:
         nc = Dataset(filename,'r')
         sed_1BF = np.array(nc.variables['TSM'][day0*24:day1*24+1,index1])
@@ -52,7 +53,7 @@ for model in models:
     sed_2BF = 1e3 * np.reshape(sed_2BF,(24*(day1-day0)+1))    # mg/L
     sed_sim[model] = sed_1BF
     # eco-geomorphology
-    filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_' + model + '%DA07_466.nc'
+    filename = rdir + 'maces_ecogeom_2002-12-01_2002-12-13_' + model + '_466.nc'
     try:
         nc = Dataset(filename,'r')
         min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
