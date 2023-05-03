@@ -120,9 +120,9 @@ legend = ax.legend(handles, list(sed_sim.keys()), numpoints=1, loc=1,
                    prop={'family':'Times New Roman', 'size':'large', 
                          'weight': 'bold'}, framealpha=0.0)
 ax.set_xlim(0, nt_model)
-ax.set_ylim(0, 150)
+ax.set_ylim(0, 120)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-ax.yaxis.set_ticks(np.linspace(0,150,6))
+ax.yaxis.set_ticks(np.linspace(0,120,5))
 ax.set_xticklabels(['12/10','12/11','12/12'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Time', fontsize=16, fontname='Times New Roman', fontweight='bold')
@@ -166,5 +166,5 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
     
 plt.tight_layout()
 fig.savefig('F7.png', dpi=300)
-#fig.savefig('F7.jpg', dpi=600)
+fig.savefig('F7.jpg', dpi=600)
 plt.show()

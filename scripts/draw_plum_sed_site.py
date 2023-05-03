@@ -21,14 +21,14 @@ z_marsh = 1.686         # marsh elevation
 day0 = (date(2017,7,19) - date(2017,7,17)).days
 day1 = (date(2017,7,23) - date(2017,7,17)).days
 
-models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
+models = ['F06', 'T03', 'KM12']#, 'M12', 'F07', 'VDK05', 'DA07']
 min_accr_sim = {}
 sed_sim_c = {}
 sed_sim_m = {}
 
 # read simulation outputs
-rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/PlumIsland/Outputs/'
-filename = rdir + 'maces_ecogeom_2017-07-17_2017-08-01_4097.F06.nc'
+rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Drafts/Outputs/PlumIsland/'
+filename = rdir + 'maces_ecogeom_2017-07-17_2017-08-01_F06_4097.nc'
 try:
     nc = Dataset(filename,'r')
     x = 1e-3 * np.array(nc.variables['x'][:])
@@ -39,7 +39,7 @@ index0 = np.argmin(np.abs(zh))
 x = x - x[index0]
 
 for model in models:
-    filename = rdir + 'maces_ecogeom_2017-07-17_2017-08-01_4097.' + model + '.nc'
+    filename = rdir + 'maces_ecogeom_2017-07-17_2017-08-01_' + model + '_4097.nc'
     try:
         nc = Dataset(filename,'r')
         min_accr = 8.64e7*np.mean(np.array(nc.variables['Dsed'][day0:day1,:]),axis=0) - \
@@ -53,7 +53,7 @@ index1 = np.argmin(np.abs(zh - z_channel))
 index2 = np.argmin(np.abs(zh - z_marsh))
 
 for model in models:
-    filename = rdir + 'maces_hydro_2017-07-17_2017-08-01_4097.' + model + '.nc'
+    filename = rdir + 'maces_hydro_2017-07-17_2017-08-01_' + model + '_4097.nc'
     try:
         nc = Dataset(filename,'r')
         sed_c = np.array(nc.variables['TSM'][day0*24:day1*24,index1])
@@ -69,8 +69,7 @@ tt_model = np.arange(nt_model)
 warnings.filterwarnings('ignore')
 
 # read data
-filename = r'/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
-    'PlumIsland/LawsPoint/EST-RO-TC-WE-TurbiditySuspSed.xlsx'
+filename = rdir + 'EST-RO-TC-WE-TurbiditySuspSed.xlsx'
 df = pd.read_excel(filename, sheet_name='EST-RO-TC-WE-TurbiditySuspSed', 
                    header=0, usecols='A,B,C,E,F')
 df.columns = ['Date','Time','Site','SSC','Depth']
@@ -186,6 +185,6 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 #ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 plt.tight_layout()
-fig.savefig('F9.png', dpi=300)
-fig.savefig('F9.pdf', dpi=600)
+fig.savefig('F8.png', dpi=300)
+#fig.savefig('F8.jpg', dpi=600)
 plt.show()
