@@ -54,10 +54,9 @@ for ii, name in enumerate(sed_site):
         tt = int( 4*( 24*(sed_date[ii].date() - date0).days + \
                  sed_time[ii].hour + sed_time[ii].minute/60.0) )
         indx = tt_h.index(tt)
-        if h_var[indx]>=-4:
-            sed_channel_obs.append(sed_obs[ii])
-            h_var_sel.append(h_var[indx])
-            U10_var_sel.append(U10_var[indx])
+        sed_channel_obs.append(sed_obs[ii])
+        h_var_sel.append(h_var[indx])
+        U10_var_sel.append(U10_var[indx])
         
 sed_channel_obs = np.array(sed_channel_obs)
 h_var_sel = np.array(h_var_sel)
@@ -80,8 +79,7 @@ print( fitted.params[0], fitted.params[1], fitted.rsquared, fitted.f_pvalue )
 h_fitted = np.linspace(np.min(h_var_sel), np.max(h_var_sel), 100)
 ssc_fitted = fitted.params[0] + fitted.params[1]*h_fitted
 
-h_var[h_var<-4] = 0.0
-ssc_ts = fitted.params[0] + fitted.params[1]*h_var
+ssc_ts = np.maximum(fitted.params[0] + 2.0*fitted.params[1]*h_var, 0.0)
 
 ax.scatter(h_var_sel, sed_channel_obs, s=10, c='black', marker='.')
 ax.plot(h_fitted, ssc_fitted, color='darkgreen', ls='-', lw=2, alpha=0.8)
@@ -134,7 +132,7 @@ plt.show()
 
 # produce sediment boundary file
 print('SSC: ', np.min(ssc_ts), np.max(ssc_ts))
-filename = rdir + 'force_SSC.nc'
+filename = rdir + 'force_SSC_revised.nc'
 try:
     nc = Dataset(filename, 'w', format='NETCDF3_64BIT_OFFSET')
     nc.createDimension('time', None)
@@ -151,10 +149,10 @@ try:
 finally:
     nc.close()
     
-filename = rdir + 'force_h.nc'
-try:
-    nc = Dataset(filename, 'r+')
-    h_ovar = nc.variables['h']
-    h_ovar[:] = h_var
-finally:
-    nc.close()
+#filename = rdir + 'force_h.nc'
+#try:
+#    nc = Dataset(filename, 'r+')
+#    h_ovar = nc.variables['h']
+#    h_ovar[:] = h_var
+#finally:
+#    nc.close()
