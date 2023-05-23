@@ -79,7 +79,7 @@ print( fitted.params[0], fitted.params[1], fitted.rsquared, fitted.f_pvalue )
 h_fitted = np.linspace(np.min(h_var_sel), np.max(h_var_sel), 100)
 ssc_fitted = fitted.params[0] + fitted.params[1]*h_fitted
 
-ssc_ts = np.maximum(fitted.params[0] + 2.0*fitted.params[1]*h_var, 0.0)
+ssc_ts = np.maximum( 2.0*(fitted.params[0] + fitted.params[1]*h_var), 0.0)
 
 ax.scatter(h_var_sel, sed_channel_obs, s=10, c='black', marker='.')
 ax.plot(h_fitted, ssc_fitted, color='darkgreen', ls='-', lw=2, alpha=0.8)

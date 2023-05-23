@@ -21,7 +21,7 @@ z_marsh = 1.686         # marsh elevation
 day0 = (date(2017,7,19) - date(2017,7,17)).days
 day1 = (date(2017,7,23) - date(2017,7,17)).days
 
-models = ['F06', 'T03', 'KM12', 'M12']#, 'F07', 'VDK05', 'DA07']
+models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05']#, 'DA07']
 
 # read simulation outputs
 rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Drafts/Outputs/PlumIsland/'
@@ -79,8 +79,8 @@ for model in models:
     U_sim_m[model] = 100*np.reshape(U_m,(24*(day1-day0)))
     Uwav_sim_c[model] = 100*np.reshape(Uwav_c,(24*(day1-day0)))
     Uwav_sim_m[model] = 100*np.reshape(Uwav_m,(24*(day1-day0)))
-    tau_sim_c[model] = 1e3*np.reshape(tau_c,(24*(day1-day0)))
-    tau_sim_m[model] = 1e3*np.reshape(tau_m,(24*(day1-day0)))
+    tau_sim_c[model] = 1e2*np.reshape(tau_c,(24*(day1-day0)))
+    tau_sim_m[model] = 1e2*np.reshape(tau_m,(24*(day1-day0)))
 
 nt_model = np.size(sed_sim_c['F06'])
 tt_model = np.arange(nt_model)
@@ -140,11 +140,11 @@ for key in sed_sim_c:
     print(key, ': ', rmse, nrmse)
 #ax.plot(tt_model, U_sim_c['M12'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 #ax.plot(tt_model, Uwav_sim_c['M12'], color='gray', linestyle=':', linewidth=1, alpha=0.9)
-    ax.plot(tt_model, tau_sim_c['M12'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+ax.plot(tt_model, tau_sim_c['VDK05'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 ax.set_xlim(0, nt_model)
-ax.set_ylim(0, 50)
+ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-ax.yaxis.set_ticks(np.linspace(0,50,6))
+ax.yaxis.set_ticks(np.linspace(0,40,5))
 ax.set_xticklabels(['7/19','7/20','7/21','7/22','7/23'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black', 
@@ -157,7 +157,7 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
 [label.set_fontweight('bold') for label in labels]
-ax.text(0.05, 0.93, 'a', transform=ax.transAxes, fontsize=16,
+ax.text(0.05, 0.90, 'a', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
@@ -184,14 +184,14 @@ for key in sed_sim_m:
     print(key, ': ', rmse, nrmse)
 #ax.plot(tt_model, U_sim_m['M12'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 #ax.plot(tt_model, Uwav_sim_m['M12'], color='gray', linestyle=':', linewidth=1, alpha=0.9)
-ax.plot(tt_model, tau_sim_m['M12'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
-legend = ax.legend(handles, list(sed_sim_c.keys()), numpoints=1, loc=1, 
+ax.plot(tt_model, tau_sim_m['VDK05'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+legend = ax.legend(handles, list(sed_sim_c.keys()), numpoints=1, loc='upper center', 
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
 ax.set_xlim(0, nt_model)
-ax.set_ylim(0, 20)
+ax.set_ylim(0, 15)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-ax.yaxis.set_ticks(np.linspace(0,20,6))
+ax.yaxis.set_ticks(np.linspace(0,15,6))
 ax.set_xticklabels(['7/19','7/20','7/21','7/22','7/23'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black', 
@@ -203,7 +203,7 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
 [label.set_fontweight('bold') for label in labels]
-ax.text(0.05, 0.93, 'b', transform=ax.transAxes, fontsize=16,
+ax.text(0.05, 0.90, 'b', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
