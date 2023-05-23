@@ -21,7 +21,7 @@ z_marsh = 1.686         # marsh elevation
 day0 = (date(2017,7,19) - date(2017,7,17)).days
 day1 = (date(2017,7,23) - date(2017,7,17)).days
 
-models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05']#, 'DA07']
+models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 
 # read simulation outputs
 rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Drafts/Outputs/PlumIsland/'
@@ -140,7 +140,7 @@ for key in sed_sim_c:
     print(key, ': ', rmse, nrmse)
 #ax.plot(tt_model, U_sim_c['M12'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 #ax.plot(tt_model, Uwav_sim_c['M12'], color='gray', linestyle=':', linewidth=1, alpha=0.9)
-ax.plot(tt_model, tau_sim_c['VDK05'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+ax.plot(tt_model, tau_sim_c['DA07'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 ax.set_xlim(0, nt_model)
 ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
@@ -184,8 +184,9 @@ for key in sed_sim_m:
     print(key, ': ', rmse, nrmse)
 #ax.plot(tt_model, U_sim_m['M12'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 #ax.plot(tt_model, Uwav_sim_m['M12'], color='gray', linestyle=':', linewidth=1, alpha=0.9)
-ax.plot(tt_model, tau_sim_m['VDK05'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
-legend = ax.legend(handles, list(sed_sim_c.keys()), numpoints=1, loc='upper center', 
+ax.plot(tt_model, tau_sim_m['DA07'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+legend = ax.legend(handles, list(sed_sim_c.keys()), numpoints=1, 
+                   loc='upper center', ncol=2,
                    prop={'family':'Times New Roman', 'size':'large'}, 
                    framealpha=0.0)
 ax.set_xlim(0, nt_model)
