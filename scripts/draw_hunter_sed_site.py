@@ -40,6 +40,8 @@ index2 = np.argmin(np.abs(zh - z2))
 index3 = np.argmin(np.abs(zh - z3))
 index4 = np.argmin(np.abs(zh - z4))
 
+print(index1, index2, index3, index4)
+
 sed1_sim = {}
 sed2_sim = {}
 sed3_sim = {}
