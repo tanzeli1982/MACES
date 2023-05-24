@@ -404,8 +404,8 @@ contains
             fwave = 1.39*(6.0*Twav(ii)/PI/par_d50)**(-0.52)
             tau_wave = 0.5*fwave*Roul*Uwav(ii)**2
             ! combined shear stress
-            if (tau_curr<TOL_REL .and. tau_wave<TOL_REL) then
-               tau(ii) = 0.0d0
+            if (tau_curr<TOL_REL .or. tau_wave<TOL_REL) then
+               tau(ii) = tau_wave + tau_curr
             else
                tau(ii) = tau_wave + tau_curr * (1.0 + 1.2* &
                   (tau_wave/(tau_curr+tau_wave))**3.2)

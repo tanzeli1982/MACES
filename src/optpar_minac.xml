@@ -7,7 +7,7 @@
    <group id="F06MOD">
       <entry id="d50" units="m" value="25e-6">
          <type>real</type>
-         <desc>sediment median diameter</desc>
+         <desc>suspended sediment median diameter</desc>
       </entry>
       <entry id="rhoSed" units="kg/m3" value="2650.0">
          <type>real</type>
@@ -25,7 +25,7 @@
    <group id="T03MOD">
       <entry id="d50" units="m" value="25e-6">
          <type>real</type>
-         <desc>sediment median diameter</desc>
+         <desc>suspended sediment median diameter</desc>
       </entry>
       <entry id="rhoSed" units="kg/m3" value="2650.0">
          <type>real</type>
@@ -55,7 +55,7 @@
    <group id="KM12MOD">
       <entry id="d50" units="m" value="25e-6">
          <type>real</type>
-         <desc>sediment median diameter</desc>
+         <desc>suspended sediment median diameter</desc>
       </entry>
       <entry id="rhoSed" units="kg/m3" value="2650.0">
          <type>real</type>
@@ -137,7 +137,7 @@
    <group id="M12MOD">
       <entry id="d50" units="m" value="25e-6">
          <type>real</type>
-         <desc>sediment median diameter</desc>
+         <desc>suspended sediment median diameter</desc>
       </entry>
       <entry id="rhoSed" units="kg/m3" value="2650.0">
          <type>real</type>
@@ -179,7 +179,7 @@
    <group id="F07MOD">
       <entry id="d50" units="m" value="25e-6">
          <type>real</type>
-         <desc>sediment median diameter</desc>
+         <desc>suspended sediment median diameter</desc>
       </entry>
       <entry id="rhoSed" units="kg/m3" value="2650.0">
          <type>real</type>
@@ -213,7 +213,7 @@
    <group id="VDK05MOD">
       <entry id="d50" units="m" value="25e-6">
          <type>real</type>
-         <desc>sediment median diameter</desc>
+         <desc>suspended sediment median diameter</desc>
       </entry>
       <entry id="rhoSed" units="kg/m3" value="2650.0">
          <type>real</type>
@@ -243,15 +243,11 @@
          <type>real</type>
          <desc>sediment wave erosion half-saturation coef of plant biomass</desc>
       </entry>
-      <entry id="tauD_cr" units="Pa" value="0.05">
-         <type>real</type>
-         <desc>critical shear stress for deposition</desc>
-      </entry>
    </group>
    <group id="DA07MOD">
       <entry id="d50" units="m" value="25e-6">
          <type>real</type>
-         <desc>sediment median diameter</desc>
+         <desc>suspended sediment median diameter</desc>
       </entry>
       <entry id="rhoSed" units="kg/m3" value="2650.0">
          <type>real</type>

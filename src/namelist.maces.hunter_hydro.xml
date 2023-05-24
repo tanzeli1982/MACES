@@ -1,0 +1,228 @@
+<file id="namelist.maces.xml" version="2.0">
+   <header>
+   These variables set the model simulation. They can be changed anytime 
+   during a run.
+   </header>
+   <group id="models">
+      <entry id="WAVE_TYPE" value="1">
+         <type>integer</type>
+         <valid_values>
+         1,2
+         </valid_values>
+         <desc>
+         Determine which algorithm is used to calculate wave propagation.
+         1: Equilibrium.
+         2: Transient.
+         </desc>
+      </entry>
+      <entry id="MINAC_TYPE" value="M12MOD">
+         <type>char</type>
+         <valid_values>
+         F06MOD,T03MOD,KM12MOD,M12MOD,F07MOD,VDK05MOD,DA07MOD
+         </valid_values>
+         <desc>
+         Determine which algorithm is used to calculate sediment accretion.
+         Default: F06MOD.
+         </desc>
+      </entry>
+      <entry id="OMAC_TYPE" value="NULLMOD">
+         <type>char</type>
+         <valid_values>
+         NULLMOD,VDK05MOD,M12MOD,DA07MOD,KM12MOD,K16MOD
+         </valid_values>
+         <desc>
+         Determine which algorithm is used to calculate organic matter accretion.
+         The OMAC algorithm also calculates aboveground and belowground biomass.
+         Default: NULLMOD. 
+         Both NULLMOD and VDK05MOD set zero organic matter accretion.
+         </desc>
+      </entry>
+      <entry id="WAVERO_TYPE" value="NULLMOD">
+         <type>char</type>
+         <valid_values>NULLMOD,L16MOD</valid_values>
+         <desc>
+         Determine which algorithm is used to calculate storm surge erosion.
+         Default: NULLMOD. 
+         NULLMOD sets zero storm surge erosion.
+         </desc>
+      </entry>
+      <entry id="LNDMGR_TYPE" value="NULLMOD">
+         <type>char</type>
+         <valid_values>NULLMOD,R20MOD,S18MOD</valid_values>
+         <desc>
+         Determine which algorithm is used to calculate landward migration.
+         Default: NULLMOD.
+         NULLMOD sets zero landward migration of coastal wetlands.
+         </desc>
+      </entry>
+   </group>
+   <group id="run_desc">
+      <entry id="CASE" value="M12MOD%NULL%NULL%NULL">
+         <type>char</type>
+         <desc>Simulation case name</desc>
+      </entry>
+      <entry id="RUN_TYPE" value="regular">
+         <type>char</type>
+         <valid_values>regular,calibration,sensitivity</valid_values>
+         <desc>Simulation type</desc>
+      </entry>
+      <entry id="RUN_STARTDATE" value="2004-09-25">
+         <type>char</type>
+         <desc>Run start date (yyyy-mm-dd 00:00:00)</desc>
+      </entry>
+      <entry id="RUN_STOPDATE" value="2004-10-06">
+         <type>char</type>
+         <desc>Run stop date (yyyy-mm-dd 00:00:00)</desc>
+      </entry>
+      <entry id="SPINUP_OPTION" value="ndays">
+         <type>char</type>
+         <valid_values>ndays,nmonths,nyears</valid_values>
+         <desc>Sets the spinup length along with SPINUP_N</desc>
+      </entry>
+      <entry id="SPINUP_N" value="10">
+         <type>integer</type>
+         <desc>Provides a numerical count for $SPINUP_OPTION</desc>
+      </entry>
+   </group>
+   <group id="run_control">
+      <entry id="RUNROOT" value="/compyfs/tanz151/post_process/maces/run/Python_maces/src">
+         <type>char</type>
+         <desc>Simulation root directory</desc>
+      </entry>
+      <entry id="HYDRO_FILE" value="$RUNROOT/optpar_hydro.xml">
+         <type>char</type>
+         <desc>Path of the hydrodynamics model parameter file</desc>
+      </entry>
+      <entry id="MINAC_FILE" value="$RUNROOT/optpar_minac.xml">
+         <type>char</type>
+         <desc>Path of the mineral accretion model parameter file</desc>
+      </entry>
+      <entry id="OMAC_FILE" value="$RUNROOT/optpar_omac.xml">
+         <type>char</type>
+         <desc>Path of the OM accretion model parameter file</desc>
+      </entry>
+      <entry id="WAVERO_FILE" value="$RUNROOT/optpar_wavero.xml">
+         <type>char</type>
+         <desc>Path of the storm surge erosion model parameter file</desc>
+      </entry>
+      <entry id="LNDMGR_FILE" value="$RUNROOT/optpar_lndmgr.xml">
+         <type>char</type>
+         <desc>Path of the landward migration model parameter file</desc>
+      </entry>
+      <entry id="SITE_FILE" value="/compyfs/tanz151/user_inputdata/maces/Data/HunterEstuary/DIVA_maces.xlsx">
+         <type>char</type>
+         <desc>Path of the site information file</desc>
+      </entry>
+      <entry id="FIRST_ID" value="1">
+         <type>integer</type>
+         <desc>First site index of the run</desc>
+      </entry>
+      <entry id="LAST_ID" value="1">
+         <type>integer</type>
+         <desc>Last site index of the run</desc>
+      </entry>
+      <entry id="CELL_RES" units="meter" value="2.0">
+         <type>real</type>
+         <desc>Reference node cell resolution</desc>
+      </entry>
+      <entry id="CELL_NUM" value="50">
+         <type>integer</type>
+         <desc>Maximum cell number in a platform segment</desc>
+      </entry>
+      <entry id="HYDRO_TOL">
+         <type>real</type>
+         <values>
+            <value variable="h">1e-3</value>
+            <value variable="hU">1e-4</value>
+            <value variable="Css">1e-5</value>
+         </values>
+         <desc>Hydrodynamic state variable numerical tolerance</desc>
+      </entry>
+      <entry id="DYN_CHECK">
+         <type>logical</type>
+         <valid_values>TRUE,FALSE</valid_values>
+         <values>
+            <value variable="h">TRUE</value>
+            <value variable="hU">FALSE</value>
+            <value variable="Css">TRUE</value>
+         </values>
+         <desc>Check negative hydrodynamic state variable</desc>
+      </entry>
+      <entry id="Verbose" value="TRUE">
+         <type>logical</type>
+         <valid_values>TRUE,FALSE</valid_values>
+         <desc>Set whether verbose model running status</desc>
+      </entry>
+   </group>
+   <group id="run_inputs">
+      <entry id="DIN_ROOT" value="/compyfs/tanz151/user_inputdata/maces/Data/HunterEstuary">
+         <type>char</type>
+         <desc>Input data root directory</desc>
+      </entry>
+      <entry id="FILE_SLR" value="$DIN_ROOT/force_SLR.nc">
+         <type>char</type>
+         <desc>Path of sea level rise file</desc>
+      </entry>
+      <entry id="SLR_TSTEP" value="1">
+         <type>integer</type>
+         <desc>Time step in years of the SLR data</desc>
+      </entry>
+      <entry id="FILE_Tair" value="$DIN_ROOT/force_Tair.nc">
+         <type>char</type>
+         <desc>Path of near-surface air temperature file</desc>
+      </entry>
+      <entry id="FILE_h" value="$DIN_ROOT/force_h.nc">
+         <type>char</type>
+         <desc>Path of boundary water level file</desc>
+      </entry>
+      <entry id="h_TSTEP" value="15">
+         <type>integer</type>
+         <desc>Time step in minutes of the h data</desc>
+      </entry>
+      <entry id="FILE_U10" value="$DIN_ROOT/force_U10.nc">
+         <type>char</type>
+         <desc>Path of boundary 10-m wind speed file</desc>
+      </entry>
+      <entry id="U10_TSTEP" value="15">
+         <type>integer</type>
+         <desc>Time step in minutes of the U10 data</desc>
+      </entry>
+      <entry id="FILE_Wave" value="$DIN_ROOT/force_wave.nc">
+         <type>char</type>
+         <desc>Path of boundary wave period file</desc>
+      </entry>
+      <entry id="Wave_TSTEP" value="15">
+         <type>integer</type>
+         <desc>Time step in minutes of the wave data</desc>
+      </entry>
+      <entry id="FILE_SSC" value="$DIN_ROOT/force_SSC.nc">
+         <type>char</type>
+         <desc>Path of boundary SSC period file</desc>
+      </entry>
+      <entry id="SSC_TSTEP" value="15">
+         <type>integer</type>
+         <desc>Time step in minutes of the SSC data</desc>
+      </entry>
+   </group>
+   <group id="run_archive">
+      <entry id="DOUT_ROOT" value="/compyfs/tanz151/post_process/maces/tests">
+         <type>char</type>
+         <desc>Run archive root directory</desc>
+      </entry>
+      <entry id="OUTPUT_HYDRO" value="TRUE">
+         <type>logical</type>
+         <valid_values>TRUE,FALSE</valid_values>
+         <desc>Set whether archive hydrodynamic outputs</desc>
+      </entry>
+      <entry id="HYDRO_TSTEP" value="hour">
+         <type>char</type>
+         <valid_values>hour,minute</valid_values>
+         <desc>Time step of hydrodynamic outputs</desc>
+      </entry>
+      <entry id="ECOGEOM_TSTEP" value="day">
+         <type>char</type>
+         <valid_values>day,month,year</valid_values>
+         <desc>Time step of ecogeomorphology outputs</desc>
+      </entry>
+   </group>
+</file>

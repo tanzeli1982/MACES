@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export PATH=/share/apps/python/anaconda3-2020.02/bin:$PATH
+source activate /qfs/people/tanz151/.conda/envs/work_env
+
 arg=$( echo $1 | tr '[:upper:]' '[:lower:]' )
 if [ -z "$arg" ]; then
    gfortran -O3 -mmacosx-version-min=10.9 -c -fPIC data_buffer_mod.f90 hydro_utilities_mod.f90
