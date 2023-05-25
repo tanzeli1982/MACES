@@ -118,7 +118,7 @@ for key in models:
     h, = ax.plot(tt_model, sed1_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
-ax.plot(tt_model, tau1_sim[casemodel], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+#ax.plot(tt_model, tau1_sim[casemodel], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 ax.set_xlim(0, nt_model)
 ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
@@ -127,11 +127,13 @@ ax.set_xticklabels(['9/28','9/29','9/30','10/1'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 #ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
 ylabel = 'Suspended sediment ($\mathregular{mg}$ $\mathregular{l^{-1}}$)'
-ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black', 
+              fontweight='bold')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
+[label.set_fontweight('bold') for label in labels]
 ax.text(0.05, 0.9, 'a', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
@@ -160,7 +162,7 @@ for key in sed2_sim:
     h, = ax.plot(tt_model, sed2_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
-ax.plot(tt_model, tau2_sim[casemodel], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+#ax.plot(tt_model, tau2_sim[casemodel], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 ax.set_xlim(0, nt_model)
 ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
@@ -174,6 +176,7 @@ labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
+[label.set_fontweight('bold') for label in labels]
 ax.text(0.05, 0.9, 'b', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
@@ -202,20 +205,23 @@ for key in sed3_sim:
     h, = ax.plot(tt_model, sed3_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
-ax.plot(tt_model, tau3_sim[casemodel], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+#ax.plot(tt_model, tau3_sim[casemodel], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 ax.set_xlim(0, nt_model)
 ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
 ax.yaxis.set_ticks(np.linspace(0,40,5))
 ax.set_xticklabels(['9/28','9/29','9/30','10/1'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black')
+ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black', 
+              fontweight='bold')
 ylabel = 'Suspended sediment ($\mathregular{mg}$ $\mathregular{l^{-1}}$)'
-ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
+ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black', 
+              fontweight='bold')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
+[label.set_fontweight('bold') for label in labels]
 ax.text(0.05, 0.9, 'c', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
@@ -244,9 +250,9 @@ for key in sed4_sim:
     h, = ax.plot(tt_model, sed4_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
-ax.plot(tt_model, tau4_sim[casemodel], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+#ax.plot(tt_model, tau4_sim[casemodel], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 legend = ax.legend(handles, models, numpoints=1, loc='upper right', 
-                   prop={'family':'Times New Roman', 'size':'large'}, 
+                   prop={'family':'Times New Roman', 'size':'large', 'weight': 'bold'}, 
                    framealpha=0.0, ncol=2)
 ax.set_xlim(0, nt_model)
 ax.set_ylim(0, 40)
@@ -254,13 +260,15 @@ ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
 ax.yaxis.set_ticks(np.linspace(0,40,5))
 ax.set_xticklabels(['9/28','9/29','9/30','10/1'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black')
+ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black', 
+              fontweight='bold')
 #ylabel = 'Suspended sediment ($\mathregular{mg}$ $\mathregular{l^{-1}}$)'
 #ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black')
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
 [label.set_fontsize(12) for label in labels]
 [label.set_color('black') for label in labels]
+[label.set_fontweight('bold') for label in labels]
 ax.text(0.05, 0.9, 'd', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
@@ -284,5 +292,5 @@ print('RMSE ' + casemodel + ': ', rmse_sed1[casemodel], rmse_sed2[casemodel],
 
 plt.tight_layout()
 fig.savefig('F9.png', dpi=300)
-#fig.savefig('F9.jpg', dpi=600)
+fig.savefig('F9.jpg', dpi=600)
 plt.show()
