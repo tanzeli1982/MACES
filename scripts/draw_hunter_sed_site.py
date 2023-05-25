@@ -20,7 +20,7 @@ z3 = 0.38   # mangrove interior
 z4 = 0.65   # salt marsh edge
 
 models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
-casemodel = 'DA07'
+casemodel = 'M12'
 
 day0 = (date(2004,9,28) - date(2004,9,25)).days
 day1 = (date(2004,10,1) - date(2004,9,25)).days
@@ -86,8 +86,7 @@ for model in models:
     Bag_sim[model] = Bag
 
 # read benchmark estimates
-filename = '/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/' + \
-    'HunterEstuary/SSC_benchmark_2004-09-28_2004-09-30.nc'
+filename = rdir + 'SSC_benchmark_2004-09-28_2004-09-30.nc'
 try:
     nc = Dataset(filename,'r')
     sed1_obs = np.array(nc.variables['SSC'][:,26,41])
