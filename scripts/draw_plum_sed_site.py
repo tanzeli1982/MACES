@@ -12,6 +12,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from netCDF4 import Dataset
 from matplotlib.ticker import AutoMinorLocator
 from datetime import date
@@ -108,6 +109,8 @@ tt_obs = np.arange(nt_obs)
 plt.clf()
 fig = plt.figure(figsize=(8,3.5))
 
+gs = gridspec.GridSpec(nrows=1, ncols=2)
+
 plt.style.use('default')
 
 #colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
@@ -117,7 +120,7 @@ colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # channel
-ax = plt.subplot2grid((1,2),(0,0))
+ax = fig.add_subplot(gs[0,0])
 ax.plot(tt_obs, sed_obs_c, color='black', linestyle='-', linewidth=2, marker='.', 
         markersize=10)
 handles = []
@@ -163,7 +166,7 @@ ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 # marsh
-ax = plt.subplot2grid((1,2),(0,1))
+ax = fig.add_subplot(gs[0,1])
 ax.plot(tt_obs, sed_obs_m, color='black', linestyle='-', linewidth=2, marker='.', 
         markersize=10)
 handles = []

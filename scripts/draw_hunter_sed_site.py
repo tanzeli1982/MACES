@@ -10,6 +10,7 @@ Compare simulated and benchmark estimate of suspended sediment
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from netCDF4 import Dataset
 from matplotlib.ticker import AutoMinorLocator
 from datetime import date
@@ -100,7 +101,8 @@ tt_obs = np.arange(nt_obs) / 4.
 
 # plot
 plt.clf()
-fig, axes = plt.subplots(2, 2, figsize=(8,7))
+fig = plt.figure(figsize=(8,7))
+gs = gridspec.GridSpec(nrows=2, ncols=2)
 
 plt.style.use('default')
 
@@ -109,7 +111,7 @@ colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # channel
-ax = axes[0][0]
+ax = fig.add_subplot(gs[0,0])
 ax.plot(tt_obs, sed1_obs, color='black', linestyle='-', linewidth=2, marker='.', 
         markersize=10)
 handles = []
@@ -153,7 +155,7 @@ for key in models:
     rmse_sed1[key] = np.sqrt( rmse_sed1[key] / count )
 
 # mangrove edge
-ax = axes[0][1]
+ax = fig.add_subplot(gs[0,1])
 ax.plot(tt_obs, sed2_obs, color='black', linestyle='-', linewidth=2, marker='.', 
         markersize=10)
 handles = []
@@ -196,7 +198,7 @@ for key in models:
     rmse_sed2[key] = np.sqrt( rmse_sed2[key] / count )
 
 # mangrove interior
-ax = axes[1][0]
+ax = fig.add_subplot(gs[1,0])
 ax.plot(tt_obs, sed3_obs, color='black', linestyle='-', linewidth=2, marker='.', 
         markersize=10)
 handles = []
@@ -241,7 +243,7 @@ for key in models:
     rmse_sed3[key] = np.sqrt( rmse_sed3[key] / count )
 
 # marsh edge
-ax = axes[1][1]
+ax = fig.add_subplot(gs[1,1])
 ax.plot(tt_obs, sed4_obs, color='black', linestyle='-', linewidth=2, marker='.', 
         markersize=10)
 handles = []
