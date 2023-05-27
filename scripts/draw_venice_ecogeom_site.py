@@ -17,7 +17,9 @@ from matplotlib.ticker import AutoMinorLocator
 from datetime import date
 
 om_models = ['M12', 'DA07', 'KM12', 'K16']
-min_models = ['F06']#, 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
+min_models = ['F06', 'T03']#, 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
+case_min = 'T03'
+case_om = 'DA07'
 rhoSed = {}
 porSed = {}
 rhoOM = {}
@@ -36,7 +38,7 @@ for key in min_models:
 xmlfile = rdir + 'optpar_omac.xml'
 tree = ET.parse(xmlfile)
 root = tree.getroot()
-for key in min_models:
+for key in om_models:
     findstr = "./group/[@id='" + key + 'MOD' + "']/entry"
     for entry in root.findall(findstr):
         if entry.get('id')=='rhoOM':
@@ -44,14 +46,14 @@ for key in min_models:
 
 om_accr_sim = {}
 min_accr_sim = {}
-om_accr_ensem = {}
-min_accr_ensem = {}
+tot_accr_sim = {}
 bg_sim = {}
 
 day0 = (date(2002,7,1) - date(2002,1,1)).days
 day1 = (date(2002,8,1) - date(2002,1,1)).days
 # read simulation outputs
-filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_F06%M12_466.nc'
+filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_' + case_min + '%' + \
+    case_om + '_466.nc'
 try:
     nc = Dataset(filename,'r')
     x = np.array(nc.variables['x'][:])
@@ -64,6 +66,7 @@ x = 1e-3 * (x - x[index0])
 # extract salt marsh zone
 indices_marsh = pft==2
 x_marsh = x[indices_marsh]   # km
+nmarsh = len(x_marsh)
 
 index_obs = np.argmin(np.abs(x-0.2))
 
@@ -78,36 +81,36 @@ for ii in range(nx):
         dx[ii] = 0.5 * (x[ii+1] - x[ii-1])
 
 for model in min_models:
-    filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_' + model + '%DA07_466.nc'
-    try:
-        nc = Dataset(filename,'r')
-        Esed = 0.5*8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)  # kg/m2/yr
-        Dsed = 0.5*8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)
-    finally:
-        nc.close()
-    minac_sim = (Dsed[index_obs]-Esed[index_obs]) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
-    min_accr_sim[model] = (Dsed[indices_marsh] - Esed[indices_marsh]) / \
-        rhoSed[model] / (1.0-porSed[model]) # mm/yr
-    print('MINAC MODEL: ', model, ', ', minac_sim)
-
-for model in om_models:
-    filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_F06%' + model + '_466.nc'
-    try:
-        nc = Dataset(filename,'r')
-        Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
-        Bmax = 1e3*np.max(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
-        om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
-    finally:
-        nc.close()
-    omac_sim = om_accr[index_obs]
-    print('OMAC MODEL: ', model, ', ', omac_sim)
-    bg_sim[model] = Bag[indices_marsh]
-    print('Bmax: ', np.max(Bag[indices_marsh]))
-    om_accr_sim[model] = om_accr[indices_marsh]
+    for omodel in om_models:
+        filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_' + model + \
+            '%' + omodel + '_466.nc'
+        try:
+            nc = Dataset(filename,'r')
+            Esed = 0.5*8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)  # kg/m2/yr
+            Dsed = 0.5*8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)  # kg/m2/yr
+            Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
+            Bmax = 1e3*np.max(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
+            om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+        finally:
+            nc.close()
+        minac_sim = (Dsed[index_obs]-Esed[index_obs]) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
+        omac_sim = om_accr[index_obs]
+        key = model + '%' + omodel
+        min_accr_sim[key] = (Dsed[indices_marsh] - Esed[indices_marsh]) / \
+            rhoSed[model] / (1.0-porSed[model]) # mm/yr
+        if omodel==case_om:
+            print('MINAC MODEL: ', model, ', ', minac_sim)
+        if model==case_min:
+            print('OMAC MODEL: ', omodel, ', ', omac_sim)
+            print('Bmax: ', np.max(Bag[indices_marsh]))
+        bg_sim[key] = Bag[indices_marsh]
+        om_accr_sim[key] = om_accr[indices_marsh]
+        tot_accr_sim[key] = min_accr_sim[key] + om_accr_sim[key] / 0.44 / \
+            rhoOM[omodel] / (1.0-porSed[model]) # mm/yr
 
 # plotting
 plt.clf()
-fig = plt.figure(figsize=(8,7))
+fig = plt.figure(figsize=(8.5,7))
 
 gs = gridspec.GridSpec(nrows=2, ncols=2)
 
@@ -122,8 +125,8 @@ linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 # comparison of aboveground biomass
 ax = fig.add_subplot(gs[0,0])
 handles = []
-for key in om_models:
-    indx = len(handles)
+for indx, omodel in enumerate(om_models):
+    key = case_min + '%' + omodel
     h, = ax.plot(x_marsh, bg_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
@@ -153,8 +156,8 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 # comparison of simulated OM accretion
 ax = fig.add_subplot(gs[0,1])
 handles = []
-for key in om_models:
-    indx = len(handles)
+for indx, omodel in enumerate(om_models):
+    key = case_min + '%' + omodel
     h, = ax.plot(x_marsh, om_accr_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
@@ -186,8 +189,8 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 # comparison of simulated mineral accretion
 ax = fig.add_subplot(gs[1,0])
 handles = []
-for key in min_models:
-    indx = len(handles)
+for indx, model in enumerate(min_models):
+    key = model + '%' + case_om
     h, = ax.plot(x_marsh, min_accr_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
@@ -215,6 +218,70 @@ ax.text(0.05, 0.9, 'c', transform=ax.transAxes, fontsize=16,
         fontname='Times New Roman', fontweight='bold')
 ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+# ensemble estimates of total accretion
+nmodel = len(min_models) * len(om_models)
+tot_accr_ensemble = np.zeros((nmodel,nmarsh))
+fom_accr_ensemble = np.zeros((nmodel,nmarsh))
+indx = 0
+for model in min_models:
+    for omodel in om_models:
+        key = model + '%' + omodel
+        tot_accr_ensemble[indx] = tot_accr_sim[key]
+        fom_accr_ensemble[indx] = 100 * (1.0 - min_accr_sim[key]/tot_accr_sim[key])
+        indx = indx + 1
+
+ax = fig.add_subplot(gs[1,1])
+ax.plot(x_marsh, np.percentile(tot_accr_ensemble,50,axis=0), color='black', 
+        linestyle='-', linewidth=2, alpha=0.9)
+ax.fill_between(x_marsh, np.percentile(tot_accr_ensemble,25,axis=0), 
+                np.percentile(tot_accr_ensemble,75,axis=0), alpha=0.3, 
+                facecolor='black')
+ax.set_xlim(0, 1.5)
+ax.set_ylim(0, 10)
+ax.xaxis.set_ticks(np.linspace(0,1.5,6))
+ax.yaxis.set_ticks(np.linspace(0,10,6))
+ax.xaxis.set_minor_locator(AutoMinorLocator(3))
+ax.set_xlabel('Distance ($\mathregular{km}$)', fontsize=12, 
+              fontname='Times New Roman', color='black', fontweight='bold')
+ylabel = 'Total accretion ($\mathregular{mm}$ $\mathregular{{yr}^{-1}}$)'
+ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black', 
+              fontweight='bold')
+labels = ax.get_xticklabels() + ax.get_yticklabels()
+[label.set_fontname('Times New Roman') for label in labels]
+[label.set_fontsize(12) for label in labels]
+[label.set_color('black') for label in labels]
+[label.set_fontweight('bold') for label in labels]
+ax.text(0.05, 0.9, 'd', transform=ax.transAxes, fontsize=16,
+        fontname='Times New Roman', fontweight='bold')
+ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=8)
+ax.tick_params(which='minor', direction='in', colors='xkcd:black')
+
+axInv = ax.twinx()
+axInv.plot(x_marsh, np.percentile(fom_accr_ensemble,50,axis=0), color='C3', 
+           linestyle='-', linewidth=2, alpha=0.9)
+axInv.fill_between(x_marsh, np.percentile(fom_accr_ensemble,25,axis=0), 
+                   np.percentile(fom_accr_ensemble,75,axis=0), alpha=0.3, 
+                   facecolor='C3')
+axInv.set_xlim(0, 1.5)
+axInv.set_ylim(0, 100)
+axInv.xaxis.set_ticks(np.arange(0,1.5,6))
+axInv.yaxis.set_ticks(np.linspace(0,100,6))
+axInv.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
+axInv.tick_params(which='minor', direction='in', colors='xkcd:black')
+axInv.tick_params(axis='y', colors='C3')
+axInv.spines['right'].set_color('C3')
+axInv.set_ylabel('Percentage of OM accretion', color='C3', fontsize=11, 
+                 fontname='Times New Roman', fontweight='bold')
+labels = axInv.get_yticklabels()
+[label.set_fontname('Times New Roman') for label in labels]
+[label.set_fontsize(12) for label in labels]
+[label.set_color('C3') for label in labels]
+[label.set_fontweight('bold') for label in labels]
+
+ax.xaxis.set_ticks(np.linspace(0,1.5,6))
+ax.yaxis.set_ticks(np.linspace(0,10,6))
+ax.xaxis.set_minor_locator(AutoMinorLocator(3))
     
 plt.tight_layout()
 fig.savefig('F10.png', dpi=300)
