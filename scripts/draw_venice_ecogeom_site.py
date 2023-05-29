@@ -17,8 +17,8 @@ from matplotlib.ticker import AutoMinorLocator
 from datetime import date
 
 om_models = ['M12', 'DA07', 'KM12', 'K16']
-min_models = ['F06', 'T03']#, 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
-case_min = 'T03'
+min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
+case_min = 'DA07'
 case_om = 'DA07'
 rhoSed = {}
 porSed = {}
@@ -69,6 +69,7 @@ x_marsh = x[indices_marsh]   # km
 nmarsh = len(x_marsh)
 
 index_obs = np.argmin(np.abs(x-0.2))
+print("index_obs: ", index_obs)
 
 nx = np.size(x)
 dx = np.zeros(nx)

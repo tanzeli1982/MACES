@@ -289,8 +289,9 @@ for key in models:
             count = count + 1
     rmse_sed4[key] = np.sqrt( rmse_sed4[key] / count )
     
-print('RMSE ' + casemodel + ': ', rmse_sed1[casemodel], rmse_sed2[casemodel], 
-      rmse_sed3[casemodel], rmse_sed4[casemodel])
+for key in models:
+    print('RMSE ' + key + ': ', rmse_sed1[key], rmse_sed2[key], 
+          rmse_sed3[key], rmse_sed4[key])
 
 plt.tight_layout()
 fig.savefig('F9.png', dpi=300)
