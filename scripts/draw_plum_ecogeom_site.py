@@ -92,11 +92,11 @@ for model in min_models:
         Dsed = 8.64e7 * np.sum(np.array(nc.variables['Dsed'][:]),axis=0)
     finally:
         nc.close()
-    minac_sim_LAC = 0.5 * (Dsed[index_LACx] - Esed[index_LACx]) / \
+    minac_sim_LAC = (Dsed[index_LACx] - Esed[index_LACx]) / \
         rhoSed[model] / (1.0-porSed[model]) # mm/yr
-    minac_sim_LPC = 0.5 * (Dsed[index_LPCx] - Esed[index_LPCx]) / \
+    minac_sim_LPC = (Dsed[index_LPCx] - Esed[index_LPCx]) / \
         rhoSed[model] / (1.0-porSed[model]) # mm/yr
-    minac_sim_MRS = 0.5 * (Dsed[index_MRSx] - Esed[index_MRSx]) / \
+    minac_sim_MRS = (Dsed[index_MRSx] - Esed[index_MRSx]) / \
         rhoSed[model] / (1.0-porSed[model]) # mm/yr
     minac_mean_sim[model] = np.array([minac_sim_MRS, minac_sim_LAC, minac_sim_LPC])
     print(model, ': ', minac_mean_sim[model])
@@ -117,7 +117,7 @@ for model in om_models:
     try:
         nc = Dataset(filename,'r')
         Bag = 1e3 * np.array(nc.variables['Bag'][:])    # gC/m2
-        om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+        om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
     finally:
         nc.close()
     omac_sim = np.sum(om_accr[indice_obs]*dx[indice_obs]) / np.sum(dx[indice_obs])

@@ -18,7 +18,7 @@ from datetime import date
 
 om_models = ['M12', 'DA07', 'KM12', 'K16']
 min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
-case_min = 'DA07'
+case_min = 'F06'
 case_om = 'DA07'
 rhoSed = {}
 porSed = {}
@@ -68,18 +68,15 @@ indices_marsh = pft==2
 x_marsh = x[indices_marsh]   # km
 nmarsh = len(x_marsh)
 
-index_obs = np.argmin(np.abs(x-0.2))
-print("index_obs: ", index_obs)
 
-nx = np.size(x)
-dx = np.zeros(nx)
-for ii in range(nx):
-    if ii==0:
-        dx[ii] = 0.5 * (x[ii+1] - x[ii])
-    elif ii==nx-1:
-        dx[ii] = 0.5 * (x[ii] - x[ii-1])
-    else:
-        dx[ii] = 0.5 * (x[ii+1] - x[ii-1])
+x_ref = x - 0.2
+x_ref[x_ref<0] = 1e20
+index_obs = []
+index_obs.append(np.argmin(x_ref))
+x_ref = x - 0.2
+x_ref[x_ref>=0] = -1e20
+index_obs.append(np.argmax(x_ref))
+print("index_obs: ", index_obs)
 
 for model in min_models:
     for omodel in om_models:
@@ -87,15 +84,16 @@ for model in min_models:
             '%' + omodel + '_466.nc'
         try:
             nc = Dataset(filename,'r')
-            Esed = 0.5*8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)  # kg/m2/yr
-            Dsed = 0.5*8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)  # kg/m2/yr
+            Esed = 8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)  # kg/m2/yr
+            Dsed = 8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)  # kg/m2/yr
             Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
             Bmax = 1e3*np.max(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
-            om_accr = 0.5*8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+            om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
         finally:
             nc.close()
-        minac_sim = (Dsed[index_obs]-Esed[index_obs]) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
-        omac_sim = om_accr[index_obs]
+        minac_sim = (np.interp(0.2, x, Dsed) - np.interp(0.2, x, Esed)) / \
+            rhoSed[model] / (1.0-porSed[model]) # mm/yr
+        omac_sim = np.interp(0.2, x, om_accr)
         key = model + '%' + omodel
         min_accr_sim[key] = (Dsed[indices_marsh] - Esed[indices_marsh]) / \
             rhoSed[model] / (1.0-porSed[model]) # mm/yr
@@ -195,7 +193,7 @@ for indx, model in enumerate(min_models):
     h, = ax.plot(x_marsh, min_accr_sim[key], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
-ax.plot(x[index_obs], 3.54, color='black', marker='*', mec='black', 
+ax.plot(0.2, 3.54, color='black', marker='*', mec='black', 
         mfc='black', ms=15, alpha=1.0)
 legend = ax.legend(handles, min_models, numpoints=1, loc="upper right", 
                    prop={'family':'Times New Roman', 'size':'large', 'weight': 'bold'}, 
