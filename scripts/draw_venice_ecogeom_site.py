@@ -284,5 +284,5 @@ ax.xaxis.set_minor_locator(AutoMinorLocator(3))
     
 plt.tight_layout()
 fig.savefig('F10.png', dpi=300)
-#fig.savefig('F10.jpg', dpi=600)
+fig.savefig('F10.jpg', dpi=600)
 plt.show()

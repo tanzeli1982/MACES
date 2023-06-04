@@ -17,10 +17,10 @@ from netCDF4 import Dataset
 from datetime import date
 
 # read sediment density and porosity of different mineral accretion models
-min_models = ['F06']#, 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
+min_models = ['F06', 'T03']#, 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
-case_min = 'F06'
-case_om = 'DA07'
+case_min = 'T03'
+case_om = 'M12'
 
 rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Drafts/Outputs/HunterEstuary/'
 xmlfile = rdir + 'optpar_minac.xml'
@@ -67,7 +67,6 @@ finally:
 index0 = np.argmin(np.abs(zh))
 x = x - x[index0]
 nx = len(x)
-
 
 zh_ref = zh - site_dem
 zh_ref[zh_ref<0] = 1e20
@@ -131,11 +130,11 @@ for indx, omodel in enumerate(om_models):
 legend = ax.legend(handles, om_models, numpoints=1, loc='upper center', 
                    prop={'family':'Times New Roman', 'size':'large', 'weight': 'bold'}, 
                    framealpha=0.0)
-ax.set_xlim(0, 100)
-ax.set_ylim(500, 2500)
-ax.xaxis.set_ticks(np.linspace(0,100,6))
-ax.yaxis.set_ticks(np.linspace(500,2500,6))
-ax.xaxis.set_minor_locator(AutoMinorLocator(3))
+ax.set_xlim(0, 80)
+ax.set_ylim(600, 1600)
+ax.xaxis.set_ticks(np.linspace(0,80,5))
+ax.yaxis.set_ticks(np.linspace(600,1600,6))
+ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
               fontname='Times New Roman', color='black', fontweight='bold')
 ylabel = 'Aboveground biomass ($\mathregular{g}$ $\mathregular{m^{-2}}$)'
@@ -164,11 +163,11 @@ legend = ax.legend(handles, om_models, numpoints=1, loc='upper center',
                    framealpha=0.0)
 ax.plot(np.interp(site_dem, zh, x), 105, color='black', marker='*', mec='black', 
         mfc='black', ms=15, alpha=1.0)
-ax.set_xlim(0, 100)
-ax.set_ylim(0, 300)
-ax.xaxis.set_ticks(np.linspace(0,100,6))
-ax.yaxis.set_ticks(np.linspace(0,300,7))
-ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax.set_xlim(0, 80)
+ax.set_ylim(50, 250)
+ax.xaxis.set_ticks(np.linspace(0,80,5))
+ax.yaxis.set_ticks(np.linspace(50,250,5))
+ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
               fontname='Times New Roman', color='black', fontweight='bold')
 ylabel = 'OM accretion ($\mathregular{gC}$ $\mathregular{m^{-2}}$ $\mathregular{yr^{-1}}$)'
@@ -197,11 +196,11 @@ ax.plot(np.interp(site_dem, zh, x), 3.66, color='black', marker='*', mec='black'
 legend = ax.legend(handles, min_models, numpoints=1, loc="upper right", 
                    prop={'family':'Times New Roman', 'size':'large', 'weight': 'bold'}, 
                    framealpha=0.0, ncol=2)
-ax.set_xlim(0, 100)
+ax.set_xlim(0, 80)
 ax.set_ylim(0, 50)
-ax.xaxis.set_ticks(np.linspace(0,100,6))
+ax.xaxis.set_ticks(np.linspace(0,80,5))
 ax.yaxis.set_ticks(np.linspace(0,50,6))
-ax.xaxis.set_minor_locator(AutoMinorLocator(3))
+ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
               fontname='Times New Roman', color='black', fontweight='bold')
 ylabel = 'Mineral accretion ($\mathregular{mm}$ $\mathregular{{yr}^{-1}}$)'
@@ -235,11 +234,11 @@ ax.plot(x, np.percentile(tot_accr_ensemble,50,axis=0), color='black',
 ax.fill_between(x, np.percentile(tot_accr_ensemble,25,axis=0), 
                 np.percentile(tot_accr_ensemble,75,axis=0), alpha=0.3, 
                 facecolor='black')
-ax.set_xlim(0, 100)
+ax.set_xlim(0, 80)
 ax.set_ylim(0, 50)
-ax.xaxis.set_ticks(np.linspace(0,100,6))
+ax.xaxis.set_ticks(np.linspace(0,80,5))
 ax.yaxis.set_ticks(np.linspace(0,50,6))
-ax.xaxis.set_minor_locator(AutoMinorLocator(3))
+ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12, 
               fontname='Times New Roman', color='black', fontweight='bold')
 ylabel = 'Total accretion ($\mathregular{mm}$ $\mathregular{{yr}^{-1}}$)'
@@ -261,10 +260,10 @@ axInv.plot(x, np.percentile(fom_accr_ensemble,50,axis=0), color='C3',
 axInv.fill_between(x, np.percentile(fom_accr_ensemble,25,axis=0), 
                    np.percentile(fom_accr_ensemble,75,axis=0), alpha=0.3, 
                    facecolor='C3')
-axInv.set_xlim(0, 100)
-axInv.set_ylim(0, 50)
-axInv.xaxis.set_ticks(np.arange(0,100,6))
-axInv.yaxis.set_ticks(np.linspace(0,50,6))
+axInv.set_xlim(0, 80)
+axInv.set_ylim(0, 100)
+axInv.xaxis.set_ticks(np.arange(0,80,5))
+axInv.yaxis.set_ticks(np.linspace(0,100,6))
 axInv.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad=4)
 axInv.tick_params(which='minor', direction='in', colors='xkcd:black')
 axInv.tick_params(axis='y', colors='C3')
@@ -277,9 +276,9 @@ labels = axInv.get_yticklabels()
 [label.set_color('C3') for label in labels]
 [label.set_fontweight('bold') for label in labels]
 
-ax.xaxis.set_ticks(np.linspace(0,100,6))
+ax.xaxis.set_ticks(np.linspace(0,80,5))
 ax.yaxis.set_ticks(np.linspace(0,50,6))
-ax.xaxis.set_minor_locator(AutoMinorLocator(3))
+ax.xaxis.set_minor_locator(AutoMinorLocator(4))
     
 plt.tight_layout()
 fig.savefig('F12.png', dpi=300)
