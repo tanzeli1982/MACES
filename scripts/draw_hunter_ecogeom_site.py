@@ -19,7 +19,7 @@ from datetime import date
 # read sediment density and porosity of different mineral accretion models
 min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
-case_min = 'DA07'
+case_min = 'M12'
 case_om = 'M12'
 
 rdir = '/Users/tanz151/Documents/Projects/TAI_BGC/Drafts/Outputs/HunterEstuary/'
@@ -282,5 +282,5 @@ ax.xaxis.set_minor_locator(AutoMinorLocator(4))
     
 plt.tight_layout()
 fig.savefig('F12.png', dpi=300)
-#fig.savefig('F12.jpg', dpi=600)
+fig.savefig('F12.jpg', dpi=600)
 plt.show()
