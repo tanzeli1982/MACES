@@ -113,6 +113,7 @@ minac_std_obs_MRS = 0.9     # mm/yr
 
 minac_mean_obs = np.array([minac_mean_obs_MRS, minac_mean_obs_LAC, minac_mean_obs_LPC])
 minac_std_obs = np.array([minac_std_obs_MRS, minac_std_obs_LAC, minac_std_obs_LPC])
+print('MINAC obs: ', minac_mean_obs)
  
 Bag_sim_mean_LAC = {}          
 # read Law's Point marsh biomass
