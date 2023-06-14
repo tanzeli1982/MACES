@@ -301,9 +301,10 @@ ax.set_xlim(0, 11)
 ax.set_ylim(0, 1000)
 ax.xaxis.set_ticks(np.arange(1,11,1))
 ax.yaxis.set_ticks(np.linspace(0,1000,6))
-ax.set_xticklabels(['17/5','17/6','17/7','17/8','17/10','18/5','18/6','18/7', 
-                    '18/8','18/10'])
-#ax.set_xlabel('Time', fontsize=11, fontname='Times New Roman', color='black')
+ax.set_xticklabels(['5/2017','6/2017','7/2017','8/2017','10/2017','5/2018',
+                    '6/2018','7/2018','8/2018','10/2018'])
+ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black', 
+              fontweight='bold')
 ylabel = 'Aboveground biomass ($\mathregular{g}$ $\mathregular{{m}^{-2}}$)'
 ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black', 
               fontweight='bold')
