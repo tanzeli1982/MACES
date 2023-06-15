@@ -18,7 +18,7 @@ from netCDF4 import Dataset
 from datetime import date
 
 # read sediment density and porosity of different mineral accretion models
-min_models = ['M12']#['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
+min_models = ['F06', 'T03', 'KM12', 'M12']#, 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
 case_min = 'M12'
 case_om = 'M12'
@@ -237,6 +237,8 @@ ax.set_ylim(0, 1800)
 ax.xaxis.set_ticks(np.arange(1,4,1))
 ax.yaxis.set_ticks(np.linspace(0,1800,7))
 ax.set_xticklabels(['0–0.5 m','0.5–1 m','1–1.5 m'])
+ax.set_xlabel('Elevation', fontsize=12, fontname='Times New Roman', 
+              color='black', fontweight='bold')
 ylabel = 'Aboveground biomass ($\mathregular{g}$ $\mathregular{{m}^{-2}}$)'
 ax.set_ylabel(ylabel, fontsize=12, fontname='Times New Roman', color='black', 
               fontweight='bold')
