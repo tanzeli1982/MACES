@@ -18,10 +18,10 @@ from netCDF4 import Dataset
 from datetime import date
 
 # read sediment density and porosity of different mineral accretion models
-min_models = ['F06', 'T03', 'KM12', 'M12']#, 'F07', 'VDK05', 'DA07']
+min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05']#, 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
-case_min = 'M12'
-case_om = 'M12'
+case_min = 'F07'
+case_om = 'KM12'
 
 rhoSed = {}
 porSed = {}
@@ -335,13 +335,13 @@ hbar = ax.bar([x_MRS,x_LAC,x_LPC], minac_mean_obs, yerr=minac_std_obs, align='ce
 #            ecolor='black', elinewidth=1, capsize=5, alpha=1.0)
 legend = ax.legend(handles, min_models, numpoints=1, loc="upper right",
                    prop={'family':'Times New Roman', 'size':'large', 'weight': 'bold'},
-                   framealpha=0.0, ncol=2)
-ax.set_xlim(-1, 200)
-ax.set_ylim(0, 20)
+                   framealpha=0.0, ncol=1)
+ax.set_xlim(-0.8, 200)
+ax.set_ylim(0, 12)
 ax.xaxis.set_ticks(np.linspace(0,200,5))
-ax.yaxis.set_ticks(np.linspace(0,20,5))
+ax.yaxis.set_ticks(np.linspace(0,12,5))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-ax.text(x_MRS, minac_mean_obs[0]+1.5, 'MRS', fontsize=12, 
+ax.text(x_MRS+2, minac_mean_obs[0]+0.5, 'MRS', fontsize=12, 
         fontname='Times New Roman', fontweight='bold', alpha=0.8)
 ax.text(x_LAC, minac_mean_obs[1]+0.5, 'LAC', fontsize=12, 
         fontname='Times New Roman', fontweight='bold', alpha=0.8)
@@ -381,9 +381,9 @@ ax.fill_between(x, np.percentile(tot_accr_ensemble,25,axis=0),
                 np.percentile(tot_accr_ensemble,75,axis=0), alpha=0.3,
                 facecolor='black')
 ax.set_xlim(0, 200)
-ax.set_ylim(0, 20)
+ax.set_ylim(0, 12)
 ax.xaxis.set_ticks(np.linspace(0,200,5))
-ax.yaxis.set_ticks(np.linspace(0,20,5))
+ax.yaxis.set_ticks(np.linspace(0,12,5))
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12,
               fontname='Times New Roman', color='black', fontweight='bold')
@@ -423,7 +423,7 @@ labels = axInv.get_yticklabels()
 [label.set_fontweight('bold') for label in labels]
 
 ax.xaxis.set_ticks(np.linspace(0,200,5))
-ax.yaxis.set_ticks(np.linspace(0,20,5))
+ax.yaxis.set_ticks(np.linspace(0,12,5))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 
 plt.tight_layout()
