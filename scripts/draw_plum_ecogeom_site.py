@@ -18,10 +18,10 @@ from netCDF4 import Dataset
 from datetime import date
 
 # read sediment density and porosity of different mineral accretion models
-min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05']#, 'DA07']
+min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
 case_min = 'F07'
-case_om = 'KM12'
+case_om = 'M12'
 
 rhoSed = {}
 porSed = {}
