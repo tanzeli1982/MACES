@@ -20,7 +20,7 @@ from datetime import date
 # read sediment density and porosity of different mineral accretion models
 min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
 om_models = ['M12', 'DA07', 'KM12', 'K16']
-case_min = 'F07'
+case_min = 'DA07'
 case_om = 'M12'
 
 rhoSed = {}
@@ -74,15 +74,16 @@ nx = len(x)
 om_accr_sim = {}
 min_accr_sim = {}
 tot_accr_sim = {}
+nyear = 2.0
 for model in min_models:
     for omodel in om_models:
         filename = rdir + 'maces_ecogeom_2017-01-01_2019-01-01_' + model + \
             '%' + omodel + '_4097.nc'
         try:
             nc = Dataset(filename,'r')
-            Esed = 8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)  # kg/m2/yr
-            Dsed = 8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)  # kg/m2/yr
-            om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+            Esed = 8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)/nyear  # g/m2/yr
+            Dsed = 8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)/nyear  # g/m2/yr
+            om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)/nyear  # g/m2/yr
         finally:
             nc.close()
         minac_sim_LAC = (np.interp(x_LAC, x, Dsed) - np.interp(x_LAC, x, Esed)) / \
@@ -264,9 +265,9 @@ legend = ax.legend(handles, om_models, numpoints=1, loc='upper center',
                    prop={'family':'Times New Roman', 'size':'large', 'weight': 'bold'},
                    framealpha=0.0)
 ax.set_xlim(0, 200)
-ax.set_ylim(50, 250)
+ax.set_ylim(0, 200)
 ax.xaxis.set_ticks(np.linspace(0,200,5))
-ax.yaxis.set_ticks(np.linspace(50,250,5))
+ax.yaxis.set_ticks(np.linspace(0,200,5))
 ax.xaxis.set_minor_locator(AutoMinorLocator(5))
 ax.set_xlabel('Distance ($\mathregular{m}$)', fontsize=12,
               fontname='Times New Roman', color='black', fontweight='bold')

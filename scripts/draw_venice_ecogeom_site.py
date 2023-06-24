@@ -78,17 +78,18 @@ x_ref[x_ref>=0] = -1e20
 index_obs.append(np.argmax(x_ref))
 print("index_obs: ", index_obs)
 
+nyear = 2.0
 for model in min_models:
     for omodel in om_models:
         filename = rdir + 'maces_ecogeom_2002-01-01_2004-01-01_' + model + \
             '%' + omodel + '_466.nc'
         try:
             nc = Dataset(filename,'r')
-            Esed = 8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)  # kg/m2/yr
-            Dsed = 8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)  # kg/m2/yr
+            Esed = 8.64e7*np.sum(np.array(nc.variables['Esed'][:]),axis=0)/nyear  # g/m2/yr
+            Dsed = 8.64e7*np.sum(np.array(nc.variables['Dsed'][:]),axis=0)/nyear  # g/m2/yr
             Bag = 1e3*np.mean(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
             Bmax = 1e3*np.max(np.array(nc.variables['Bag'][day0:day1,:]),axis=0)    # g/m2
-            om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)  # g/m2/yr
+            om_accr = 8.64e7*np.sum(np.array(nc.variables['DepOM'][:]),axis=0)/nyear  # g/m2/yr
         finally:
             nc.close()
         minac_sim = (np.interp(0.2, x, Dsed) - np.interp(0.2, x, Esed)) / \
