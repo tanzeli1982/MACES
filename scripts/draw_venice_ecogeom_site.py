@@ -16,8 +16,8 @@ from netCDF4 import Dataset
 from matplotlib.ticker import AutoMinorLocator
 from datetime import date
 
-om_models = ['M12', 'DA07', 'KM12', 'K16']
 min_models = ['F06', 'T03', 'KM12', 'M12', 'F07', 'VDK05', 'DA07']
+om_models = ['M12', 'DA07', 'KM12', 'K16']
 case_min = 'F06'
 case_om = 'DA07'
 rhoSed = {}
