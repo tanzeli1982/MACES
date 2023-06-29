@@ -232,11 +232,16 @@ for model in min_models:
         indx = indx + 1
 
 ax = fig.add_subplot(gs[1,1])
-ax.plot(x_marsh, np.percentile(tot_accr_ensemble,50,axis=0), color='black', 
+#ax.plot(x_marsh, np.percentile(tot_accr_ensemble,50,axis=0), color='black', 
+#        linestyle='-', linewidth=2, alpha=0.9)
+#ax.fill_between(x_marsh, np.percentile(tot_accr_ensemble,25,axis=0), 
+#                np.percentile(tot_accr_ensemble,75,axis=0), alpha=0.3, 
+#                facecolor='black')
+ax.plot(x_marsh, np.mean(tot_accr_ensemble,axis=0), color='black', 
         linestyle='-', linewidth=2, alpha=0.9)
-ax.fill_between(x_marsh, np.percentile(tot_accr_ensemble,25,axis=0), 
-                np.percentile(tot_accr_ensemble,75,axis=0), alpha=0.3, 
-                facecolor='black')
+ax.fill_between(x_marsh, np.mean(tot_accr_ensemble,axis=0)-np.std(tot_accr_ensemble,axis=0), 
+                np.mean(tot_accr_ensemble,axis=0)+np.std(tot_accr_ensemble,axis=0), 
+                alpha=0.3, facecolor='black')
 ax.set_xlim(0, 1.5)
 ax.set_ylim(0, 10)
 ax.xaxis.set_ticks(np.linspace(0,1.5,6))
@@ -258,11 +263,16 @@ ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 axInv = ax.twinx()
-axInv.plot(x_marsh, np.percentile(fom_accr_ensemble,50,axis=0), color='C3', 
+#axInv.plot(x_marsh, np.percentile(fom_accr_ensemble,50,axis=0), color='C3', 
+#           linestyle='-', linewidth=2, alpha=0.9)
+#axInv.fill_between(x_marsh, np.percentile(fom_accr_ensemble,25,axis=0), 
+#                   np.percentile(fom_accr_ensemble,75,axis=0), alpha=0.3, 
+#                   facecolor='C3')
+axInv.plot(x_marsh, np.mean(fom_accr_ensemble,axis=0), color='C3', 
            linestyle='-', linewidth=2, alpha=0.9)
-axInv.fill_between(x_marsh, np.percentile(fom_accr_ensemble,25,axis=0), 
-                   np.percentile(fom_accr_ensemble,75,axis=0), alpha=0.3, 
-                   facecolor='C3')
+axInv.fill_between(x_marsh, np.mean(fom_accr_ensemble,axis=0)-np.std(fom_accr_ensemble,axis=0), 
+                   np.mean(fom_accr_ensemble,axis=0)+np.std(fom_accr_ensemble,axis=0), 
+                   alpha=0.3, facecolor='C3')
 axInv.set_xlim(0, 1.5)
 axInv.set_ylim(0, 100)
 axInv.xaxis.set_ticks(np.arange(0,1.5,6))
