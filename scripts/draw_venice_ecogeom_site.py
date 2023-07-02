@@ -96,15 +96,14 @@ for model in min_models:
             rhoSed[model] / (1.0-porSed[model]) # mm/yr
         omac_sim = np.interp(0.2, x, om_accr)
         key = model + '%' + omodel
-        min_accr_sim[key] = (Dsed[indices_marsh] - Esed[indices_marsh]) / \
-            rhoSed[model] / (1.0-porSed[model]) # mm/yr
+        min_accr_sim[key] = (Dsed - Esed) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
         if omodel==case_om:
             print('MINAC MODEL: ', model, ', ', minac_sim)
         if model==case_min:
             print('OMAC MODEL: ', omodel, ', ', omac_sim)
             print('Bmax: ', np.max(Bag[indices_marsh]))
-        bg_sim[key] = Bag[indices_marsh]
-        om_accr_sim[key] = om_accr[indices_marsh]
+        bg_sim[key] = Bag
+        om_accr_sim[key] = om_accr
         tot_accr_sim[key] = min_accr_sim[key] + om_accr_sim[key] / 0.44 / \
             rhoOM[omodel] / (1.0-porSed[model]) # mm/yr
 
@@ -127,7 +126,7 @@ ax = fig.add_subplot(gs[0,0])
 handles = []
 for indx, omodel in enumerate(om_models):
     key = case_min + '%' + omodel
-    h, = ax.plot(x_marsh, bg_sim[key], color=colors[indx], 
+    h, = ax.plot(x_marsh, bg_sim[key][indices_marsh], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 legend = ax.legend(handles, om_models, numpoints=1, loc='upper center', 
@@ -158,7 +157,7 @@ ax = fig.add_subplot(gs[0,1])
 handles = []
 for indx, omodel in enumerate(om_models):
     key = case_min + '%' + omodel
-    h, = ax.plot(x_marsh, om_accr_sim[key], color=colors[indx], 
+    h, = ax.plot(x_marsh, om_accr_sim[key][indices_marsh], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 legend = ax.legend(handles, om_models, numpoints=1, loc='upper center', 
@@ -191,7 +190,7 @@ ax = fig.add_subplot(gs[1,0])
 handles = []
 for indx, model in enumerate(min_models):
     key = model + '%' + case_om
-    h, = ax.plot(x_marsh, min_accr_sim[key], color=colors[indx], 
+    h, = ax.plot(x_marsh, min_accr_sim[key][indices_marsh], color=colors[indx], 
                  linestyle=linestyles[indx], linewidth=2, alpha=1)
     handles.append(h)
 ax.plot(0.2, 3.54, color='black', marker='*', mec='black', 
@@ -227,8 +226,9 @@ indx = 0
 for model in min_models:
     for omodel in om_models:
         key = model + '%' + omodel
-        tot_accr_ensemble[indx] = tot_accr_sim[key]
-        fom_accr_ensemble[indx] = 100 * (1.0 - min_accr_sim[key]/tot_accr_sim[key])
+        tot_accr_ensemble[indx] = tot_accr_sim[key][indices_marsh]
+        fom_accr_ensemble[indx] = 100 * (1.0 - min_accr_sim[key][indices_marsh]/ \
+                         tot_accr_sim[key][indices_marsh])
         indx = indx + 1
 
 ax = fig.add_subplot(gs[1,1])
