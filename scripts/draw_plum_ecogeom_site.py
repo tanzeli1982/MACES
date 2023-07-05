@@ -372,7 +372,9 @@ for model in min_models:
     for omodel in om_models:
         key = model + '%' + omodel
         tot_accr_ensemble[indx] = tot_accr_sim[key]
-        fom_accr_ensemble[indx] = 100 * (1.0 - min_accr_sim[key]/tot_accr_sim[key])
+        pos_mask = tot_accr_sim[key]>0
+        fom_accr_ensemble[indx][pos_mask] = 100 * (1.0 - min_accr_sim[key][pos_mask]/tot_accr_sim[key][pos_mask])
+        fom_accr_ensemble[indx][np.logical_not(pos_mask)] = 100
         indx = indx + 1
 
 ax = fig.add_subplot(gs[2,1])
