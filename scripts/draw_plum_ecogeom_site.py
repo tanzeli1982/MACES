@@ -74,6 +74,7 @@ nx = len(x)
 om_accr_sim = {}
 min_accr_sim = {}
 tot_accr_sim = {}
+Esed_sim = {}
 nyear = 2.0
 for model in min_models:
     for omodel in om_models:
@@ -94,6 +95,7 @@ for model in min_models:
             rhoSed[model] / (1.0-porSed[model]) # mm/yr
         key = model + '%' + omodel
         min_accr_sim[key] = (Dsed - Esed) / rhoSed[model] / (1.0-porSed[model]) # mm/yr
+        Esed_sim[key] = Esed / rhoSed[model] / (1.0-porSed[model])
         if omodel==case_om:
             print('MINAC MODEL: ', model, ', ', minac_sim_MRS, minac_sim_LAC, minac_sim_LPC)
         om_accr_sim[key] = om_accr
