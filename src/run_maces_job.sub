@@ -2,25 +2,21 @@
 
 #SBATCH  --job-name=maces
 #SBATCH  --nodes=1
-#SBATCH  --ntasks-per-node=24
+##SBATCH  --ntasks-per-node=40
 #SBATCH  --exclusive
-#SBATCH  --time=03:00:00
+#SBATCH  --time=02:00:00
 #SBATCH  --partition=short
-#SBATCH -A  taim 
+#SBATCH -A  esmd 
 #SBATCH --mail-type=END
 #SBATCH --mail-user=zeli.tan@pnnl.gov
 #SBATCH --output=slurm.out
 #SBATCH --error=slurm.out
 
-module load intel/15.0.1
-module load openmpi/1.8.3 
-module load netcdf/4.3.2
-module load git
+module purge
+module load intel netcdf/4.7.4 mvapich2
 
-export PATH=$HOME/.conda/envs/work_env/bin:$PATH
+source activate /qfs/people/tanz151/.conda/envs/work_env
 
-source activate work_env
+srun -n 1 python MACES_main.py -f namelist.maces.hunter_hydro.xml 
 
-mpiexec -np 24 python MACES_main.py -f namelist.maces.xml 
-
-source deactivate
+conda deactivate

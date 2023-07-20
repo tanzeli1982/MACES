@@ -131,25 +131,23 @@ class KM12MOD(MACMODSuper):
         """
         pft = inputs['pft']     # platform pft
         Css0 = inputs['refCss'] # reference sediment conc (kg/m3)
-        tau = inputs['tau']     # bottom shear stress (Pa)
         Bag = inputs['Bag']     # aboveground biomass (kg/m2)
         U = inputs['U']         # flow velocity (m/s)
         Dsed = inputs['Dsed']   # sediment deposition (kg/m2/s)
         
         Dsed[:] = 0.0
-        ws = self.settling_velocity(pft, tau, Bag, U)
+        ws = self.settling_velocity(pft, 1e3*Bag, U)
         indice = np.logical_and(pft>1,pft<=9)
         Dsed[indice] = ws[indice] * Css0
         return Dsed
     
-    def settling_velocity(self, pft, tau, Bag, U):
+    def settling_velocity(self, pft, Bag, U):
         """"Calculate effective sediment settling velocity (Morris et al., 2012).
         Arguments:
             d50 : sediment median diameter (m)
             Rous : sediment density (kg/m3)
             pft : platform pft
-            tau : bottom shear stress (Pa)
-            Bag : aboveground biomass (kg/m2)
+            Bag : aboveground biomass (gC/m2)
             U : tide flow velocity (m/s)
         Returns: sediment settling velocity (m s-1)
         """
@@ -220,7 +218,7 @@ class M12MOD(MACMODSuper):
         """
         E0 = self.m_params['E0']    # the reference erosion rate (mm/yr)
         tauE_cr = self.m_params['tauE_cr']  # critical shear stress (Pa)
-        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
+        Rous = 2650.0               # sediment density (kg/m3)
         tau = inputs['tau']         # bottom shear stress (Pa)
         pft = inputs['pft']         # platform pft
         Esed = inputs['Esed']       # sediment erosion (kg/m2/s)
@@ -246,7 +244,7 @@ class M12MOD(MACMODSuper):
         
         ws = self.settling_velocity(tau)
         Dsed[:] = 0.0
-        indice = np.logical_and(np.logical_and(pft>1,pft<=9), Css>Css0)
+        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), Css>Css0)
         Dsed[indice] = np.maximum( Css[indice]*(ws[indice]+ks[pft[indice]]* \
             Bag[indice]), 0.0 )
         return Dsed
@@ -259,11 +257,12 @@ class M12MOD(MACMODSuper):
 #        """
 #        alphaSG = self.m_params['alphaSG']  # m2/yr (default: 3.65)
 #        betaSG = self.m_params['betaSG']    # m4/yr (default: 0.0019)
-#        Rous = self.m_params['rhoSed']      # sediment density (kg/m3)
+#        Rous = 2650.0               # sediment density (kg/m3)
 #        Lbed = inputs['Lbed']   # sediment bed load (kg/m2/s)
 #        pft = inputs['pft']     # platform pft
 #        Bbg = inputs['Bbg']     # belowground biomass (kg/m2)
 #        S = inputs['S']         # platform slope (m/m)
+#
 #        Lbed[:] = 0.0
 #        Nx = len(pft)
 #        for ii in range(Nx):
@@ -302,6 +301,7 @@ class F07MOD(MACMODSuper):
         E0 = self.m_params['E0']    # reference erosion rate (kg/m2/s/Pa)
         tauE_cr = self.m_params['tauE_cr']  # critical shear stress (Pa)
         gamma = self.m_params['gamma']  # the increase of critical shear stress with depth
+        d50 = self.m_params['d50']  # sediment median diameter (m)
         tau = inputs['tau']         # bottom shear stress (Pa)
         dtau = inputs['dtau']       # bottom shear stress diff (Pa)
         dt = inputs['dt']           # time step (s)
@@ -309,11 +309,13 @@ class F07MOD(MACMODSuper):
         Esed = inputs['Esed']       # sediment erosion (kg/m2/s)
         
         Esed[:] = 0.0
-        indice = np.logical_and( tau>tauE_cr, pft==1 )
-        Esed[indice] = E0*(tau[indice]-tauE_cr)**1.5
-        indice = pft==1
-        Esed[indice] = Esed[indice] + \
-            np.maximum(E0*(dtau[indice]-gamma*Esed[indice]*dt), 0.0)
+        if d50>6.25e-5: 
+            indice = np.logical_and( tau>tauE_cr, pft==1 )
+            Esed[indice] = E0*(tau[indice]-tauE_cr)**1.5
+        else:
+            indice = pft==1
+            Esed[indice] = Esed[indice] + np.maximum(E0*(dtau[indice]- \
+                gamma*Esed[indice]*dt), 0.0)
         return Esed
         
     def mineral_deposition(self, inputs):
@@ -324,6 +326,7 @@ class F07MOD(MACMODSuper):
         """
         tauD_cr = self.m_params['tauD_cr']  # critical shear stress (Pa)
         KD = self.m_params['KD']    # cohesive sed settling rate (m5 s-1 kg-4/3)
+        d50 = self.m_params['d50']  # sediment median diameter (m)
         Css = inputs['Css']     # sediment conc (kg/m3)
         tau = inputs['tau']     # bottom shear stress (Pa)
         Css0 = inputs['refCss'] # reference sediment conc (kg/m3)
@@ -331,9 +334,14 @@ class F07MOD(MACMODSuper):
         Dsed = inputs['Dsed']   # sediment deposition (kg/m2/s)
         
         Dsed[:] = 0.0
-        indice = np.logical_and(np.logical_and(pft>1,pft<=9), 
-                                np.logical_and(Css>Css0,tau<tauD_cr))
-        Dsed[indice] = KD*Css[indice]**(7/3)*(1-tau[indice]/tauD_cr)
+        if d50>6.25e-5:
+            ws = self.settling_velocity(tau)
+            indice = np.logical_and(np.logical_and(pft>=1,pft<=9), Css>Css0)
+            Dsed[indice] = np.maximum( Css[indice]*ws[indice], 0.0 )  
+        else:
+            indice = np.logical_and(np.logical_and(pft>=1,pft<=9), 
+                                    np.logical_and(Css>Css0,tau<tauD_cr))
+            Dsed[indice] = KD*Css[indice]**(7./3.)*(tauD_cr-tau[indice])/0.1
         return Dsed
     
 ###############################################################################
@@ -361,7 +369,7 @@ class VDK05MOD(MACMODSuper):
         ds = self.m_params['ds']        # a conversion coefficient for wave erosion (yr-1)
         aNv = self.m_params['aNv']      # sediment erosion increase rate by plant (kg/m2)
         bNv = self.m_params['bNv']      # sediment erosion increase rate by plant (kg/m2)
-        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
+        Rous = 2650.0               # sediment density (kg/m3)
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         tau = inputs['tau']         # bottom shear stress (Pa)
         h = inputs['h']             # water depth (m)
@@ -379,7 +387,7 @@ class VDK05MOD(MACMODSuper):
             # wave driven erosion
             indice = np.logical_and(np.logical_and(pft>=1, pft<=9), h>utils.TOL)
             Esed[indice] = Esed[indice] + ds/3.1536e7 * (bNv/(bNv+Bag[indice])) * \
-                S[indice]
+                np.maximum(S[indice],0.0)
         return Esed
         
     def mineral_deposition(self, inputs):
@@ -398,7 +406,7 @@ class VDK05MOD(MACMODSuper):
         
         Dsed[:] = 0.0
         indice = np.logical_and(np.logical_and(zh>=0, zh<=Ks), 
-                                np.logical_and(Css>utils.TOL,pft>1))
+                                np.logical_and(Css>utils.TOL,pft>=1))
         Dsed[indice] = Rous * Dmax/3.1536e7 * (1.0 - zh[indice]/Ks)
         return Dsed
     
@@ -428,7 +436,7 @@ class DA07MOD(MACMODSuper):
         tauE_cr0 = self.m_params['tauE_cr']  # critical shear stress (Pa)
         Kveg = self.m_params['Kveg']    # shear stress increase rate with Bag
         Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
-        Rous = self.m_params['rhoSed']  # sediment density (kg/m3)
+        Rous = 2650.0               # sediment density (kg/m3)
         tau = inputs['tau']         # bottom shear stress (Pa)
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         pft = inputs['pft']         # platform pft
@@ -437,11 +445,10 @@ class DA07MOD(MACMODSuper):
         Esed[:] = 0.0
         Bmax_x = Bmax[pft]
         Kveg_x = Kveg[pft]
-        indice = Bmax_x>utils.TOL
+        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), Bmax_x>utils.TOL)
         tauE_cr = tauE_cr0 * (1.0 + Kveg_x[indice]*Bag[indice]/Bmax_x[indice])
         Esed[indice] = np.maximum( 0.0, 1e-3*E0*Rous*(tau[indice]/tauE_cr-1.0)/3.1536e7 )
-        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), 
-                                Bmax_x<=utils.TOL)
+        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), Bmax_x<=utils.TOL)
         Esed[indice] = np.maximum( 0.0, 1e-3*E0*Rous*(tau[indice]/tauE_cr0-1.0)/3.1536e7 )
         return Esed
         
@@ -475,9 +482,9 @@ class DA07MOD(MACMODSuper):
         nv = utils.visc
         # direct deposition
         ws = self.settling_velocity(tau)
-        indice = np.logical_and(np.logical_and(pft>1,pft<=9), 
+        indice = np.logical_and(np.logical_and(pft>=1,pft<=9), 
                                 np.logical_and(Css>Css0,tau<tauD_cr))
-        Dsed[indice] = 2.0*ws[indice]*Css[indice]*(1.0-tau[indice]/tauD_cr)
+        Dsed[indice] = 2.0*ws[indice]*Css[indice]*(tauD_cr-tau[indice])/0.1
         # plant trapping
         alphaN_x = alphaN[pft]
         betaN_x = betaN[pft]
@@ -490,11 +497,11 @@ class DA07MOD(MACMODSuper):
         ds = np.zeros_like(Bag)
         eps = np.zeros_like(Bag)
         indice = np.logical_and(alphaN_x>0, Bag>0)
-        ns[indice] = np.exp( np.log(alphaN_x[indice]) + betaN_x[indice]*np.log(Bag[indice]))
+        ns[indice] = np.exp( np.log(alphaN_x[indice]) + betaN_x[indice]*np.log(1e3*Bag[indice]))
         indice = np.logical_and(alphaH_x>0, Bag>0)
-        hs[indice] = np.exp( np.log(alphaH_x[indice]) + betaH_x[indice]*np.log(Bag[indice]))
+        hs[indice] = np.exp( np.log(alphaH_x[indice]) + betaH_x[indice]*np.log(1e3*Bag[indice]))
         indice = np.logical_and(alphaD_x>0, Bag>0)
-        ds[indice] = np.exp( np.log(alphaD_x[indice]) + betaD_x[indice]*np.log(Bag[indice]))
+        ds[indice] = np.exp( np.log(alphaD_x[indice]) + betaD_x[indice]*np.log(1e3*Bag[indice]))
         indice = ds>0
         eps[indice] = alphaE * (np.abs(U[indice])*ds[indice]/nv)**betaE * \
             (d50/ds[indice])**gammaE
@@ -510,7 +517,7 @@ class DA07MOD(MACMODSuper):
 #        Returns: bed loading rate (kg m-2 s-1)
 #        """
 #        d50 = self.m_params['d50sand']      # sediment median diameter (m) default: 200e-6
-#        Rous = self.m_params['rhoSed']  # sediment density
+#        Rous = 2650.0               # sediment density (kg/m3)
 #        Lbed = inputs['Lbed']   # sediment bed load (kg/m2/s)
 #        x = inputs['x']         # coordinate (m)
 #        h = inputs['h']         # water depth (m)

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+module purge
+module load intel netcdf/4.7.4 mvapich2
+
+export PATH=/share/apps/python/anaconda3-2020.02/bin:$PATH
+source activate /qfs/people/tanz151/.conda/envs/work_env
+
 arg=$( echo $1 | tr '[:upper:]' '[:lower:]' )
 if [ -z "$arg" ]; then
    #ifort -O3 -fast -c -fPIC data_buffer_mod.f90 hydro_utilities_mod.f90
@@ -18,3 +24,5 @@ elif [ $arg = 'debug' ]; then
 else
    echo "Wrong Argument: $1!!!"
 fi
+
+conda deactivate

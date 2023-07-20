@@ -2,6 +2,10 @@
    <header>
    Parameters of the hydrodynamics model. 
    </header>
+   <entry id="d50" units="m" value="1.25e-4">
+      <type>real</type>
+      <desc>bed sediment median diameter</desc>
+   </entry>
    <entry id="Cz0" units="m^0.5/s" value="65.0">
       <type>real</type>
       <desc>the Chezy's friction coefficient</desc>

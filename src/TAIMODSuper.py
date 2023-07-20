@@ -105,7 +105,7 @@ class MACMODSuper(object):
         nv = utils.visc
         G = utils.G
         ws = (( np.sqrt(0.25*(A/F)**(2/m)+(4./3.*d50**3*G*(S-1)/F/nv**2)**(1/m)) \
-              - 0.5*(A/F)**(1/m))**m) * nv / d50 * (1.0 - tau/tauD_cr)
+              - 0.5*(A/F)**(1/m))**m) * nv / d50 * (tauD_cr - tau) / 0.1
         return np.maximum(ws, 0.0)
 
 ###############################################################################    

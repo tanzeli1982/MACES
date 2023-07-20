@@ -1,0 +1,45 @@
+#!/bin/bash
+
+#SBATCH  --job-name=maces
+#SBATCH  --nodes=1
+#SBATCH  --ntasks=4
+##SBATCH  --ntasks-per-node=40
+#SBATCH  --cpus-per-task=1
+#SBATCH  --exclusive
+#SBATCH  --time=02:00:00
+#SBATCH  --partition=short
+#SBATCH -A  esmd 
+#SBATCH --mail-type=END
+#SBATCH --mail-user=zeli.tan@pnnl.gov
+#SBATCH --output=slurm.out
+#SBATCH --error=slurm.out
+
+module purge
+module load intel netcdf/4.7.4 mvapich2
+
+export PATH=/share/apps/python/anaconda3-2020.02/bin:$PATH
+source activate /qfs/people/tanz151/.conda/envs/work_env
+
+mac_type=( 'F06' )
+omac_types=( 'M12' 'DA07' 'KM12' 'K16' )
+
+for omac_type in ${omac_types[@]}; do
+
+echo "simulate with " ${omac_type}
+
+# copy namelist file
+cp namelist.maces.xml namelist.maces.${omac_type}.xml
+
+# change settings
+python nmlchange.py --file namelist.maces.${omac_type}.xml --parameter OMAC_TYPE --value ${omac_type}MOD
+python nmlchange.py --file namelist.maces.${omac_type}.xml --parameter CASE --value ${mac_type}%${omac_type}
+python nmlchange.py --file namelist.maces.${omac_type}.xml --parameter Verbose --value TRUE
+
+done
+
+for omac_type in ${omac_types[@]}; do
+   srun --ntasks=1 --nodes=1 --cpus-per-task=1 python MACES_main.py -f namelist.maces.${omac_type}.xml &
+done
+wait
+
+conda deactivate

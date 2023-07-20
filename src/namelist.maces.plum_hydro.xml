@@ -15,7 +15,7 @@
          2: Transient.
          </desc>
       </entry>
-      <entry id="MINAC_TYPE" value="T03MOD">
+      <entry id="MINAC_TYPE" value="M12MOD">
          <type>char</type>
          <valid_values>
          F06MOD,T03MOD,KM12MOD,M12MOD,F07MOD,VDK05MOD,DA07MOD
@@ -25,7 +25,7 @@
          Default: F06MOD.
          </desc>
       </entry>
-      <entry id="OMAC_TYPE" value="DA07MOD">
+      <entry id="OMAC_TYPE" value="NULLMOD">
          <type>char</type>
          <valid_values>
          NULLMOD,VDK05MOD,M12MOD,DA07MOD,KM12MOD,K16MOD
@@ -66,11 +66,11 @@
          <valid_values>regular,calibration,sensitivity</valid_values>
          <desc>Simulation type</desc>
       </entry>
-      <entry id="RUN_STARTDATE" value="2004-09-25">
+      <entry id="RUN_STARTDATE" value="2017-10-04">
          <type>char</type>
          <desc>Run start date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
-      <entry id="RUN_STOPDATE" value="2004-10-06">
+      <entry id="RUN_STOPDATE" value="2017-10-21">
          <type>char</type>
          <desc>Run stop date (yyyy-mm-dd 00:00:00)</desc>
       </entry>
@@ -85,7 +85,7 @@
       </entry>
    </group>
    <group id="run_control">
-      <entry id="RUNROOT" value="/Users/tanz151/Python_maces/src">
+      <entry id="RUNROOT" value="/compyfs/tanz151/post_process/maces/run/Python_maces/src">
          <type>char</type>
          <desc>Simulation root directory</desc>
       </entry>
@@ -93,11 +93,11 @@
          <type>char</type>
          <desc>Path of the hydrodynamics model parameter file</desc>
       </entry>
-      <entry id="MINAC_FILE" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs/optpar_minac.xml">
+      <entry id="MINAC_FILE" value="$RUNROOT/optpar_minac.xml">
          <type>char</type>
          <desc>Path of the mineral accretion model parameter file</desc>
       </entry>
-      <entry id="OMAC_FILE" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs/optpar_omac.xml">
+      <entry id="OMAC_FILE" value="$RUNROOT/optpar_omac.xml">
          <type>char</type>
          <desc>Path of the OM accretion model parameter file</desc>
       </entry>
@@ -109,7 +109,7 @@
          <type>char</type>
          <desc>Path of the landward migration model parameter file</desc>
       </entry>
-      <entry id="SITE_FILE" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/DIVA_maces.xlsx">
+      <entry id="SITE_FILE" value="/compyfs/tanz151/user_inputdata/maces/Data/PlumIsland/DIVA_maces.xlsx">
          <type>char</type>
          <desc>Path of the site information file</desc>
       </entry>
@@ -121,7 +121,7 @@
          <type>integer</type>
          <desc>Last site index of the run</desc>
       </entry>
-      <entry id="CELL_RES" units="meter" value="2.0">
+      <entry id="CELL_RES" units="meter" value="10.0">
          <type>real</type>
          <desc>Reference node cell resolution</desc>
       </entry>
@@ -155,7 +155,7 @@
       </entry>
    </group>
    <group id="run_inputs">
-      <entry id="DIN_ROOT" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary">
+      <entry id="DIN_ROOT" value="/compyfs/tanz151/user_inputdata/maces/Data/PlumIsland">
          <type>char</type>
          <desc>Input data root directory</desc>
       </entry>
@@ -195,17 +195,17 @@
          <type>integer</type>
          <desc>Time step in minutes of the wave data</desc>
       </entry>
-      <entry id="FILE_SSC" value="$DIN_ROOT/force_SSC.nc">
+      <entry id="FILE_SSC" value="$DIN_ROOT/force_SSC_revised.nc">
          <type>char</type>
-         <desc>Path of boundary wave period file</desc>
+         <desc>Path of boundary SSC period file</desc>
       </entry>
       <entry id="SSC_TSTEP" value="15">
          <type>integer</type>
-         <desc>Time step in minutes of the wave data</desc>
+         <desc>Time step in minutes of the SSC data</desc>
       </entry>
    </group>
    <group id="run_archive">
-      <entry id="DOUT_ROOT" value="/Users/tanz151/Documents/Projects/TAI_BGC/Data/Hydrodynamics_obs/HunterEstuary/Outputs">
+      <entry id="DOUT_ROOT" value="/compyfs/tanz151/post_process/maces/tests">
          <type>char</type>
          <desc>Run archive root directory</desc>
       </entry>

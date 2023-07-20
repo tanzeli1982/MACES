@@ -161,8 +161,7 @@ class M12MOD(OMACMODSuper):
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         
         Bag[:] = 0.0
-        indice = np.logical_and(np.logical_and(zh>=0,zh<=MHT), 
-                                np.logical_and(pft>=1,pft<=5))
+        indice = np.logical_and(np.logical_and(pft>=1,pft<=5), zh>=0)
         DMHT = MHT - zh
         Bag[indice] = np.maximum(1e-3, aa[pft[indice]]*DMHT[indice]+ \
            bb[pft[indice]]*(DMHT[indice]**2)+cc[pft[indice]])
@@ -209,20 +208,23 @@ class DA07MOD(OMACMODSuper):
         Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
         omega = self.m_params['omega']  # the ratio of winter Bag to Bps 
         mps = self.m_params['mps']      # month of Bag at its peak
+        eta_max = self.m_params['eta_max']   # maximum elevation for wetland (m)
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         zh = inputs['zh']           # platform surface elevation (msl)
         pft = inputs['pft']         # platform pft
         #MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
-        MHT = inputs['MHHW']        # mean high high water level (msl)
+        #MHT = inputs['MHHW']        # mean high high water level (msl)
         m = inputs['month']         # month (1 to 12)
         
         Bag[:] = 0.0
+        eta_max_x = eta_max[pft]
         indice = np.logical_and(np.logical_and(pft>=2,pft<=5), 
-                                np.logical_and(zh>=0,zh<=MHT))
-        Bps = (MHT - zh[indice]) / MHT * Bmax[pft[indice]]   # peak season Bag
+                                np.logical_and(zh>=0,zh<=eta_max_x))
+        Bps = (eta_max_x[indice] - zh[indice]) / eta_max_x[indice] * \
+           Bmax[pft[indice]]   # peak season Bag
         Bag[indice] = np.maximum(1e-3, \
            0.5*Bps*(1-omega)*(np.sin(np.pi*m/6-mps*np.pi/12)+1) + omega*Bps)
-        indice = np.logical_and(np.logical_and(zh>=0,zh<=MHT), pft==1)
+        indice = np.logical_and(np.logical_and(zh>=0,zh<=eta_max_x), pft==1)
         Bag[indice] = 1e-3
         return Bag
 
@@ -253,6 +255,7 @@ class KM12MOD(OMACMODSuper):
         thetaBG = self.m_params['thetaBG']  # coef for the root:shoot quotient
         Dmbm = self.m_params['Dmbm']        # coef for the root:shoot quotient 
         Bmax = self.m_params['Bmax']        # maximum Bag (kg/m2)
+        eta_max = self.m_params['eta_max']  # maximum elevation for wetland habitat (m)
         rBmin = self.m_params['rBmin']      # the ratio of winter Bag to Bps
         sigmaB = self.m_params['sigmaB']    # biomass increase due to temperature (K-1)
         rGmin = self.m_params['rGmin']      # the ratio of winter growth rate to Bps (day-1)
@@ -262,20 +265,20 @@ class KM12MOD(OMACMODSuper):
         Tmean = inputs['Tmean']         # annual mean temperature (K)
         zh = inputs['zh']               # platform surface elevation (msl)
         pft = inputs['pft']             # platform pft
-        MHHW = inputs['MHHW']           # mean high high water level (msl)
         jd = inputs['doy']              # day (1 to 365)
         DepOM = inputs['DepOM']         # OM deposition (kg/m2/s)
         
         DepOM[:] = 0.0
         jd_phi = 56     # the phase shift (in days) between Gps and Bps
-        indice = np.logical_and(np.logical_and(zh>=0, zh<=MHHW), 
+        eta_max_x = eta_max[pft]
+        indice = np.logical_and(np.logical_and(zh>=0, zh<=eta_max_x), 
                                 np.logical_and(pft>=2, pft<=5))
         # the root:shoot quotient
-        phi = thetaBG[pft[indice]]*(MHHW-zh[indice]) + Dmbm[pft[indice]]
+        phi = thetaBG[pft[indice]]*(eta_max_x[indice]-zh[indice]) + Dmbm[pft[indice]]
         # peak season Bag
         Tref = 293.15   # K
-        Bps = Bmax[pft[indice]]*(MHHW-zh[indice])/MHHW* \
-            (1+(Tsummer-Tref)*sigmaB[pft[indice]])
+        Bps = Bmax[pft[indice]] * (eta_max_x[indice] - zh[indice]) / \
+            eta_max_x[indice] * (1 + (Tsummer-Tref)*sigmaB[pft[indice]])
         Bmin = rBmin * Bps          # winter Bag
         Gmin = rGmin/8.64e4 * Bps   # winter growth rate (kg/m2/s)
         Gps = rGps/8.64e4 * Bps     # peak growth rate (kg/m2/s)
@@ -295,6 +298,7 @@ class KM12MOD(OMACMODSuper):
         Returns: aboveground biomass (kg m-2)
         """
         Bmax = self.m_params['Bmax']        # maximum Bag (kg/m2)
+        eta_max = self.m_params['eta_max']  # maximum elevation for wetland habitat (m) 
         rBmin = self.m_params['rBmin']      # the ratio of winter Bag to Bps
         sigmaB = self.m_params['sigmaB']    # biomass increase due to temperature (K-1)
         jdps = self.m_params['jdps']        # the DOY when Bag is at its peak
@@ -302,19 +306,20 @@ class KM12MOD(OMACMODSuper):
         zh = inputs['zh']               # platform surface elevation (msl)
         pft = inputs['pft']             # platform pft
         Bag = inputs['Bag']             # aboveground biomass (kg/m2)
-        MHHW = inputs['MHHW']           # mean high high water level (msl)
+        #MHHW = inputs['MHHW']           # mean high high water level (msl)
         jd = inputs['doy']              # day (1 to 365)
         
         Bag[:] = 0.0
         Tref = 293.15   # K
+        eta_max_x = eta_max[pft]
         indice = np.logical_and(np.logical_and(pft>=2,pft<=5), 
-                                np.logical_and(zh>=0,zh<=MHHW))
-        Bps = Bmax[pft[indice]]*(MHHW-zh[indice])/MHHW* \
-            (1+(Tsummer-Tref)*sigmaB[pft[indice]])
+                                np.logical_and(zh>=0,zh<=eta_max_x))
+        Bps = Bmax[pft[indice]] * (eta_max_x[indice] - zh[indice]) / \
+            eta_max_x[indice] * (1+(Tsummer-Tref)*sigmaB[pft[indice]])
         Bmin = rBmin * Bps          # winter Bag
         Bag[indice] = np.maximum(0.5*(Bmin+Bps+(Bps-Bmin)* \
            np.cos(2*np.pi*(jd-jdps)/365)), 1e-3)
-        indice = np.logical_and(np.logical_and(zh>=0,zh<=MHHW), pft==1)
+        indice = np.logical_and(np.logical_and(zh>=0,zh<=eta_max_x), pft==1)
         Bag[indice] = 1e-3
         return Bag
     
@@ -326,13 +331,15 @@ class KM12MOD(OMACMODSuper):
         """
         thetaBG = self.m_params['thetaBG']  # coef for the root:shoot quotient
         Dmbm = self.m_params['Dmbm']        # coef for the root:shoot quotient    
+        eta_max = self.m_params['eta_max']  # maximum elevation for wetland habitat (m) 
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         Bbg = inputs['Bbg']         # belowground biomass (kg/m2)
         zh = inputs['zh']           # platform surface elevation (msl)
         pft = inputs['pft']         # platform pft
         MHHW = inputs['MHHW']       # mean high high water level (msl)
         
-        indice = np.logical_and(np.logical_and(zh>=0, zh<=MHHW), 
+        eta_max_x = eta_max[pft]
+        indice = np.logical_and(np.logical_and(zh>=0, zh<=eta_max_x), 
                                 np.logical_and(pft>=2, pft<=5))
         phi = thetaBG[pft[indice]]*(MHHW-zh[indice]) + Dmbm[pft[indice]]
         Bbg[indice] = np.maximum(phi,0.0) * np.maximum(Bag[indice],0.0)
@@ -386,6 +393,7 @@ class K16MOD(OMACMODSuper):
         Returns: aboveground biomass (kg m-2)
         """
         Bmax = self.m_params['Bmax']    # maximum Bag (kg/m2)
+        eta_max = self.m_params['eta_max']   # maximum elevation for wetland (m)
         b2mgv = self.m_params['b2mgv']  # coef for Md vs Mh equation (dimensionless)
         b3mgv = self.m_params['b3mgv']  # coef for Md vs Mh equation (cm-1)
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
@@ -395,30 +403,34 @@ class K16MOD(OMACMODSuper):
         MHT = inputs['MHHW']        # mean high high water level (msl)
         
         Bag[:] = 0.0
-        indice_zh = np.logical_and(zh>=0, zh<=MHT)
+        eta_max_x = eta_max[pft]
+        indice_zh = np.logical_and(zh>=0, zh<=eta_max_x)
         # tidal flats
         indice = np.logical_and(indice_zh, pft==1)
         Bag[indice] = 1e-3
         # Spartina alterniflora dominated marshes
         indice = np.logical_and(indice_zh, pft==2)
-        rz = (1-0.5*zh[indice]/MHT)   # Bag production rate
-        mz = 0.5*zh[indice]/MHT       # Bag mortality rate
+        rz =  1 - 0.5*zh[indice]/eta_max_x[indice]  # Bag production rate
+        mz = 0.5*zh[indice]/eta_max_x[indice]       # Bag mortality rate
         Bag[indice] = np.maximum( Bmax[pft[indice]]*(1.0-mz/rz), 1e-3 )
         # multi-species marshes
         indice = np.logical_and(np.logical_or(pft==3,pft==4), indice_zh)
-        rz = 0.5*(1+zh[indice]/MHT)
-        mz = 0.5*(1-zh[indice]/MHT)
+        rz = 0.5*(1+zh[indice]/eta_max_x[indice])
+        mz = 0.5*(1-zh[indice]/eta_max_x[indice])
         Bag[indice] = np.maximum( Bmax[pft[indice]]*(1.0-mz/rz), 1e-3 )
         # mangroves
+        indice_zh = np.logical_and(zh>=0, zh<=MHT)
         indice = np.logical_and(indice_zh, pft==5)
-        Md = np.zeros_like(zh[indice])
-        Mh = np.zeros_like(zh[indice])
-        P = 1 - zh[indice]/MHT
-        I = 4*P - 8*P**2 + 0.5
-        Md[I<=0] = self.Md
-        Mh[I<=0] = self.Mh
-        Md[I>0] = self.Md * (1-0.5*zh[indice][I>0]/MHT)
-        Mh[I>0] = 137 + b2mgv*Md[I>0] + b3mgv*(Md[I>0])**2
+        #Md = np.zeros_like(zh[indice])
+        #Mh = np.zeros_like(zh[indice])
+        #P = 1 - zh[indice]/MHT
+        #I = 4*P - 8*P**2 + 0.5
+        #Md[I<=0] = 0.0
+        #Mh[I<=0] = 0.0
+        #Md[I>0] = self.Md * (1-0.5*zh[indice][I>0]/MHT)
+        #Mh[I>0] = 137 + b2mgv*Md[I>0] + b3mgv*(Md[I>0])**2
+        Md = self.Md * (1 - 0.5*zh[indice]/eta_max_x[indice])
+        Mh = 137 + b2mgv*Md + b3mgv*Md**2
         #rout = 0.5/Md   # tree density (tree/m2)
         Bag[indice] = 0.154 * Md**1.11    # kg/m2
         return Bag
@@ -430,6 +442,7 @@ class K16MOD(OMACMODSuper):
         Returns: belowground biomass (kg m-2)
         """
         phi = self.m_params['phi']  # the root:shoot quotient
+        eta_max = self.m_params['eta_max']   # maximum elevation for wetland (m)
         Bbg = inputs['Bbg']         # belowground biomass (kg/m2)
         Bag = inputs['Bag']         # aboveground biomass (kg/m2)
         pft = inputs['pft']         # platform pft
@@ -437,12 +450,14 @@ class K16MOD(OMACMODSuper):
         #MHT = 0.5*inputs['TR']      # mean high tide water level (msl)
         MHT = inputs['MHHW']        # mean high high water level (msl)
         
-        indice_zh = np.logical_and(zh>=0, zh<=MHT)
+        eta_max_x = eta_max[pft]
         # marshes
+        indice_zh = np.logical_and(zh>=0, zh<=eta_max_x)
         indice = np.logical_and(np.logical_and(pft>=2, pft<=4), 
                                 indice_zh)
         Bbg[indice] = phi[pft[indice]]*Bag[indice]
         # mangroves
+        indice_zh = np.logical_and(zh>=0, zh<=MHT)
         indice = np.logical_and(indice_zh, pft==5)
         Bbg[indice] = 0.64 * (Bag[indice]/0.154)**(0.17/1.11)
         return Bbg

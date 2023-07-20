@@ -79,7 +79,6 @@ if __name__=='__main__':
     lndmgr_params = comm.bcast(lndmgr_params, root=0)
     hydro_params = comm.bcast(hydro_params, root=0)
     # make parameters of different components consistent
-    hydro_params['d50'] = mac_params['d50']
     if 'alphaA' in mac_params:
         hydro_params['alphaA'] = mac_params['alphaA']
     if 'betaA' in mac_params:
@@ -300,11 +299,11 @@ if __name__=='__main__':
         if namelist['OUTPUT_HYDRO']:
             filename_hydro = namelist['DOUT_ROOT'] + '/maces_hydro_' + \
                 namelist['RUN_STARTDATE'] + '_' + namelist['RUN_STOPDATE'] + \
-                '_' + '{:d}'.format(site_id) + '.nc'
+                '_' + namelist['CASE'] + '_' + '{:d}'.format(site_id) + '.nc'
             utils.write_hydro_outputs(filename_hydro, namelist['HYDRO_TSTEP'], 
                                       uhydro_out)
         filename_ecogeom = namelist['DOUT_ROOT'] + '/maces_ecogeom_' + \
             namelist['RUN_STARTDATE'] + '_' + namelist['RUN_STOPDATE'] + \
-            '_' + '{:d}'.format(site_id) + '.nc'
+            '_' + namelist['CASE'] + '_' + '{:d}'.format(site_id) + '.nc'
         utils.write_ecogeom_outputs(filename_ecogeom, namelist['ECOGEOM_TSTEP'], 
                                     ecogeom_out)
