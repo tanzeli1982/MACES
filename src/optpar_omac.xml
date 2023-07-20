@@ -30,10 +30,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">15.5</value>
-            <value pft="3">15.5</value>
-            <value pft="4">15.5</value>
-            <value pft="5">15.698</value>
+            <value pft="2">0.3669</value>
+            <value pft="3">0.3669</value>
+            <value pft="4">0.3669</value>
+            <value pft="5">0.3524</value>
             <value pft="6">0.0</value>
             <value pft="7">0.0</value>
             <value pft="8">0.0</value>
@@ -46,10 +46,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">-18.55</value>
-            <value pft="3">-18.55</value>
-            <value pft="4">-18.55</value>
-            <value pft="5">-12.075</value>
+            <value pft="2">-0.1694</value>
+            <value pft="3">-0.1694</value>
+            <value pft="4">-0.1694</value>
+            <value pft="5">-0.08317</value>
             <value pft="6">0.0</value>
             <value pft="7">0.0</value>
             <value pft="8">0.0</value>
@@ -62,10 +62,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">-1.364</value>
-            <value pft="3">-1.364</value>
-            <value pft="4">-1.364</value>
-            <value pft="5">-2.657</value>
+            <value pft="2">0.8513</value>
+            <value pft="3">0.8513</value>
+            <value pft="4">0.8513</value>
+            <value pft="5">0.8516</value>
             <value pft="6">0.0</value>
             <value pft="7">0.0</value>
             <value pft="8">0.0</value>
@@ -202,10 +202,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">15.5</value>
-            <value pft="3">15.5</value>
-            <value pft="4">15.5</value>
-            <value pft="5">15.698</value>
+            <value pft="2">0.3669</value>
+            <value pft="3">0.3669</value>
+            <value pft="4">0.3669</value>
+            <value pft="5">0.3524</value>
             <value pft="6">0.0</value>
             <value pft="7">0.0</value>
             <value pft="8">0.0</value>
@@ -218,10 +218,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">-18.55</value>
-            <value pft="3">-18.55</value>
-            <value pft="4">-18.55</value>
-            <value pft="5">-12.075</value>
+            <value pft="2">-0.1694</value>
+            <value pft="3">-0.1694</value>
+            <value pft="4">-0.1694</value>
+            <value pft="5">-0.08317</value>
             <value pft="6">0.0</value>
             <value pft="7">0.0</value>
             <value pft="8">0.0</value>
@@ -234,10 +234,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">-1.364</value>
-            <value pft="3">-1.364</value>
-            <value pft="4">-1.364</value>
-            <value pft="5">-2.657</value>
+            <value pft="2">0.8513</value>
+            <value pft="3">0.8513</value>
+            <value pft="4">0.8513</value>
+            <value pft="5">0.8516</value>
             <value pft="6">0.0</value>
             <value pft="7">0.0</value>
             <value pft="8">0.0</value>
@@ -250,10 +250,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">0.02</value>
-            <value pft="3">0.02</value>
-            <value pft="4">0.02</value>
-            <value pft="5">0.02</value>
+            <value pft="2">0.0737</value>
+            <value pft="3">0.0737</value>
+            <value pft="4">0.0737</value>
+            <value pft="5">0.0737</value>
             <value pft="6">0.02</value>
             <value pft="7">0.02</value>
             <value pft="8">0.02</value>
@@ -279,7 +279,7 @@
       </entry>
    </group>
    <group id="DA07MOD">
-      <entry id="rhoOM" units="kg/m3" value="1200.0">
+      <entry id="rhoOM" units="kg/m3" value="300.0">
          <type>real</type>
          <desc>organic matter density</desc>
       </entry>
@@ -299,19 +299,35 @@
          </values>
          <desc>the root:shoot quotient</desc>
       </entry>
-      <entry id="Qom0" units="m/yr" value="0.01">
+      <entry id="Qom0" units="m/yr" value="8.21e-4">
          <type>real</type>
          <desc>a typical OM deposition rate</desc>
+      </entry>
+      <entry id="eta_max" units="m">
+         <type>real</type>
+         <values>
+            <value pft="0">0.923697</value>
+            <value pft="1">0.923697</value>
+            <value pft="2">3.537</value>
+            <value pft="3">3.537</value>
+            <value pft="4">3.537</value>
+            <value pft="5">2.4483</value>
+            <value pft="6">0.923697</value>
+            <value pft="7">0.923697</value>
+            <value pft="8">0.923697</value>
+            <value pft="9">0.923697</value>
+         </values>
+         <desc>maximum elevation for wetland habitat</desc>
       </entry>
       <entry id="Bmax" units="kg/m2">
          <type>real</type>
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">1.0</value>
-            <value pft="3">1.0</value>
-            <value pft="4">1.0</value>
-            <value pft="5">1.0</value>
+            <value pft="2">1.05</value>
+            <value pft="3">1.05</value>
+            <value pft="4">1.05</value>
+            <value pft="5">1.225</value>
             <value pft="6">1.0</value>
             <value pft="7">1.0</value>
             <value pft="8">1.0</value>
@@ -334,15 +350,31 @@
          <type>real</type>
          <desc>organic matter density</desc>
       </entry>
+      <entry id="eta_max" units="m">
+         <type>real</type>
+         <values>
+            <value pft="0">0.923697</value>
+            <value pft="1">0.923697</value>
+            <value pft="2">3.537</value>
+            <value pft="3">3.537</value>
+            <value pft="4">3.537</value>
+            <value pft="5">2.4483</value>
+            <value pft="6">0.923697</value>
+            <value pft="7">0.923697</value>
+            <value pft="8">0.923697</value>
+            <value pft="9">0.923697</value>
+         </values>
+         <desc>maximum elevation for wetland habitat</desc>
+      </entry>
       <entry id="Bmax" units="kg/m2">
          <type>real</type>
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">1.0</value>
-            <value pft="3">1.0</value>
-            <value pft="4">1.0</value>
-            <value pft="5">1.0</value>
+            <value pft="2">0.878</value>
+            <value pft="3">0.878</value>
+            <value pft="4">0.878</value>
+            <value pft="5">1.024</value>
             <value pft="6">1.0</value>
             <value pft="7">1.0</value>
             <value pft="8">1.0</value>
@@ -380,14 +412,14 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">-6.8</value>
-            <value pft="3">-6.8</value>
-            <value pft="4">-6.8</value>
-            <value pft="5">-6.8</value>
-            <value pft="6">-6.8</value>
-            <value pft="7">-6.8</value>
-            <value pft="8">-6.8</value>
-            <value pft="9">-6.8</value>
+            <value pft="2">-1.5</value>
+            <value pft="3">-1.5</value>
+            <value pft="4">-1.5</value>
+            <value pft="5">-1.5</value>
+            <value pft="6">-1.5</value>
+            <value pft="7">-1.5</value>
+            <value pft="8">-1.5</value>
+            <value pft="9">-1.5</value>
          </values>
          <desc>slope of the root:shoot quotient equation</desc>
       </entry>
@@ -396,14 +428,14 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">4.8</value>
-            <value pft="3">4.8</value>
-            <value pft="4">4.8</value>
-            <value pft="5">4.8</value>
-            <value pft="6">4.8</value>
-            <value pft="7">4.8</value>
-            <value pft="8">4.8</value>
-            <value pft="9">4.8</value>
+            <value pft="2">2.4</value>
+            <value pft="3">2.4</value>
+            <value pft="4">2.4</value>
+            <value pft="5">2.4</value>
+            <value pft="6">2.4</value>
+            <value pft="7">2.4</value>
+            <value pft="8">2.4</value>
+            <value pft="9">2.4</value>
          </values>
          <desc>intercept of the root:shoot quotient equation</desc>
       </entry>
@@ -424,7 +456,7 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">0.02</value>
+            <value pft="2">0.2</value>
             <value pft="3">0.2</value>
             <value pft="4">0.2</value>
             <value pft="5">0.2</value>
@@ -440,10 +472,10 @@
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">1.5</value>
-            <value pft="3">1.5</value>
-            <value pft="4">1.5</value>
-            <value pft="5">1.5</value>
+            <value pft="2">50.061</value>
+            <value pft="3">50.061</value>
+            <value pft="4">50.061</value>
+            <value pft="5">50.061</value>
             <value pft="6">1.5</value>
             <value pft="7">1.5</value>
             <value pft="8">1.5</value>
@@ -473,19 +505,31 @@
          </values>
          <desc>the root:shoot quotient</desc>
       </entry>
-      <entry id="gammaB" units="m yr-1 m2 kg-1" value="2.0e-3">
+      <entry id="eta_max" units="m">
          <type>real</type>
-         <desc>the conversion rate of aboveground biomass to OM accretion</desc>
+         <values>
+            <value pft="0">0.923697</value>
+            <value pft="1">0.923697</value>
+            <value pft="2">2.236</value>
+            <value pft="3">2.236</value>
+            <value pft="4">2.236</value>
+            <value pft="5">1.3455</value>
+            <value pft="6">0.923697</value>
+            <value pft="7">0.923697</value>
+            <value pft="8">0.923697</value>
+            <value pft="9">0.923697</value>
+         </values>
+         <desc>maximum elevation for wetland habitat</desc>
       </entry>
       <entry id="Bmax" units="kg/m2">
          <type>real</type>
          <values>
             <value pft="0">0.0</value>
             <value pft="1">0.0</value>
-            <value pft="2">1.0</value>
-            <value pft="3">1.0</value>
-            <value pft="4">1.0</value>
-            <value pft="5">1.0</value>
+            <value pft="2">1.05</value>
+            <value pft="3">1.05</value>
+            <value pft="4">1.05</value>
+            <value pft="5">1.225</value>
             <value pft="6">1.0</value>
             <value pft="7">1.0</value>
             <value pft="8">1.0</value>
@@ -493,15 +537,19 @@
          </values>
          <desc>maximum standing biomass</desc>
       </entry>
-      <entry id="b2mgv" units="none" value="42.0">
+      <entry id="gammaB" units="m yr-1 m2 kg-1" value="9.229e-5">
+         <type>real</type>
+         <desc>the conversion rate of aboveground biomass to OM accretion</desc>
+      </entry>
+      <entry id="b2mgv" units="none" value="400.0">
          <type>real</type>
          <desc>coef for mangrove stem diameter vs tree height equation</desc>
       </entry>
-      <entry id="b3mgv" units="cm-1" value="0.46">
+      <entry id="b3mgv" units="cm-1" value="1.0">
          <type>real</type>
          <desc>coef for mangrove stem diameter vs tree height equation</desc>
       </entry>
-      <entry id="Mdmax" units="cm" value="40.0">
+      <entry id="Mdmax" units="cm" value="17.94">
          <type>real</type>
          <desc>mangrove maximum stem diameter</desc>
       </entry>

@@ -131,25 +131,23 @@ class KM12MOD(MACMODSuper):
         """
         pft = inputs['pft']     # platform pft
         Css0 = inputs['refCss'] # reference sediment conc (kg/m3)
-        tau = inputs['tau']     # bottom shear stress (Pa)
         Bag = inputs['Bag']     # aboveground biomass (kg/m2)
         U = inputs['U']         # flow velocity (m/s)
         Dsed = inputs['Dsed']   # sediment deposition (kg/m2/s)
         
         Dsed[:] = 0.0
-        ws = self.settling_velocity(pft, tau, Bag, U)
+        ws = self.settling_velocity(pft, 1e3*Bag, U)
         indice = np.logical_and(pft>1,pft<=9)
         Dsed[indice] = ws[indice] * Css0
         return Dsed
     
-    def settling_velocity(self, pft, tau, Bag, U):
+    def settling_velocity(self, pft, Bag, U):
         """"Calculate effective sediment settling velocity (Morris et al., 2012).
         Arguments:
             d50 : sediment median diameter (m)
             Rous : sediment density (kg/m3)
             pft : platform pft
-            tau : bottom shear stress (Pa)
-            Bag : aboveground biomass (kg/m2)
+            Bag : aboveground biomass (gC/m2)
             U : tide flow velocity (m/s)
         Returns: sediment settling velocity (m s-1)
         """
@@ -499,11 +497,11 @@ class DA07MOD(MACMODSuper):
         ds = np.zeros_like(Bag)
         eps = np.zeros_like(Bag)
         indice = np.logical_and(alphaN_x>0, Bag>0)
-        ns[indice] = np.exp( np.log(alphaN_x[indice]) + betaN_x[indice]*np.log(Bag[indice]))
+        ns[indice] = np.exp( np.log(alphaN_x[indice]) + betaN_x[indice]*np.log(1e3*Bag[indice]))
         indice = np.logical_and(alphaH_x>0, Bag>0)
-        hs[indice] = np.exp( np.log(alphaH_x[indice]) + betaH_x[indice]*np.log(Bag[indice]))
+        hs[indice] = np.exp( np.log(alphaH_x[indice]) + betaH_x[indice]*np.log(1e3*Bag[indice]))
         indice = np.logical_and(alphaD_x>0, Bag>0)
-        ds[indice] = np.exp( np.log(alphaD_x[indice]) + betaD_x[indice]*np.log(Bag[indice]))
+        ds[indice] = np.exp( np.log(alphaD_x[indice]) + betaD_x[indice]*np.log(1e3*Bag[indice]))
         indice = ds>0
         eps[indice] = alphaE * (np.abs(U[indice])*ds[indice]/nv)**betaE * \
             (d50/ds[indice])**gammaE
