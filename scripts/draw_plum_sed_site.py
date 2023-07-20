@@ -12,6 +12,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from netCDF4 import Dataset
 from matplotlib.ticker import AutoMinorLocator
 from datetime import date
@@ -108,6 +109,8 @@ tt_obs = np.arange(nt_obs)
 plt.clf()
 fig = plt.figure(figsize=(8,3.5))
 
+gs = gridspec.GridSpec(nrows=1, ncols=2)
+
 plt.style.use('default')
 
 #colors = ["#aee39a", "#643176", "#4be32e", "#e72fc2", "#518413", "#7540fc", 
@@ -117,9 +120,9 @@ colors = ['#7b85d4', '#f37738', '#83c995', '#d7369e', '#c4c9d8', '#859795',
 linestyles = ['-', '--', '-.', ':', '-', '--', '-.']
 
 # channel
-ax = plt.subplot2grid((1,2),(0,0))
+ax = fig.add_subplot(gs[0,0])
 ax.plot(tt_obs, sed_obs_c, color='black', linestyle='-', linewidth=2, marker='.', 
-        markersize=8)
+        markersize=10)
 handles = []
 for key in sed_sim_c:
     #if key in ['F06', 'T03', 'KM12']:
@@ -140,7 +143,7 @@ for key in sed_sim_c:
     print(key, ': ', rmse, nrmse)
 #ax.plot(tt_model, U_sim_c['M12'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 #ax.plot(tt_model, Uwav_sim_c['M12'], color='gray', linestyle=':', linewidth=1, alpha=0.9)
-ax.plot(tt_model, tau_sim_c['DA07'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+#ax.plot(tt_model, tau_sim_c['DA07'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 ax.set_xlim(0, nt_model)
 ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
@@ -163,9 +166,9 @@ ax.tick_params(which='major', direction='in', colors='xkcd:black', length=6, pad
 ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 # marsh
-ax = plt.subplot2grid((1,2),(0,1))
+ax = fig.add_subplot(gs[0,1])
 ax.plot(tt_obs, sed_obs_m, color='black', linestyle='-', linewidth=2, marker='.', 
-        markersize=8)
+        markersize=10)
 handles = []
 for key in sed_sim_m:
     indx = len(handles)
@@ -184,15 +187,15 @@ for key in sed_sim_m:
     print(key, ': ', rmse, nrmse)
 #ax.plot(tt_model, U_sim_m['M12'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 #ax.plot(tt_model, Uwav_sim_m['M12'], color='gray', linestyle=':', linewidth=1, alpha=0.9)
-ax.plot(tt_model, tau_sim_m['DA07'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
+#ax.plot(tt_model, tau_sim_m['DA07'], color='gray', linestyle='-', linewidth=1, alpha=0.9)
 legend = ax.legend(handles, list(sed_sim_c.keys()), numpoints=1, 
-                   loc='upper center', ncol=2,
-                   prop={'family':'Times New Roman', 'size':'large'}, 
+                   loc='upper right', ncol=2,
+                   prop={'family':'Times New Roman', 'size':'large', 'weight': 'bold'}, 
                    framealpha=0.0)
 ax.set_xlim(0, nt_model)
-ax.set_ylim(0, 15)
+ax.set_ylim(0, 40)
 ax.xaxis.set_ticks(np.arange(0,nt_model+1,24))
-ax.yaxis.set_ticks(np.linspace(0,15,6))
+ax.yaxis.set_ticks(np.linspace(0,40,5))
 ax.set_xticklabels(['7/19','7/20','7/21','7/22','7/23'])
 ax.xaxis.set_minor_locator(AutoMinorLocator(4))
 ax.set_xlabel('Time', fontsize=12, fontname='Times New Roman', color='black', 
@@ -237,5 +240,5 @@ ax.tick_params(which='minor', direction='in', colors='xkcd:black')
 
 plt.tight_layout()
 fig.savefig('F8.png', dpi=300)
-#fig.savefig('F8.jpg', dpi=600)
+fig.savefig('F8.jpg', dpi=600)
 plt.show()
